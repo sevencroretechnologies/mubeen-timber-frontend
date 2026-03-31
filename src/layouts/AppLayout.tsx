@@ -4,25 +4,13 @@ import { useAuth } from "../context/AuthContext";
 import {
   LayoutDashboard,
   Users,
-  Clock,
-  Calendar,
-  IndianRupee,
-  Briefcase,
   Target,
-  Package,
-  GraduationCap,
-  FileText,
-  Video,
-  BarChart3,
-  Settings,
   Shield,
   LogOut,
   Menu,
   X,
   ChevronDown,
-  Bell,
   User,
-  Building2,
   Warehouse,
   ShoppingCart,
 } from "lucide-react";
@@ -56,452 +44,23 @@ interface NavItem {
 const navigation: NavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   {
-    name: "Staff",
-    href: "/staff",
-    icon: Users,
-    permission: "view_staff",
-    children: [
-      { name: "All Staff", href: "/staff", permission: "view_staff" },
-      { name: "Add Staff", href: "/staff/create", permission: "create_staff" },
-      // {
-      //   name: "Departments",
-      //   href: "/staff/departments",
-      //   permission: "view_settings",
-      // },
-    ],
-  },
-  {
-    name: "Documents",
-    href: "/documents",
-    icon: FileText,
-    permission: "view_documents",
-    children: [
-      {
-        name: "Document Types",
-        href: "/documents/types",
-        permission: "view_documents",
-      },
-      // { name: 'Document Locations', href: '/documents/locations' },
-      // { name: 'All Documents', href: '/documents' },
-    ],
-  },
-  {
-    name: "Organizations",
-    href: "/organizations",
-    icon: Building2,
-    permission: "view_organizations",
-  },
-  {
-    name: "Companies",
-    href: "/companies",
-    icon: Building2,
-    permission: "view_companies",
-  },
-  {
-    name: "Attendance",
-    href: "/attendance/self",
-    icon: Clock,
-    children: [
-      { name: "Clock In/Out (Self)", href: "/attendance/self" },
-      { name: "My Work Logs", href: "/attendance/my-logs" },
-      { name: "My Summary", href: "/attendance/my-summary" },
-      // Admin-only items (hidden for user role)
-      {
-        name: "Clock In/Out",
-        href: "/attendance",
-        permission: "view_attendance",
-      },
-      {
-        name: "Work Logs",
-        href: "/attendance/logs",
-        permission: "view_attendance",
-      },
-      {
-        name: "Summary",
-        href: "/attendance/summary",
-        permission: "view_attendance",
-      },
-      {
-        name: "Shifts",
-        href: "/attendance/shifts",
-        permission: "edit_attendance",
-      },
-    ],
-  },
-  {
-    name: "Leave",
-    href: "/leave/requests",
-    icon: Calendar,
-    children: [
-      { name: "My Requests", href: "/leave/requests" },
-      { name: "Apply Leave", href: "/leave/apply" },
-      { name: "My Balances", href: "/leave/my-balances" },
-      // Admin-only items (hidden for user role)
-      {
-        name: "All Requests",
-        href: "/leave/all-requests",
-        permission: "view_all_time_off",
-      },
-      {
-        name: "Approvals",
-        href: "/leave/approvals",
-        permission: "approve_time_off",
-      },
-      {
-        name: "Balances",
-        href: "/leave/balances",
-        permission: "view_time_off",
-      },
-
-      {
-        name: "Leave Type",
-        href: "/leave/categories",
-        check: (user) =>
-          (!!user?.company_id &&
-            !!user?.org_id &&
-            (user?.roles?.includes("hr") ||
-              user?.roles?.includes("company"))) ||
-          user?.permissions?.includes("manage_time_off_categories") ||
-          user?.roles?.includes("admin"),
-      },
-    ],
-  },
-  {
-    name: "Payroll",
-    href: "/payroll/my-slips",
-    icon: IndianRupee,
-    children: [
-      { name: "My Salary Slips", href: "/payroll/my-slips" },
-      // Admin-only items (hidden for user role)
-      {
-        name: "Salary Slips",
-        href: "/payroll/slips",
-        permission: "view_payslips",
-      },
-      {
-        name: "Generate Payroll",
-        href: "/payroll/generate",
-        permission: "generate_payslips",
-      },
-      // {
-      //   name: "Compensation",
-      //   href: "/payroll/compensation",
-      //   permission: "view_compensation",
-      // },
-      {
-        name: "Benefits",
-        href: "/payroll/benefits",
-        permission: "view_benefits",
-      },
-      {
-        name: "Benefit Types",
-        href: "/payroll/benefits/types",
-        permission: "view_benefit_types",
-      },
-      {
-        name: "Deductions",
-        href: "/payroll/deductions",
-        permission: "view_deductions",
-      },
-      {
-        name: "Deduction Types",
-        href: "/payroll/deductions/types",
-        permission: "view_deduction_types",
-      },
-      { name: "Tax Slabs", href: "/payroll/tax", permission: "view_tax_slabs" },
-    ],
-  },
-  {
-    name: "Recruitment",
-    href: "/recruitment",
-    icon: Briefcase,
-    permission: "view_recruitment",
-    children: [
-      {
-        name: "Job Categories",
-        href: "/recruitment/job/categories",
-        permission: "view_recruitment",
-      },
-      // {
-      //   name: "Job Board",
-      //   href: "/recruitment/job-board",
-      //   permission: "view_recruitment",
-      // },
-      {
-        name: "Jobs",
-        href: "/recruitment/jobs",
-        permission: "view_recruitment",
-      },
-      {
-        name: "Candidates",
-        href: "/recruitment/candidates",
-        permission: "view_recruitment",
-      },
-      // {
-      //   name: "Job Stages",
-      //   href: "/recruitment/job/stages",
-      //   permission: "view_recruitment",
-      // },
-      {
-        name: "Applications",
-        href: "/recruitment/applications",
-        permission: "view_recruitment",
-      },
-      // {
-      //   name: "Interviews",
-      //   href: "/recruitment/interviews",
-      //   permission: "view_recruitment",
-      // },
-      // {
-      //   name: "Jobs",
-      //   href: "/recruitment/jobs",
-      //   permission: "view_recruitment",
-      // },
-      // { name: 'Job Create', href: '/recruitment/jobs/create', permission: 'view_recruitment' },
-      // {
-      //   name: "Job Application",
-      //   href: "/recruitment/applications",
-      //   permission: "view_recruitment",
-      // },
-      // {
-      //   name: "Job Category",
-      //   href: "/recruitment/job/categories",
-      //   permission: "view_recruitment",
-      // },
-      // {
-      //   name: "Job Candidate",
-      //   href: "/recruitment/candidates",
-      //   permission: "view_recruitment",
-      // },
-      {
-        name: "Onboarding Checklists",
-        href: "/recruitment/onboarding-checklists",
-        permission: "view_recruitment",
-      },
-      {
-        name: "Custom Question",
-        href: "/recruitment/custom-questions",
-        permission: "view_recruitment",
-      },
-      {
-        name: "Interview Schedule",
-        href: "/recruitment/interviews",
-        permission: "view_recruitment",
-      },
-      // {
-      //   name: "Onboarding Checklists",
-      //   href: "/recruitment/onboarding-checklists",
-      //   permission: "view_recruitment",
-      // },
-      {
-        name: "Candidate Sources",
-        href: "/recruitment/candidate-sources",
-        permission: "view_recruitment",
-      },
-      {
-        name: "Interview Types",
-        href: "/recruitment/job/stages",
-        permission: "view_recruitment",
-      },
-      {
-        name: "Career",
-        href: "/recruitment/career",
-        permission: "view_recruitment",
-      },
-    ],
-  },
-  {
-    name: "Performance",
-    href: "/performance",
+    name: "CRM",
+    href: "/crm",
     icon: Target,
-    permission: "view_staff_performance",
     children: [
-      { name: "Goals", href: "/performance/goals", permission: "manage_goals" },
-      // { name: 'KPIs', href: '/performance/kpis', permission: 'view_staff_performance' },
-      {
-        name: "Appraisals",
-        href: "/performance/appraisals",
-        permission: "manage_appraisals",
-      },
-      // {
-      //   name: "Competencies",
-      //   href: "/performance/competencies",
-      //   permission: "view_staff_performance",
-      // },
-    ],
-  },
-  {
-    name: "Assets",
-    href: "/assets",
-    icon: Package,
-    permission: "view_staff_assets",
-    children: [
-      { name: "All Assets", href: "/assets", permission: "view_staff_assets" },
-      {
-        name: "Asset Types",
-        href: "/assets/types",
-        permission: "manage_staff_assets",
-      },
-      {
-        name: "Assignments",
-        href: "/assets/assignments",
-        permission: "manage_staff_assets",
-      },
-    ],
-  },
-  {
-    name: "Training",
-    href: "/training",
-    icon: GraduationCap,
-    permission: "view_staff_training",
-    children: [
-      {
-        name: "Programs",
-        href: "/training/programs",
-        permission: "view_staff_training",
-      },
-      {
-        name: "Training Types",
-        href: "/training/types",
-        permission: "view_staff_training",
-      },
-      {
-        name: "Sessions",
-        href: "/training/sessions",
-        permission: "view_staff_training",
-      },
-      {
-        name: "Participants",
-        href: "/training/participants",
-        permission: "manage_staff_training",
-      },
-    ],
-  },
-  {
-    name: "Contracts",
-    href: "/contracts",
-    icon: FileText,
-    permission: "view_staff_contracts",
-    children: [
-      { name: "All Contracts", href: "/contracts" },
-      { name: "Contract Types", href: "/contracts/types" },
-      { name: "Contract Renewals", href: "/contracts/renewals" },
-    ],
-  },
-  {
-    name: "Meetings",
-    href: "/meetings",
-    icon: Video,
-    permission: "view_meetings",
-    children: [
-      { name: "All Meetings", href: "/meetings", permission: "view_meetings" },
-      {
-        name: "Meeting Attendees",
-        href: "/meetings/attendees",
-        permission: "view_meetings",
-      },
-      // { name: 'Meeting Calendar', href: '/meetings/calendar', permission: "view_meetings" },
-      {
-        name: "Meeting Minutes",
-        href: "/meetings/minutes",
-        permission: "manage_meeting_minutes",
-      },
-      {
-        name: "Meeting Action Items",
-        href: "/meetings/action-items",
-        permission: "view_meetings",
-      },
-      {
-        name: "Meeting Types",
-        href: "/meetings/types",
-        permission: "manage_meeting_types",
-      },
-      {
-        name: "Meeting Rooms",
-        href: "/meetings/rooms",
-        permission: "manage_meeting_rooms",
-      },
-    ],
-  },
-  {
-    name: "Reports",
-    href: "/reports",
-    icon: BarChart3,
-    permission: "view_reports",
-    children: [
-      {
-        name: "Attendance Report",
-        href: "/reports/attendance",
-        permission: "view_reports",
-      },
-      {
-        name: "Leave Report",
-        href: "/reports/leave",
-        permission: "view_reports",
-      },
-      {
-        name: "Payroll Report",
-        href: "/reports/payroll",
-        permission: "view_reports",
-      },
-      // {
-      //   name: "Headcount",
-      //   href: "/reports/headcount",
-      //   permission: "view_reports",
-      // },
-      // {
-      //   name: "Turnover",
-      //   href: "/reports/turnover",
-      //   permission: "view_reports",
-      // },
-    ],
-  },
-  {
-    name: "Settings",
-    href: "/settings",
-    icon: Settings,
-    permission: "view_settings",
-    children: [
-      {
-        name: "Office Locations",
-        href: "/settings/locations",
-        permission: "view_settings",
-      },
-      {
-        name: "Departments",
-        href: "/settings/divisions",
-        permission: "view_settings",
-      },
-      {
-        name: "Job Titles",
-        href: "/settings/job-titles",
-        permission: "view_settings",
-      },
-      {
-        name: "Holidays",
-        href: "/settings/holidays",
-        permission: "view_settings",
-      },
-      {
-        name: "Working Days",
-        href: "/settings/working-days",
-        permission: "view_settings",
-      },
-      // { name: 'File Categories', href: '/settings/file-categories', permission: 'view_settings' },
-      {
-        name: "Notices",
-        href: "/settings/company-notices",
-        permission: "view_settings",
-      },
-      {
-        name: "Document Configuration",
-        href: "/settings/document-config",
-        permission: "view_settings",
-        check: (user) =>
-          user?.roles?.includes("company") &&
-          !!user?.org_id &&
-          !!user?.company_id,
-      },
+      { name: "Dashboard", href: "/crm/dashboard" },
+      { name: "Leads", href: "/crm/leads" },
+      { name: "Customers", href: "/crm/customers" },
+      { name: "Opportunities", href: "/crm/opportunities" },
+      { name: "Campaigns", href: "/crm/campaigns" },
+      { name: "Sources", href: "/crm/sources" },
+      { name: "Territories", href: "/crm/territories" },
+      { name: "Product List", href: "/crm/products" },
+      { name: "Product Categories", href: "/crm/product-categories" },
+      { name: "Prospects", href: "/crm/prospects" },
+      { name: "Contacts", href: "/crm/contacts" },
+      { name: "Opportunity Lost Reasons", href: "/crm/opportunity-lost-reasons" },
+      { name: "Sales Task", href: "/crm/sales-tasks" },
     ],
   },
   {
@@ -524,30 +83,6 @@ const navigation: NavItem[] = [
     children: [
       { name: "Purchase Orders", href: "/purchases/orders" },
       { name: "Suppliers", href: "/purchases/suppliers" },
-    ],
-  },
-  {
-    name: "CRM",
-    href: "/crm",
-    icon: Target,
-    children: [
-      { name: "Dashboard", href: "/crm/dashboard" },
-      { name: "Leads", href: "/crm/leads" },
-      { name: "Customers", href: "/crm/customers" },
-      { name: "Opportunities", href: "/crm/opportunities" },
-      { name: "Campaigns", href: "/crm/campaigns" },
-      { name: "Sources", href: "/crm/sources" },
-      { name: "Territories", href: "/crm/territories" },
-      { name: "Product List", href: "/crm/products" },
-      { name: "Product Categories", href: "/crm/product-categories" },
-      // { name: "Appointments", href: "/crm/appointments" },
-      { name: "Prospects", href: "/crm/prospects" },
-      { name: "Contacts", href: "/crm/contacts" },
-      {name: "Opportunity Lost Reasons", href: "/crm/opportunity-lost-reasons"},
-      // { name: "Sales Stages", href: "/crm/sales-stages" },
-      // { name: "Settings", href: "/crm/settings" },
-      { name: "Sales Task", href: "/crm/sales-tasks" },
-      // { name: "Sales Task Detail", href: "/crm/sales-task-details" },
     ],
   },
   {
@@ -659,7 +194,7 @@ export default function AppLayout() {
       try {
         const response = await authService.getProfile();
         const profileImagePath =
-          response.data.data?.user?.staff_member?.profile_image;
+          response.data.data?.user?.profile_image || response.data.data?.user?.staff_member?.profile_image;
         if (profileImagePath) {
           // Convert to full URL if it's a relative path
           const imageUrl = profileImagePath.startsWith("http")
@@ -720,10 +255,10 @@ export default function AppLayout() {
             {!sidebarCollapsed && (
               <Link to="/dashboard" className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-solarized-blue rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">HR</span>
+                  <span className="text-white font-bold text-sm">TM</span>
                 </div>
                 <span className="font-semibold text-solarized-base02">
-                  HRMS
+                  Timber CRM
                 </span>
               </Link>
             )}
