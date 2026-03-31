@@ -23,6 +23,8 @@ import {
   Bell,
   User,
   Building2,
+  Warehouse,
+  ShoppingCart,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import {
@@ -500,6 +502,28 @@ const navigation: NavItem[] = [
           !!user?.org_id &&
           !!user?.company_id,
       },
+    ],
+  },
+  {
+    name: "Inventory",
+    href: "/inventory",
+    icon: Warehouse,
+    children: [
+      { name: "Stock Overview", href: "/inventory" },
+      { name: "Stock Movements", href: "/inventory/movements" },
+      { name: "Stock Adjustment", href: "/inventory/adjust" },
+      { name: "Low Stock Alerts", href: "/inventory/alerts" },
+      { name: "Requisitions", href: "/inventory/requisitions" },
+      { name: "Warehouses", href: "/inventory/warehouses" },
+    ],
+  },
+  {
+    name: "Purchases",
+    href: "/purchases",
+    icon: ShoppingCart,
+    children: [
+      { name: "Purchase Orders", href: "/purchases/orders" },
+      { name: "Suppliers", href: "/purchases/suppliers" },
     ],
   },
   {
