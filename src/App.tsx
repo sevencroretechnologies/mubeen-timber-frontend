@@ -149,6 +149,21 @@ import ProductList from '@/modules/crm/products/ProductList';
 import ProductCategoryList from '@/modules/crm/products/ProductCategoryList';
 import CrmSettings from '@/modules/crm/settings/CrmSettings';
 
+// Timber Inventory & Purchases
+import StockOverview from '@/modules/timber/inventory/StockOverview';
+import StockMovements from '@/modules/timber/inventory/StockMovements';
+import StockAdjustmentForm from '@/modules/timber/inventory/StockAdjustmentForm';
+import LowStockAlerts from '@/modules/timber/inventory/LowStockAlerts';
+import MaterialRequisitionList from '@/modules/timber/inventory/MaterialRequisitionList';
+import MaterialRequisitionForm from '@/modules/timber/inventory/MaterialRequisitionForm';
+import WarehouseList from '@/modules/timber/purchases/orders/WarehouseList';
+import SupplierList from '@/modules/timber/purchases/suppliers/SupplierList';
+import SupplierForm from '@/modules/timber/purchases/suppliers/SupplierForm';
+import PurchaseOrderList from '@/modules/timber/purchases/orders/PurchaseOrderList';
+import PurchaseOrderForm from '@/modules/timber/purchases/orders/PurchaseOrderForm';
+import PurchaseOrderView from '@/modules/timber/purchases/orders/PurchaseOrderView';
+import ReceiveGoodsForm from '@/modules/timber/purchases/orders/ReceiveGoodsForm';
+
 // Error Pages
 import Unauthorized from '@/pages/Unauthorized';
 import CompanyNotices from '@/pages/settings/CompanyNotices';
@@ -417,6 +432,25 @@ function App() {
             <Route path="/settings/company-notices" element={<CompanyNotices />} />
             <Route path="/settings/file-categories" element={<FileCategories />} />
             <Route path="/settings/document-config" element={<DocumentConfiguration />} />
+
+            {/* Timber Inventory */}
+            <Route path="/inventory" element={<StockOverview />} />
+            <Route path="/inventory/movements" element={<StockMovements />} />
+            <Route path="/inventory/adjust" element={<StockAdjustmentForm />} />
+            <Route path="/inventory/alerts" element={<LowStockAlerts />} />
+            <Route path="/inventory/requisitions" element={<MaterialRequisitionList />} />
+            <Route path="/inventory/requisitions/create" element={<MaterialRequisitionForm />} />
+            <Route path="/inventory/warehouses" element={<WarehouseList />} />
+
+            {/* Timber Purchases */}
+            <Route path="/purchases/orders" element={<PurchaseOrderList />} />
+            <Route path="/purchases/orders/create" element={<PurchaseOrderForm />} />
+            <Route path="/purchases/orders/:id" element={<PurchaseOrderView />} />
+            <Route path="/purchases/orders/:id/edit" element={<PurchaseOrderForm />} />
+            <Route path="/purchases/orders/:id/receive" element={<ReceiveGoodsForm />} />
+            <Route path="/purchases/suppliers" element={<SupplierList />} />
+            <Route path="/purchases/suppliers/create" element={<SupplierForm />} />
+            <Route path="/purchases/suppliers/:id/edit" element={<SupplierForm />} />
 
             {/* CRM */}
             <Route path="/crm" element={<CrmDashboard />} />
