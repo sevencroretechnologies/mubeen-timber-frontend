@@ -57,7 +57,7 @@ const navigation: NavItem[] = [
       { name: "Sources", href: "/crm/sources" },
       { name: "Territories", href: "/crm/territories" },
       { name: "Product List", href: "/crm/products" },
-      { name: "Product Categories", href: "/crm/product-categories" },
+      { name: "Projects", href: "/crm/projects" },
       { name: "Prospects", href: "/crm/prospects" },
       { name: "Contacts", href: "/crm/contacts" },
       { name: "Opportunity Lost Reasons", href: "/crm/opportunity-lost-reasons" },
