@@ -113,7 +113,7 @@ function App() {
             <Route path="/crm/sources" element={<SourceList />} />
             <Route path="/crm/territories" element={<TerritoryList />} />
             <Route path="/crm/products" element={<ProductList />} />
-            <Route path="/crm/product-categories" element={<ProductCategoryList />} />
+            <Route path="/crm/projects" element={<ProductCategoryList />} />
             <Route path="/crm/appointments" element={<AppointmentsList />} />
             <Route path="/crm/prospects" element={<ProspectsList />} />
             <Route path="/crm/prospects/create" element={<ProspectForm />} />
