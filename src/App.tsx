@@ -50,6 +50,10 @@ import ContactForm from '@/modules/crm/contacts/contactForm';
 import ContactList from '@/modules/crm/contacts/contactList';
 import CrmSettings from '@/modules/crm/settings/CrmSettings';
 
+// Estimations
+import EstimationsList from '@/modules/crm/estimations/EstimationsList';
+import EstimationForm from '@/modules/crm/estimations/EstimationForm';
+
 // Timber Inventory & Purchases
 import StockOverview from '@/modules/timber/inventory/StockOverview';
 import StockMovements from '@/modules/timber/inventory/StockMovements';
@@ -99,6 +103,9 @@ function App() {
             {/* CRM */}
             <Route path="/crm" element={<CrmDashboard />} />
             <Route path="/crm/dashboard" element={<CrmDashboard />} />
+            <Route path="/crm/estimations" element={<EstimationsList />} />
+            <Route path="/crm/estimations/create" element={<EstimationForm />} />
+            <Route path="/crm/estimations/:id/edit" element={<EstimationForm />} />
             <Route path="/crm/leads" element={<LeadsList />} />
             <Route path="/crm/leads/create" element={<LeadForm />} />
             <Route path="/crm/leads/:id/edit" element={<LeadForm />} />
