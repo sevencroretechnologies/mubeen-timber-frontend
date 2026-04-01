@@ -1,0 +1,258 @@
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { estimationsApi, customerApi, crmProductService, projectApi } from '@/services/api';
+import { showAlert, getErrorMessage } from '@/lib/sweetalert';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ArrowLeft, Save, Calculator } from 'lucide-react';
+
+export default function EstimationForm() {
+    const navigate = useNavigate();
+    const { id } = useParams<{ id: string }>();
+    const isEdit = Boolean(id);
+    
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [customers, setCustomers] = useState<any[]>([]);
+    const [products, setProducts] = useState<any[]>([]);
+    const [projects, setProjects] = useState<any[]>([]);
+
+    const [customerId, setCustomerId] = useState('');
+    const [projectId, setProjectId] = useState('');
+    const [productId, setProductId] = useState('');
+    const [estimationType, setEstimationType] = useState('1');
+    const [length, setLength] = useState('');
+    const [breadth, setBreadth] = useState('');
+    const [height, setHeight] = useState('');
+    const [thickness, setThickness] = useState('');
+    const [quantity, setQuantity] = useState('');
+    const [cft, setCft] = useState('');
+    const [costPerCft, setCostPerCft] = useState('');
+    const [laborCharges, setLaborCharges] = useState('');
+    const [totalAmount, setTotalAmount] = useState('');
+
+    useEffect(() => {
+        const fetchDependencies = async () => {
+            try {
+                const [custRes, prodRes, projRes] = await Promise.all([
+                    customerApi.list({ per_page: 100 }),
+                    crmProductService.getAll({ per_page: 100 }),
+                    projectApi.list()
+                ]);
+                
+                const extractArray = (res: any): any[] => {
+                    if (Array.isArray(res)) return res;
+                    if (res?.data && Array.isArray(res.data)) return res.data;
+                    if (res?.data?.data && Array.isArray(res.data.data)) return res.data.data;
+                    if (res?.data?.data?.data && Array.isArray(res.data.data.data)) return res.data.data.data;
+                    return [];
+                };
+
+                setCustomers(extractArray(custRes));
+                setProducts(extractArray(prodRes));
+                setProjects(extractArray(projRes));
+            } catch (error) {
+                console.error('Failed to load form dependencies:', error);
+            }
+        };
+        fetchDependencies();
+    }, []);
+
+    useEffect(() => {
+        if (isEdit && id) {
+            estimationsApi.get(id).then((res) => {
+                const est = res.data || res;
+                setCustomerId(String(est.customer_id || ''));
+                setProjectId(String(est.project_id || ''));
+                setProductId(String(est.product_id || ''));
+                setEstimationType(String(est.estimation_type || '1'));
+                setLength(String(est.length || ''));
+                setBreadth(String(est.breadth || ''));
+                setHeight(String(est.height || ''));
+                setThickness(String(est.thickness || ''));
+                setQuantity(String(est.quantity || ''));
+                setCft(String(est.cft || ''));
+                setCostPerCft(String(est.cost_per_cft || ''));
+                setLaborCharges(String(est.labor_charges || ''));
+                setTotalAmount(String(est.total_amount || ''));
+            }).catch((error) => {
+                showAlert('error', 'Error', 'Failed to load estimation details');
+                console.error(error);
+            });
+        }
+    }, [id, isEdit]);
+
+    const calculateTotals = () => {
+        // Example CFT Calculation: (L * B * H * T) / 144
+        const l = Number(length) || 1;
+        const b = Number(breadth) || 1;
+        const h = Number(height) || 1;
+        const t = Number(thickness) || 1;
+        const q = Number(quantity) || 1;
+        
+        // If they provided dimensions, calculate CFT
+        let calcCft = Number(cft);
+        if (length || breadth || height || thickness) {
+            calcCft = (l * b * h * t * q) / 144;
+            setCft(calcCft.toFixed(2));
+        }
+
+        const cost = Number(costPerCft) || 0;
+        const labor = Number(laborCharges) || 0;
+        
+        const total = (calcCft * cost) + labor;
+        setTotalAmount(total.toFixed(2));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!customerId || !productId) {
+            showAlert('error', 'Validation', 'Please select a Customer and Product.');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const payload = {
+                customer_id: Number(customerId),
+                project_id: projectId ? Number(projectId) : null,
+                product_id: Number(productId),
+                estimation_type: Number(estimationType),
+                length: length ? Number(length) : null,
+                breadth: breadth ? Number(breadth) : null,
+                height: height ? Number(height) : null,
+                thickness: thickness ? Number(thickness) : null,
+                quantity: quantity ? Number(quantity) : null,
+                cft: cft ? Number(cft) : null,
+                cost_per_cft: costPerCft ? Number(costPerCft) : null,
+                labor_charges: laborCharges ? Number(laborCharges) : null,
+                total_amount: totalAmount ? Number(totalAmount) : null,
+            };
+
+            if (isEdit && id) {
+                await estimationsApi.update(id, payload);
+                showAlert('success', 'Updated', 'Estimation updated successfully');
+            } else {
+                await estimationsApi.create(payload);
+                showAlert('success', 'Created', 'Estimation created successfully');
+            }
+            navigate('/crm/estimations');
+        } catch (error) {
+            showAlert('error', 'Error', getErrorMessage(error, `Failed to ${isEdit ? 'update' : 'create'} estimation`));
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center gap-4">
+                <Button variant="ghost" size="icon" onClick={() => navigate('/crm/estimations')}>
+                    <ArrowLeft className="h-5 w-5" />
+                </Button>
+                <div>
+                    <h1 className="text-2xl font-bold text-solarized-base02">{isEdit ? 'Edit' : 'New'} Estimation</h1>
+                    <p className="text-muted-foreground">{isEdit ? 'Update estimation parameters' : 'Create a new project/product estimation'}</p>
+                </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Core Details</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="space-y-2">
+                                <Label>Customer <span className="text-red-500">*</span></Label>
+                                <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm" required>
+                                    <option value="">Select Customer</option>
+                                    {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Product <span className="text-red-500">*</span></Label>
+                                <select value={productId} onChange={(e) => setProductId(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm" required>
+                                    <option value="">Select Product</option>
+                                    {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Project</Label>
+                                <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm">
+                                    <option value="">Select Project (Optional)</option>
+                                    {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Estimation Type <span className="text-red-500">*</span></Label>
+                                <Input type="number" value={estimationType} onChange={(e) => setEstimationType(e.target.value)} required />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle>Dimensions & Values</CardTitle>
+                        <Button type="button" variant="outline" size="sm" onClick={calculateTotals}>
+                            <Calculator className="mr-2 h-4 w-4" /> Auto-Calculate
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-6">
+                            <div className="space-y-2">
+                                <Label>Length</Label>
+                                <Input type="number" step="0.01" value={length} onChange={(e) => setLength(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Breadth</Label>
+                                <Input type="number" step="0.01" value={breadth} onChange={(e) => setBreadth(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Height</Label>
+                                <Input type="number" step="0.01" value={height} onChange={(e) => setHeight(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Thickness</Label>
+                                <Input type="number" step="0.01" value={thickness} onChange={(e) => setThickness(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Quantity</Label>
+                                <Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-6 border-t">
+                            <div className="space-y-2">
+                                <Label>Volume (CFT)</Label>
+                                <Input type="number" step="0.01" value={cft} onChange={(e) => setCft(e.target.value)} className="bg-blue-50/50" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Cost per CFT (₹)</Label>
+                                <Input type="number" step="0.01" value={costPerCft} onChange={(e) => setCostPerCft(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Labor Charges (₹)</Label>
+                                <Input type="number" step="0.01" value={laborCharges} onChange={(e) => setLaborCharges(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-solarized-blue font-bold">Total Amount (₹)</Label>
+                                <Input type="number" step="0.01" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)} className="font-bold bg-green-50" />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <div className="flex justify-end gap-3">
+                    <Button type="button" variant="outline" onClick={() => navigate('/crm/estimations')}>Cancel</Button>
+                    <Button type="submit" disabled={isSubmitting} className="bg-solarized-blue hover:bg-solarized-blue/90">
+                        <Save className="mr-2 h-4 w-4" />
+                        {isSubmitting ? 'Saving...' : 'Save Estimation'}
+                    </Button>
+                </div>
+            </form>
+        </div>
+    );
+}
