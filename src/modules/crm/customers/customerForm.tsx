@@ -362,7 +362,7 @@ export default function CustomerForm() {
             
 
                 {/* Other Details */}
-                <Card>
+                {/* <Card>
                     <CardHeader>
                         <CardTitle>Other Details</CardTitle>
                     </CardHeader>
@@ -377,7 +377,7 @@ export default function CustomerForm() {
                             />
                         </div>
                     </CardContent>
-                </Card>
+                </Card> */}
 
                 <div className="flex justify-end gap-4">
                     <Button
