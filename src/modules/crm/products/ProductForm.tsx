@@ -25,13 +25,7 @@ interface Project {
   name: string;
 }
 
-interface Product {
-  id: number;
-  name: string;
-  description: string | null;
-  customer_id: number | null;
-  project_id: number | null;
-}
+
 
 interface ProductFormProps {
   isOpen: boolean;
@@ -58,7 +52,10 @@ export default function ProductForm({ isOpen, onClose, onSuccess, productId }: P
   const fetchCustomers = async () => {
     try {
       const response = await crmCustomerService.getAll();
-      const data = response.data?.data || response.data || [];
+      let data = response.data?.data || response.data;
+      if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+          data = data.data;
+      }
       setCustomers(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch customers:', error);
@@ -68,7 +65,10 @@ export default function ProductForm({ isOpen, onClose, onSuccess, productId }: P
   const fetchProjects = async () => {
     try {
       const response = await projectService.getAll();
-      const data = response.data?.data || response.data || [];
+      let data = response.data?.data || response.data;
+      if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+          data = data.data;
+      }
       setProjects(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch projects:', error);

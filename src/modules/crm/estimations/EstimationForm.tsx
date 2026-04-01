@@ -41,14 +41,17 @@ export default function EstimationForm() {
                     projectApi.list()
                 ]);
                 
-                const custData = (custRes as any).data || custRes;
-                setCustomers(Array.isArray(custData) ? custData : []);
-                
-                const prodData = prodRes.data?.data || prodRes.data;
-                setProducts(Array.isArray(prodData) ? prodData : []);
+                const extractArray = (res: any): any[] => {
+                    if (Array.isArray(res)) return res;
+                    if (res?.data && Array.isArray(res.data)) return res.data;
+                    if (res?.data?.data && Array.isArray(res.data.data)) return res.data.data;
+                    if (res?.data?.data?.data && Array.isArray(res.data.data.data)) return res.data.data.data;
+                    return [];
+                };
 
-                const projData = (projRes as any).data || projRes;
-                setProjects(Array.isArray(projData) ? projData : []);
+                setCustomers(extractArray(custRes));
+                setProducts(extractArray(prodRes));
+                setProjects(extractArray(projRes));
             } catch (error) {
                 console.error('Failed to load form dependencies:', error);
             }
