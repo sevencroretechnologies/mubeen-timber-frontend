@@ -271,18 +271,7 @@ export default function CustomerList() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Website</Label>
-                                    <p className="text-sm font-medium truncate">{selectedCustomer.website || '—'}</p>
-                                </div>
-                                {selectedCustomer.industry_id && (
-                                    <div className="space-y-1">
-                                        <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Industry</Label>
-                                        <p className="text-sm font-medium">{selectedCustomer.industry_name}</p>
-                                    </div>
-                                )}
-                            </div>
+                           
                         </div>
                     )}
                     <DialogFooter>

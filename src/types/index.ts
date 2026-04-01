@@ -447,21 +447,9 @@ export interface Customer {
   opportunity: Opportunity | null;
   industry_id: number | null;
   industry_name?: string;
-  industry: IndustryType | null;
-  default_price_list_id: number | null;
-  price_list: PriceList | null;
-  payment_term_id: number | null;
-  payment_term: PaymentTerm | null;
-  customer_contact_id: number | null;
-  primary_contact: Contact | null;
   email: string | null;
   phone: string | null;
-  website: string | null;
-  tax_id: string | null;
-  billing_currency: string | null;
-  bank_account_details: string | null;
-  print_language: string | null;
-  customer_details: string | null;
+
   created_at: string;
   updated_at: string;
 }

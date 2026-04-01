@@ -16,9 +16,7 @@ import type {
     Territory,
     Lead,
     Opportunity,
-    IndustryType,
-    PriceList,
-    PaymentTerm,
+ 
     Contact,
 } from "@/types";
 import { showAlert, getErrorMessage } from "@/lib/sweetalert";
@@ -60,18 +58,11 @@ export default function CustomerForm() {
         territory_id: "",
         lead_id: "",
         opportunity_id: "",
-        industry_id: "",
-        default_price_list_id: "",
-        payment_term_id: "",
-        customer_contact_id: "",
+       
         email: "",
         phone: "",
         website: "",
-        tax_id: "",
-        billing_currency: "",
-        bank_account_details: "",
-        print_language: "",
-        customer_details: "",
+       
     });
 
     // Dropdown options
@@ -79,10 +70,6 @@ export default function CustomerForm() {
     const [territories, setTerritories] = useState<Territory[]>([]);
     const [leads, setLeads] = useState<Lead[]>([]);
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-    const [industries, setIndustries] = useState<IndustryType[]>([]);
-    const [priceLists, setPriceLists] = useState<PriceList[]>([]);
-    const [paymentTerms, setPaymentTerms] = useState<PaymentTerm[]>([]);
-    const [contacts, setContacts] = useState<Contact[]>([]);
 
     useEffect(() => {
         const loadOptions = async () => {
@@ -120,10 +107,7 @@ export default function CustomerForm() {
                 setTerritories(territoriesRes || []);
                 setLeads(Array.isArray(leadsRes) ? leadsRes : (leadsRes as any).data || []);
                 setOpportunities(Array.isArray(oppsRes) ? oppsRes : (oppsRes as any).data || []);
-                setIndustries(indRes || []);
-                setPriceLists(pricesRes || []);
-                setPaymentTerms(termsRes || []);
-                setContacts(Array.isArray(contactsRes) ? contactsRes : (contactsRes as any).data || []);
+                
             } catch (error) {
                 console.error("Critical error in loadOptions:", error);
             }
@@ -148,18 +132,8 @@ export default function CustomerForm() {
                         territory_id: customer.territory_id?.toString() || "",
                         lead_id: customer.lead_id?.toString() || "",
                         opportunity_id: customer.opportunity_id?.toString() || "",
-                        industry_id: customer.industry_id?.toString() || "",
-                        default_price_list_id: customer.default_price_list_id?.toString() || "",
-                        payment_term_id: customer.payment_term_id?.toString() || "",
-                        customer_contact_id: customer.customer_contact_id?.toString() || "",
                         email: customer.email || "",
                         phone: customer.phone || "",
-                        website: customer.website || "",
-                        tax_id: customer.tax_id || "",
-                        billing_currency: customer.billing_currency || "",
-                        bank_account_details: customer.bank_account_details || "",
-                        print_language: customer.print_language || "",
-                        customer_details: customer.customer_details || "",
                     });
                 } catch (error) {
                     showAlert("error", "Error", getErrorMessage(error, "Failed to fetch customer details"));
@@ -352,22 +326,7 @@ export default function CustomerForm() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="space-y-2">
-                            <Label>Industry</Label>
-                            <Select
-                                value={form.industry_id}
-                                onValueChange={(v) => setField("industry_id", v)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select Industry" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {industries.map(i => (
-                                        <SelectItem key={i.id} value={i.id.toString()}>{i.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        
                     </CardContent>
                 </Card>
 
@@ -396,96 +355,11 @@ export default function CustomerForm() {
                                 />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Website</Label>
-                                <Input
-                                    value={form.website}
-                                    onChange={(e) => setField("website", e.target.value)}
-                                    placeholder="https://..."
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Print Language</Label>
-                                <Input
-                                    value={form.print_language}
-                                    onChange={(e) => setField("print_language", e.target.value)}
-                                    placeholder="English"
-                                />
-                            </div>
-                        </div>
+                       
                     </CardContent>
                 </Card>
 
-                {/* Sales & Accounting */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Sales & Accounting</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-6 md:grid-cols-2">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Default Price List</Label>
-                                <Select
-                                    value={form.default_price_list_id}
-                                    onValueChange={(v) => setField("default_price_list_id", v)}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select Price List" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {priceLists.map(p => (
-                                            <SelectItem key={p.id} value={p.id.toString()}>{p.name} ({p.currency})</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Payment Terms</Label>
-                                <Select
-                                    value={form.payment_term_id}
-                                    onValueChange={(v) => setField("payment_term_id", v)}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select Terms" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {paymentTerms.map(t => (
-                                            <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Billing Currency</Label>
-                                <Input
-                                    value={form.billing_currency}
-                                    onChange={(e) => setField("billing_currency", e.target.value)}
-                                    placeholder="INR"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Tax ID</Label>
-                                <Input
-                                    value={form.tax_id}
-                                    onChange={(e) => setField("tax_id", e.target.value)}
-                                    placeholder="GSTIN/VAT"
-                                />
-                            </div>
-                        </div>
-                        <div className="space-y-2 md:col-span-2">
-                            <Label>Bank Account Details</Label>
-                            <Textarea
-                                value={form.bank_account_details}
-                                onChange={(e) => setField("bank_account_details", e.target.value)}
-                                placeholder="Bank name, Account number, IFSC, etc."
-                                className="min-h-[100px]"
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
+            
 
                 {/* Other Details */}
                 <Card>
