@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import DataTable, { TableColumn } from 'react-data-table-component';
-import { Plus, Search, Users, Eye, Edit, Trash2, Building2, FolderKanban } from 'lucide-react';
+import { Plus, Search, Users, Eye, Edit, Trash2, Building2, FolderKanban, GitBranch } from 'lucide-react';
 
 export default function CustomerList() {
     const navigate = useNavigate();
@@ -77,6 +77,10 @@ export default function CustomerList() {
 
     const handleProjects = (customer: Customer) => {
         navigate(`/crm/customers/${customer.id}/projects`);
+    };
+
+    const handleWorkflow = (customer: Customer) => {
+        navigate(`/crm/workflow/${customer.id}`);
     };
 
     const handleView = (customer: Customer) => {
@@ -141,6 +145,9 @@ export default function CustomerList() {
             name: 'Actions',
             cell: (row) => (
                 <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => handleWorkflow(row)} title="Workflow">
+                        <GitBranch className="h-4 w-4 text-purple-600" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => handleProjects(row)} title="Projects">
                         <FolderKanban className="h-4 w-4 text-emerald-600" />
                     </Button>
@@ -155,7 +162,7 @@ export default function CustomerList() {
                     </Button>
                 </div>
             ),
-            width: '180px',
+            width: '200px',
         },
     ];
 

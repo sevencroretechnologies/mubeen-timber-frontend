@@ -1,14 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { customerApi, projectApi } from '@/services/api';
+import { customerApi, projectApi, crmProductService, estimationsApi } from '@/services/api';
 import type { Customer } from '@/types';
 import { showAlert, showConfirmDialog, getErrorMessage } from '@/lib/sweetalert';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogFooter,
@@ -19,7 +18,6 @@ import { Textarea } from '@/components/ui/textarea';
 import {
     ArrowLeft,
     Plus,
-    Building2,
     Mail,
     Phone,
     MapPin,
@@ -28,6 +26,10 @@ import {
     Edit,
     Trash2,
     Loader2,
+    Package,
+    Calculator,
+    ChevronDown,
+    ChevronRight,
 } from 'lucide-react';
 
 interface Project {
@@ -39,24 +41,85 @@ interface Project {
     updated_at: string;
 }
 
+interface Product {
+    id: number;
+    customer_id: number | null;
+    project_id: number | null;
+    name: string;
+    description: string | null;
+    created_at: string;
+}
+
+interface Estimation {
+    id: number;
+    product_id: number;
+    customer_id: number;
+    project_id: number | null;
+    estimation_type: number;
+    length: number | null;
+    breadth: number | null;
+    height: number | null;
+    thickness: number | null;
+    quantity: number | null;
+    cft: number;
+    cost_per_cft: number | null;
+    labor_charges: number | null;
+    total_amount: number;
+}
+
 export default function CustomerProjects() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
     const [customer, setCustomer] = useState<Customer | null>(null);
     const [projects, setProjects] = useState<Project[]>([]);
+    const [expandedProject, setExpandedProject] = useState<number | null>(null);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [expandedProduct, setExpandedProduct] = useState<number | null>(null);
+    const [estimations, setEstimations] = useState<Estimation[]>([]);
+
     const [isLoadingCustomer, setIsLoadingCustomer] = useState(true);
     const [isLoadingProjects, setIsLoadingProjects] = useState(true);
+    const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+    const [isLoadingEstimations, setIsLoadingEstimations] = useState(false);
 
-    // Modal state
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
+    // Project Modal
+    const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+    const [isEditingProject, setIsEditingProject] = useState(false);
     const [editingProject, setEditingProject] = useState<Project | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
-    const [formData, setFormData] = useState({
+    const [isSavingProject, setIsSavingProject] = useState(false);
+    const [projectFormData, setProjectFormData] = useState({
         name: '',
         description: '',
     });
+
+    // Product Modal
+    const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+    const [isEditingProduct, setIsEditingProduct] = useState(false);
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [isSavingProduct, setIsSavingProduct] = useState(false);
+    const [isCreatingNewProduct, setIsCreatingNewProduct] = useState(true);
+    const [selectedExistingProductId, setSelectedExistingProductId] = useState('');
+    const [allCustomerProducts, setAllCustomerProducts] = useState<Product[]>([]);
+    const [productFormData, setProductFormData] = useState({
+        name: '',
+        description: '',
+    });
+
+    // Estimation Modal
+    const [isEstimationModalOpen, setIsEstimationModalOpen] = useState(false);
+    const [isSavingEstimation, setIsSavingEstimation] = useState(false);
+    const [estimationFormData, setEstimationFormData] = useState({
+        estimation_type: '1',
+        length: '',
+        breadth: '',
+        height: '',
+        thickness: '',
+        quantity: '1',
+        cost_per_cft: '',
+        labor_charges: '',
+    });
+    const [currentProductId, setCurrentProductId] = useState<number | null>(null);
 
     const fetchCustomer = useCallback(async () => {
         if (!id) return;
@@ -77,8 +140,8 @@ export default function CustomerProjects() {
         if (!id) return;
         setIsLoadingProjects(true);
         try {
-            const response = await projectApi.list({ customer_id: id });
-            const data = response?.data || response;
+            const response = await projectApi.list({ customer_id: id, per_page: 100 });
+            const data = response?.data?.data || response?.data || response || [];
             setProjects(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Failed to fetch projects:', error);
@@ -88,73 +151,372 @@ export default function CustomerProjects() {
         }
     }, [id]);
 
+    const fetchProducts = useCallback(async (projectId: number) => {
+        setIsLoadingProducts(true);
+        try {
+            const response = await crmProductService.getAll({ project_id: projectId, per_page: 100 });
+            const data = response?.data?.data?.data || response?.data?.data || response?.data || [];
+            setProducts(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error('Failed to fetch products:', error);
+            setProducts([]);
+        } finally {
+            setIsLoadingProducts(false);
+        }
+    }, []);
+
+    const fetchEstimations = useCallback(async (productId: number) => {
+        setIsLoadingEstimations(true);
+        try {
+            const response = await estimationsApi.list({ product_id: productId, per_page: 100 });
+            const data = response?.data?.data || response?.data || response || [];
+            setEstimations(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error('Failed to fetch estimations:', error);
+            setEstimations([]);
+        } finally {
+            setIsLoadingEstimations(false);
+        }
+    }, []);
+
+    const fetchAllCustomerProducts = useCallback(async () => {
+        try {
+            const response = await crmProductService.getAll({ customer_id: id, per_page: 100 });
+            const data = response?.data?.data?.data || response?.data?.data || response?.data || [];
+            setAllCustomerProducts(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error('Failed to fetch customer products:', error);
+            setAllCustomerProducts([]);
+        }
+    }, [id]);
+
     useEffect(() => {
         fetchCustomer();
         fetchProjects();
     }, [fetchCustomer, fetchProjects]);
 
-    const handleOpenAddModal = () => {
-        setIsEditing(false);
-        setEditingProject(null);
-        setFormData({ name: '', description: '' });
-        setIsModalOpen(true);
+    // Toggle project expansion
+    const handleToggleProject = async (projectId: number) => {
+        if (expandedProject === projectId) {
+            setExpandedProject(null);
+            setExpandedProduct(null);
+            setProducts([]);
+            setEstimations([]);
+        } else {
+            setExpandedProject(projectId);
+            setExpandedProduct(null);
+            setEstimations([]);
+            await fetchProducts(projectId);
+        }
     };
 
-    const handleOpenEditModal = (project: Project) => {
-        setIsEditing(true);
+    // Toggle product expansion (show estimations)
+    const handleToggleProduct = async (productId: number) => {
+        if (expandedProduct === productId) {
+            setExpandedProduct(null);
+            setEstimations([]);
+        } else {
+            setExpandedProduct(productId);
+            await fetchEstimations(productId);
+        }
+    };
+
+    // Project Handlers
+    const handleOpenAddProjectModal = () => {
+        setIsEditingProject(false);
+        setEditingProject(null);
+        setProjectFormData({ name: '', description: '' });
+        setIsProjectModalOpen(true);
+    };
+
+    const handleOpenEditProjectModal = (project: Project, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsEditingProject(true);
         setEditingProject(project);
-        setFormData({
+        setProjectFormData({
             name: project.name,
             description: project.description || '',
         });
-        setIsModalOpen(true);
+        setIsProjectModalOpen(true);
     };
 
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
+    const handleCloseProjectModal = () => {
+        setIsProjectModalOpen(false);
         setEditingProject(null);
-        setFormData({ name: '', description: '' });
+        setProjectFormData({ name: '', description: '' });
     };
 
-    const handleSave = async () => {
-        if (!formData.name.trim()) {
+    const handleSaveProject = async () => {
+        if (!projectFormData.name.trim()) {
             showAlert('error', 'Validation', 'Project name is required');
             return;
         }
-        setIsSaving(true);
+        setIsSavingProject(true);
         try {
             const payload = {
                 customer_id: Number(id),
-                name: formData.name.trim(),
-                description: formData.description.trim() || null,
+                name: projectFormData.name.trim(),
+                description: projectFormData.description.trim() || null,
             };
 
-            if (isEditing && editingProject) {
+            if (isEditingProject && editingProject) {
                 await projectApi.update(editingProject.id, payload);
                 showAlert('success', 'Updated!', 'Project updated successfully', 2000);
             } else {
                 await projectApi.create(payload);
                 showAlert('success', 'Created!', 'Project created successfully', 2000);
             }
-            handleCloseModal();
+            handleCloseProjectModal();
             fetchProjects();
         } catch (error) {
             showAlert('error', 'Error', getErrorMessage(error, 'Failed to save project'));
         } finally {
-            setIsSaving(false);
+            setIsSavingProject(false);
         }
     };
 
-    const handleDelete = async (projectId: number) => {
-        const result = await showConfirmDialog('Delete Project', 'Are you sure you want to delete this project?');
+    const handleDeleteProject = async (projectId: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const result = await showConfirmDialog('Delete Project', 'Are you sure? This will also delete all products and estimations.');
         if (!result.isConfirmed) return;
         try {
             await projectApi.delete(projectId);
             showAlert('success', 'Deleted!', 'Project deleted successfully', 2000);
+            if (expandedProject === projectId) {
+                setExpandedProject(null);
+                setProducts([]);
+                setEstimations([]);
+            }
             fetchProjects();
         } catch (error) {
             showAlert('error', 'Error', getErrorMessage(error, 'Failed to delete project'));
         }
+    };
+
+    // Product Handlers
+    const handleOpenAddProductModal = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsEditingProduct(false);
+        setEditingProduct(null);
+        setIsCreatingNewProduct(true);
+        setSelectedExistingProductId('');
+        setProductFormData({ name: '', description: '' });
+        await fetchAllCustomerProducts();
+        setIsProductModalOpen(true);
+    };
+
+    const handleOpenEditProductModal = (product: Product, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsEditingProduct(true);
+        setEditingProduct(product);
+        setIsCreatingNewProduct(true);
+        setSelectedExistingProductId('');
+        setProductFormData({
+            name: product.name,
+            description: product.description || '',
+        });
+        setIsProductModalOpen(true);
+    };
+
+    const handleCloseProductModal = () => {
+        setIsProductModalOpen(false);
+        setEditingProduct(null);
+        setIsCreatingNewProduct(true);
+        setSelectedExistingProductId('');
+        setProductFormData({ name: '', description: '' });
+    };
+
+    const handleSaveProduct = async () => {
+        setIsSavingProduct(true);
+        try {
+            // If editing existing product
+            if (isEditingProduct && editingProduct) {
+                const payload = {
+                    customer_id: Number(id),
+                    project_id: expandedProject,
+                    name: productFormData.name.trim(),
+                    description: productFormData.description.trim() || null,
+                };
+                await crmProductService.update(editingProduct.id, payload);
+                showAlert('success', 'Updated!', 'Product updated successfully', 2000);
+                handleCloseProductModal();
+                if (expandedProject) fetchProducts(expandedProject);
+            }
+            // If creating/selecting new product
+            else {
+                if (isCreatingNewProduct) {
+                    if (!productFormData.name.trim()) {
+                        showAlert('error', 'Validation', 'Product name is required');
+                        setIsSavingProduct(false);
+                        return;
+                    }
+                    const payload = {
+                        customer_id: Number(id),
+                        project_id: expandedProject,
+                        name: productFormData.name.trim(),
+                        description: productFormData.description.trim() || null,
+                    };
+                    await crmProductService.create(payload);
+                    showAlert('success', 'Created!', 'Product created successfully', 2000);
+                } else if (selectedExistingProductId) {
+                    // Link existing product to this project
+                    const product = allCustomerProducts.find(p => p.id === Number(selectedExistingProductId));
+                    if (product) {
+                        await crmProductService.update(product.id, {
+                            customer_id: Number(id),
+                            project_id: expandedProject,
+                            name: product.name,
+                            description: product.description,
+                        });
+                        showAlert('success', 'Added!', 'Product added to project successfully', 2000);
+                    }
+                }
+                handleCloseProductModal();
+                if (expandedProject) fetchProducts(expandedProject);
+            }
+        } catch (error) {
+            showAlert('error', 'Error', getErrorMessage(error, 'Failed to save product'));
+        } finally {
+            setIsSavingProduct(false);
+        }
+    };
+
+    const handleDeleteProduct = async (productId: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const result = await showConfirmDialog('Delete Product', 'Are you sure? This will also delete all estimations.');
+        if (!result.isConfirmed) return;
+        try {
+            await crmProductService.delete(productId);
+            showAlert('success', 'Deleted!', 'Product deleted successfully', 2000);
+            if (expandedProduct === productId) {
+                setExpandedProduct(null);
+                setEstimations([]);
+            }
+            if (expandedProject) fetchProducts(expandedProject);
+        } catch (error) {
+            showAlert('error', 'Error', getErrorMessage(error, 'Failed to delete product'));
+        }
+    };
+
+    // Estimation Handlers
+    const calculateCft = () => {
+        const l = Number(estimationFormData.length) || 1;
+        const b = Number(estimationFormData.breadth) || 1;
+        const h = Number(estimationFormData.height) || 1;
+        const t = Number(estimationFormData.thickness) || 1;
+        const q = Number(estimationFormData.quantity) || 1;
+
+        const type = Number(estimationFormData.estimation_type);
+        let cftPerUnit = 0;
+
+        if (type === 1) cftPerUnit = (l * b * h) / 144;
+        else if (type === 2) cftPerUnit = l * b * h;
+        else if (type === 3) cftPerUnit = (l * b * t) / 12;
+        else if (type === 4) cftPerUnit = l * b * t;
+        else cftPerUnit = (l * b * h) / 144;
+
+        return cftPerUnit * q;
+    };
+
+    const calculateTotal = () => {
+        const cft = calculateCft();
+        const cost = Number(estimationFormData.cost_per_cft) || 0;
+        const labor = Number(estimationFormData.labor_charges) || 0;
+        return (cft * cost) + labor;
+    };
+
+    const handleOpenAddEstimationModal = (productId: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setCurrentProductId(productId);
+        setEstimationFormData({
+            estimation_type: '1',
+            length: '',
+            breadth: '',
+            height: '',
+            thickness: '',
+            quantity: '1',
+            cost_per_cft: '',
+            labor_charges: '',
+        });
+        setIsEstimationModalOpen(true);
+    };
+
+    const handleCloseEstimationModal = () => {
+        setIsEstimationModalOpen(false);
+        setCurrentProductId(null);
+        setEstimationFormData({
+            estimation_type: '1',
+            length: '',
+            breadth: '',
+            height: '',
+            thickness: '',
+            quantity: '1',
+            cost_per_cft: '',
+            labor_charges: '',
+        });
+    };
+
+    const handleSaveEstimation = async () => {
+        if (!currentProductId || !expandedProject) return;
+
+        setIsSavingEstimation(true);
+        try {
+            const payload = {
+                customer_id: Number(id),
+                project_id: expandedProject,
+                product_id: currentProductId,
+                estimation_type: Number(estimationFormData.estimation_type),
+                length: estimationFormData.length ? Number(estimationFormData.length) : null,
+                breadth: estimationFormData.breadth ? Number(estimationFormData.breadth) : null,
+                height: estimationFormData.height ? Number(estimationFormData.height) : null,
+                thickness: estimationFormData.thickness ? Number(estimationFormData.thickness) : null,
+                quantity: estimationFormData.quantity ? Number(estimationFormData.quantity) : null,
+                cft: calculateCft(),
+                cost_per_cft: estimationFormData.cost_per_cft ? Number(estimationFormData.cost_per_cft) : null,
+                labor_charges: estimationFormData.labor_charges ? Number(estimationFormData.labor_charges) : null,
+                total_amount: calculateTotal(),
+            };
+
+            await estimationsApi.create(payload);
+            showAlert('success', 'Created!', 'Estimation added successfully', 2000);
+            handleCloseEstimationModal();
+            fetchEstimations(currentProductId);
+        } catch (error) {
+            showAlert('error', 'Error', getErrorMessage(error, 'Failed to save estimation'));
+        } finally {
+            setIsSavingEstimation(false);
+        }
+    };
+
+    const handleDeleteEstimation = async (estimationId: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const result = await showConfirmDialog('Delete Estimation', 'Are you sure?');
+        if (!result.isConfirmed) return;
+        try {
+            await estimationsApi.delete(estimationId);
+            showAlert('success', 'Deleted!', 'Estimation deleted successfully', 2000);
+            if (currentProductId) fetchEstimations(currentProductId);
+        } catch (error) {
+            showAlert('error', 'Error', getErrorMessage(error, 'Failed to delete estimation'));
+        }
+    };
+
+    // Helper functions
+    const getEstimationTypeLabel = (type: number) => {
+        const types = { 1: 'Inches', 2: 'Feet', 3: 'Thickness (In)', 4: 'Thickness (Ft)' };
+        return types[type as keyof typeof types] || 'Unknown';
+    };
+
+    const getProductTotal = (productId: number): number => {
+        if (!Array.isArray(estimations)) return 0;
+        return estimations
+            .filter(e => e.product_id === productId)
+            .reduce((sum, e) => sum + Number(e.total_amount || 0), 0);
+    };
+
+    const getProjectTotal = (projectId: number): number => {
+        if (!Array.isArray(estimations)) return 0;
+        return estimations.reduce((sum, e) => (e.project_id === projectId ? sum + Number(e.total_amount || 0) : sum), 0);
     };
 
     if (isLoadingCustomer) {
@@ -170,195 +532,295 @@ export default function CustomerProjects() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => navigate('/crm/customers')}
-                        className="shrink-0"
-                    >
+                    <Button variant="outline" size="icon" onClick={() => navigate('/crm/customers')}>
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <div>
-                        <h1 className="text-2xl font-bold text-solarized-base02">
-                            Customer Projects
-                        </h1>
-                        <p className="text-muted-foreground">
-                            Manage projects for {customer?.name || 'this customer'}
-                        </p>
+                        <h1 className="text-2xl font-bold text-solarized-base02">Customer Projects & Estimations</h1>
+                        <p className="text-muted-foreground">{customer?.name}</p>
                     </div>
                 </div>
-                <Button onClick={handleOpenAddModal} className="bg-solarized-blue hover:bg-solarized-blue/90">
+                <Button onClick={handleOpenAddProjectModal} className="bg-solarized-blue">
                     <Plus className="mr-2 h-4 w-4" /> Add Project
                 </Button>
             </div>
 
-            {/* Customer Details Card */}
+            {/* Customer Details */}
             {customer && (
                 <Card className="border-l-4 border-l-solarized-blue">
-                    <CardHeader className="pb-3">
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                            <Building2 className="h-5 w-5 text-solarized-blue" />
-                            {customer.name}
-                        </CardTitle>
-                        <CardDescription>
-                            {customer.customer_type || 'Customer'}
-                            {customer.customer_group_name ? ` • ${customer.customer_group_name}` : ''}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                            {customer.email && (
-                                <div className="flex items-center gap-2 text-sm">
-                                    <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-                                    <span className="truncate">{customer.email}</span>
-                                </div>
-                            )}
-                            {customer.phone && (
-                                <div className="flex items-center gap-2 text-sm">
-                                    <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                                    <span>{customer.phone}</span>
-                                </div>
-                            )}
-                            {customer.territory_name && (
-                                <div className="flex items-center gap-2 text-sm">
-                                    <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
-                                    <span>{customer.territory_name}</span>
-                                </div>
-                            )}
-                            {customer.industry_name && (
-                                <div className="flex items-center gap-2 text-sm">
-                                    <Users className="h-4 w-4 text-muted-foreground shrink-0" />
-                                    <span>{customer.industry_name}</span>
-                                </div>
-                            )}
+                    <CardContent className="pt-6">
+                        <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
+                            {customer.email && <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-muted-foreground" />{customer.email}</div>}
+                            {customer.phone && <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" />{customer.phone}</div>}
+                            {customer.territory_name && <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-muted-foreground" />{customer.territory_name}</div>}
+                            {customer.industry_name && <div className="flex items-center gap-2"><Users className="h-4 w-4 text-muted-foreground" />{customer.industry_name}</div>}
                         </div>
                     </CardContent>
                 </Card>
             )}
 
-            {/* Projects List */}
+            {/* Projects List with Expandable Products and Estimations */}
             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                        <FolderKanban className="h-5 w-5 text-emerald-600" />
-                        Projects
-                        <span className="ml-1 text-sm font-normal text-muted-foreground">
-                            ({projects.length})
-                        </span>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
+                <CardContent className="p-0">
                     {isLoadingProjects ? (
-                        <div className="flex items-center justify-center py-12">
-                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                        </div>
+                        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
                     ) : projects.length === 0 ? (
                         <div className="text-center py-12 text-muted-foreground">
                             <FolderKanban className="mx-auto h-12 w-12 mb-4 opacity-20" />
-                            <p className="text-base font-medium">No projects yet</p>
-                            <p className="text-sm mt-1">Click "Add Project" to create the first project for this customer.</p>
+                            <p>No projects yet. Click "Add Project" to create one.</p>
                         </div>
                     ) : (
-                        <div className="grid gap-3">
-                            {projects.map((project, index) => (
-                                <div
-                                    key={project.id}
-                                    className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-                                >
-                                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                                        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-emerald-100 text-emerald-700 text-sm font-semibold shrink-0">
-                                            {index + 1}
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <h3 className="font-semibold text-sm truncate">
-                                                {project.name}
-                                            </h3>
-                                            {project.description && (
-                                                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                                                    {project.description}
-                                                </p>
-                                            )}
-                                            <p className="text-xs text-muted-foreground mt-1">
-                                                Created: {new Date(project.created_at).toLocaleDateString()}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-1 shrink-0 ml-2">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => handleOpenEditModal(project)}
-                                            title="Edit"
+                        <div className="divide-y">
+                            {projects.map((project, pIndex) => {
+                                const projectProducts = products.filter(p => p.project_id === project.id);
+                                const isProjectExpanded = expandedProject === project.id;
+                                const projectTotal = getProjectTotal(project.id);
+
+                                return (
+                                    <div key={project.id} className="border-b last:border-b-0">
+                                        {/* Project Row */}
+                                        <div
+                                            className={`flex items-center gap-4 p-4 cursor-pointer hover:bg-accent/50 ${isProjectExpanded ? 'bg-accent/30' : ''}`}
+                                            onClick={() => handleToggleProject(project.id)}
                                         >
-                                            <Edit className="h-4 w-4 text-blue-600" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => handleDelete(project.id)}
-                                            title="Delete"
-                                        >
-                                            <Trash2 className="h-4 w-4 text-red-600" />
-                                        </Button>
+                                            <span className="flex items-center justify-center h-8 w-8 rounded-full bg-emerald-100 text-emerald-700 text-sm font-semibold shrink-0">
+                                                {pIndex + 1}
+                                            </span>
+                                            <span className="shrink-0">{isProjectExpanded ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}</span>
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-semibold text-base">{project.name}</h3>
+                                                {project.description && <p className="text-sm text-muted-foreground truncate">{project.description}</p>}
+                                                <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                                                    <span>Created: {new Date(project.created_at).toLocaleDateString()}</span>
+                                                    <span>Products: {projectProducts.length}</span>
+                                                    {projectTotal > 0 && <span className="text-green-600 font-medium">Total: ₹{projectTotal.toFixed(2)}</span>}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-1 shrink-0">
+                                                <Button variant="ghost" size="icon" onClick={(e) => handleOpenEditProjectModal(project, e)}><Edit className="h-4 w-4 text-blue-600" /></Button>
+                                                <Button variant="ghost" size="icon" onClick={(e) => handleDeleteProject(project.id, e)}><Trash2 className="h-4 w-4 text-red-600" /></Button>
+                                            </div>
+                                        </div>
+
+                                        {/* Products Section (Expanded) */}
+                                        {isProjectExpanded && (
+                                            <div className="border-t bg-muted/30">
+                                                <div className="flex items-center justify-between px-4 py-2 bg-muted/50">
+                                                    <span className="text-sm font-medium flex items-center gap-2"><Package className="h-4 w-4 text-blue-600" /> Products</span>
+                                                    <Button size="sm" variant="outline" onClick={handleOpenAddProductModal}><Plus className="h-4 w-4 mr-1" />Add Product</Button>
+                                                </div>
+
+                                                {isLoadingProducts ? (
+                                                    <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
+                                                ) : projectProducts.length === 0 ? (
+                                                    <div className="text-center py-8 text-muted-foreground text-sm">No products. Add a product to get started.</div>
+                                                ) : (
+                                                    <div className="divide-y divide-border/50">
+                                                        {projectProducts.map((product, prodIndex) => {
+                                                            const isProductExpanded = expandedProduct === product.id;
+                                                            const productEstimations = estimations.filter(e => e.product_id === product.id);
+                                                            const productTotal = getProductTotal(product.id);
+
+                                                            return (
+                                                                <div key={product.id}>
+                                                                    {/* Product Row */}
+                                                                    <div
+                                                                        className={`flex items-center gap-4 p-3 pl-12 cursor-pointer hover:bg-accent/50 ${isProductExpanded ? 'bg-accent/20' : ''}`}
+                                                                        onClick={() => handleToggleProduct(product.id)}
+                                                                    >
+                                                                        <span className="flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold shrink-0">
+                                                                            {prodIndex + 1}
+                                                                        </span>
+                                                                        <span className="shrink-0">{isProductExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</span>
+                                                                        <div className="flex-1">
+                                                                            <h4 className="font-medium text-sm">{product.name}</h4>
+                                                                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                                                                <span>{productEstimations.length} estimation{productEstimations.length !== 1 ? 's' : ''}</span>
+                                                                                {productTotal > 0 && <span className="text-green-600 font-medium">Total: ₹{productTotal.toFixed(2)}</span>}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-1 shrink-0">
+                                                                            <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleOpenAddEstimationModal(product.id, e); }}><Calculator className="h-3 w-3 mr-1" />Add Estimation</Button>
+                                                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => handleOpenEditProductModal(product, e)}><Edit className="h-3 w-3 text-blue-600" /></Button>
+                                                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => handleDeleteProduct(product.id, e)}><Trash2 className="h-3 w-3 text-red-600" /></Button>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Estimations Section (Expanded) */}
+                                                                    {isProductExpanded && (
+                                                                        <div className="border-t bg-muted/20">
+                                                                            <div className="flex items-center justify-between px-4 py-2 bg-muted/50">
+                                                                                <span className="text-sm font-medium flex items-center gap-2"><Calculator className="h-4 w-4 text-orange-600" /> Estimations</span>
+                                                                                <Button size="sm" variant="outline" onClick={(e) => handleOpenAddEstimationModal(product.id, e)}><Plus className="h-3 w-3 mr-1" />Add More</Button>
+                                                                            </div>
+
+                                                                            {isLoadingEstimations ? (
+                                                                                <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin" /></div>
+                                                                            ) : productEstimations.length === 0 ? (
+                                                                                <div className="text-center py-6 text-muted-foreground text-xs">No estimations yet. Click "Add Estimation" to create one.</div>
+                                                                            ) : (
+                                                                                <div className="p-3 pl-16 grid gap-2">
+                                                                                    {productEstimations.map((estimation, eIndex) => (
+                                                                                        <div key={estimation.id} className="flex items-center justify-between p-3 bg-background border rounded-lg">
+                                                                                            <div className="flex items-center gap-4">
+                                                                                                <span className="h-5 w-5 rounded-full bg-orange-100 text-orange-700 text-xs flex items-center justify-center font-semibold">{eIndex + 1}</span>
+                                                                                                <div>
+                                                                                                    <div className="text-sm font-medium">{getEstimationTypeLabel(estimation.estimation_type)}</div>
+                                                                                                    <div className="text-xs text-muted-foreground">
+                                                                                                        CFT: {Number(estimation.cft || 0).toFixed(2)} | Qty: {estimation.quantity || 1}
+                                                                                                        {(estimation.length || estimation.breadth || estimation.height) && (
+                                                                                                            <span> | L×B×H: {estimation.length || 0}×{estimation.breadth || 0}×{estimation.height || 0}</span>
+                                                                                                        )}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <div className="flex items-center gap-3">
+                                                                                                <span className="text-sm font-bold text-green-600">₹{Number(estimation.total_amount || 0).toFixed(2)}</span>
+                                                                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => handleDeleteEstimation(estimation.id, e)}><Trash2 className="h-3 w-3 text-red-600" /></Button>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                    <div className="flex justify-between items-center pt-2 px-2 border-t">
+                                                                                        <span className="text-sm font-medium">Product Total:</span>
+                                                                                        <span className="text-base font-bold text-green-600">₹{Number(productEstimations.reduce((sum, e) => sum + Number(e.total_amount || 0), 0)).toFixed(2)}</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </CardContent>
             </Card>
 
-            {/* Add/Edit Project Modal */}
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            {/* Project Modal */}
+            <Dialog open={isProjectModalOpen} onOpenChange={setIsProjectModalOpen}>
                 <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <FolderKanban className="h-5 w-5 text-emerald-600" />
-                            {isEditing ? 'Edit Project' : 'Add New Project'}
-                        </DialogTitle>
-                        <DialogDescription>
-                            {isEditing
-                                ? 'Update the project details below.'
-                                : `Create a new project for ${customer?.name || 'this customer'}.`}
-                        </DialogDescription>
+                        <DialogTitle>{isEditingProject ? 'Edit Project' : 'Add New Project'}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label htmlFor="project-name">
-                                Project Name <span className="text-red-500">*</span>
-                            </Label>
-                            <Input
-                                id="project-name"
-                                placeholder="Enter project name"
-                                value={formData.name}
-                                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                            />
+                            <Label>Project Name <span className="text-red-500">*</span></Label>
+                            <Input placeholder="Enter project name" value={projectFormData.name} onChange={(e) => setProjectFormData(p => ({ ...p, name: e.target.value }))} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="project-description">Description</Label>
-                            <Textarea
-                                id="project-description"
-                                placeholder="Enter project description (optional)"
-                                value={formData.description}
-                                onChange={(e) =>
-                                    setFormData((prev) => ({ ...prev, description: e.target.value }))
-                                }
-                                rows={3}
-                            />
+                            <Label>Description</Label>
+                            <Textarea placeholder="Enter description (optional)" value={projectFormData.description} onChange={(e) => setProjectFormData(p => ({ ...p, description: e.target.value }))} rows={3} />
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={handleCloseModal} disabled={isSaving}>
-                            Cancel
+                        <Button variant="outline" onClick={handleCloseProjectModal} disabled={isSavingProject}>Cancel</Button>
+                        <Button onClick={handleSaveProject} disabled={isSavingProject} className="bg-solarized-blue">{isSavingProject && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{isEditingProject ? 'Update' : 'Create'}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Product Modal */}
+            <Dialog open={isProductModalOpen} onOpenChange={setIsProductModalOpen}>
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle>{isEditingProduct ? 'Edit Product' : 'Add Product'}</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        {!isEditingProduct ? (
+                            <div className="space-y-2">
+                                <Label>Product <span className="text-red-500">*</span></Label>
+                                {isCreatingNewProduct ? (
+                                    <div className="space-y-3">
+                                        <Input placeholder="e.g., Door, Window, Table" value={productFormData.name} onChange={(e) => setProductFormData(p => ({ ...p, name: e.target.value }))} autoFocus />
+                                        <Button type="button" variant="link" className="p-0 h-auto text-sm" onClick={() => setIsCreatingNewProduct(false)}>← Select existing product</Button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        <select
+                                            value={selectedExistingProductId}
+                                            onChange={(e) => {
+                                                if (e.target.value === 'new') {
+                                                    setIsCreatingNewProduct(true);
+                                                    setSelectedExistingProductId('');
+                                                    setProductFormData({ name: '', description: '' });
+                                                } else {
+                                                    setSelectedExistingProductId(e.target.value);
+                                                }
+                                            }}
+                                            className="w-full border rounded-md px-3 py-2 text-sm"
+                                        >
+                                            <option value="">Select a product</option>
+                                            {allCustomerProducts.map((p) => (
+                                                <option key={p.id} value={p.id}>{p.name}</option>
+                                            ))}
+                                            <option value="new">+ Create new product</option>
+                                        </select>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <>
+                                <div className="space-y-2">
+                                    <Label>Product Name <span className="text-red-500">*</span></Label>
+                                    <Input placeholder="e.g., Door, Window, Table" value={productFormData.name} onChange={(e) => setProductFormData(p => ({ ...p, name: e.target.value }))} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Description</Label>
+                                    <Textarea placeholder="Enter description (optional)" value={productFormData.description} onChange={(e) => setProductFormData(p => ({ ...p, description: e.target.value }))} rows={3} />
+                                </div>
+                            </>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={handleCloseProductModal} disabled={isSavingProduct}>Cancel</Button>
+                        <Button onClick={handleSaveProduct} disabled={isSavingProduct || (!isEditingProduct && !isCreatingNewProduct && !selectedExistingProductId)} className="bg-solarized-blue">
+                            {isSavingProduct && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isEditingProduct ? 'Update' : (isCreatingNewProduct ? 'Create & Add' : 'Add to Project')}
                         </Button>
-                        <Button
-                            onClick={handleSave}
-                            disabled={isSaving}
-                            className="bg-solarized-blue hover:bg-solarized-blue/90"
-                        >
-                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {isEditing ? 'Update' : 'Create'}
-                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Estimation Modal */}
+            <Dialog open={isEstimationModalOpen} onOpenChange={setIsEstimationModalOpen}>
+                <DialogContent className="sm:max-w-[600px]">
+                    <DialogHeader>
+                        <DialogTitle>Add Estimation</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+                        <div className="space-y-2">
+                            <Label>Estimation Formula</Label>
+                            <select value={estimationFormData.estimation_type} onChange={(e) => setEstimationFormData(p => ({ ...p, estimation_type: e.target.value }))} className="w-full border rounded-md px-3 py-2 text-sm">
+                                <option value="1">CFT - Inches (L×B×H/144)</option>
+                                <option value="2">CFT - Feet (L×B×H)</option>
+                                <option value="3">CFT - Thickness in Inches (L×B×T/12)</option>
+                                <option value="4">CFT - Thickness in Feet (L×B×T)</option>
+                            </select>
+                        </div>
+                        <div className="grid grid-cols-5 gap-2">
+                            <div className="space-y-1"><Label className="text-xs">Length</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.length} onChange={(e) => setEstimationFormData(p => ({ ...p, length: e.target.value }))} /></div>
+                            <div className="space-y-1"><Label className="text-xs">Breadth</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.breadth} onChange={(e) => setEstimationFormData(p => ({ ...p, breadth: e.target.value }))} /></div>
+                            <div className="space-y-1"><Label className="text-xs">Height</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.height} onChange={(e) => setEstimationFormData(p => ({ ...p, height: e.target.value }))} /></div>
+                            <div className="space-y-1"><Label className="text-xs">Thickness</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.thickness} onChange={(e) => setEstimationFormData(p => ({ ...p, thickness: e.target.value }))} /></div>
+                            <div className="space-y-1"><Label className="text-xs">Quantity</Label><Input type="number" placeholder="1" value={estimationFormData.quantity} onChange={(e) => setEstimationFormData(p => ({ ...p, quantity: e.target.value }))} /></div>
+                        </div>
+                        <div className="bg-blue-50 p-3 rounded-lg flex justify-between"><span className="text-sm font-medium">Volume (CFT):</span><span className="text-lg font-bold text-blue-600">{calculateCft().toFixed(2)}</span></div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2"><Label>Cost per CFT (₹)</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.cost_per_cft} onChange={(e) => setEstimationFormData(p => ({ ...p, cost_per_cft: e.target.value }))} /></div>
+                            <div className="space-y-2"><Label>Labor Charges (₹)</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.labor_charges} onChange={(e) => setEstimationFormData(p => ({ ...p, labor_charges: e.target.value }))} /></div>
+                        </div>
+                        <div className="bg-green-50 p-3 rounded-lg flex justify-between"><span className="text-sm font-medium">Total Amount:</span><span className="text-2xl font-bold text-green-600">₹{calculateTotal().toFixed(2)}</span></div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={handleCloseEstimationModal} disabled={isSavingEstimation}>Cancel</Button>
+                        <Button onClick={handleSaveEstimation} disabled={isSavingEstimation} className="bg-solarized-blue">{isSavingEstimation && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
