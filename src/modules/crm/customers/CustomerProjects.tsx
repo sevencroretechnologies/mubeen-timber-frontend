@@ -668,8 +668,11 @@ export default function CustomerProjects() {
                                                                                                     <div className="text-sm font-medium">{getEstimationTypeLabel(estimation.estimation_type)}</div>
                                                                                                     <div className="text-xs text-muted-foreground">
                                                                                                         CFT: {Number(estimation.cft || 0).toFixed(2)} | Qty: {estimation.quantity || 1}
-                                                                                                        {(estimation.length || estimation.breadth || estimation.height) && (
+                                                                                                        {(estimation.estimation_type === 1 || estimation.estimation_type === 2) && (estimation.length || estimation.breadth || estimation.height) && (
                                                                                                             <span> | L×B×H: {estimation.length || 0}×{estimation.breadth || 0}×{estimation.height || 0}</span>
+                                                                                                        )}
+                                                                                                        {(estimation.estimation_type === 3 || estimation.estimation_type === 4) && (estimation.length || estimation.breadth || estimation.thickness) && (
+                                                                                                            <span> | L×B×T: {estimation.length || 0}×{estimation.breadth || 0}×{estimation.thickness || 0}</span>
                                                                                                         )}
                                                                                                     </div>
                                                                                                 </div>
@@ -807,8 +810,12 @@ export default function CustomerProjects() {
                         <div className="grid grid-cols-5 gap-2">
                             <div className="space-y-1"><Label className="text-xs">Length</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.length} onChange={(e) => setEstimationFormData(p => ({ ...p, length: e.target.value }))} /></div>
                             <div className="space-y-1"><Label className="text-xs">Breadth</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.breadth} onChange={(e) => setEstimationFormData(p => ({ ...p, breadth: e.target.value }))} /></div>
-                            <div className="space-y-1"><Label className="text-xs">Height</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.height} onChange={(e) => setEstimationFormData(p => ({ ...p, height: e.target.value }))} /></div>
-                            <div className="space-y-1"><Label className="text-xs">Thickness</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.thickness} onChange={(e) => setEstimationFormData(p => ({ ...p, thickness: e.target.value }))} /></div>
+                            {(estimationFormData.estimation_type === '1' || estimationFormData.estimation_type === '2') && (
+                                <div className="space-y-1"><Label className="text-xs">Height</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.height} onChange={(e) => setEstimationFormData(p => ({ ...p, height: e.target.value }))} /></div>
+                            )}
+                            {(estimationFormData.estimation_type === '3' || estimationFormData.estimation_type === '4') && (
+                                <div className="space-y-1"><Label className="text-xs">Thickness</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.thickness} onChange={(e) => setEstimationFormData(p => ({ ...p, thickness: e.target.value }))} /></div>
+                            )}
                             <div className="space-y-1"><Label className="text-xs">Quantity</Label><Input type="number" placeholder="1" value={estimationFormData.quantity} onChange={(e) => setEstimationFormData(p => ({ ...p, quantity: e.target.value }))} /></div>
                         </div>
                         <div className="bg-blue-50 p-3 rounded-lg flex justify-between"><span className="text-sm font-medium">Volume (CFT):</span><span className="text-lg font-bold text-blue-600">{calculateCft().toFixed(2)}</span></div>
