@@ -48,6 +48,7 @@ import CustomerList from '@/modules/crm/customers/customerList';
 import CustomerForm from '@/modules/crm/customers/customerForm';
 import ContactForm from '@/modules/crm/contacts/contactForm';
 import ContactList from '@/modules/crm/contacts/contactList';
+import CustomerProjects from '@/modules/crm/customers/CustomerProjects';
 import CrmSettings from '@/modules/crm/settings/CrmSettings';
 
 // Estimations
@@ -112,6 +113,7 @@ function App() {
             <Route path="/crm/customers" element={<CustomerList />} />
             <Route path="/crm/customers/create" element={<CustomerForm />} />
             <Route path="/crm/customers/:id/edit" element={<CustomerForm />} />
+            <Route path="/crm/customers/:id/projects" element={<CustomerProjects />} />
             <Route path="/crm/opportunities" element={<OpportunitiesList />} />
             <Route path="/crm/opportunities/create" element={<OpportunityForm />} />
             <Route path="/crm/opportunities/:id/edit" element={<OpportunityForm />} />

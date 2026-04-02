@@ -454,6 +454,14 @@ export const estimationsApi = {
 };
 
 export const projectApi = {
-  list: (params?: Record<string, unknown>) => api.get('/projects', { params }),
-  get: (id: number | string) => api.get(`/projects/${id}`),
+  list: (params?: Record<string, unknown>) => api.get('/projects', { params }).then(res => {
+    const data = res.data;
+    if (Array.isArray(data)) return data as any;
+    if (data && typeof data === 'object' && Array.isArray((data as any).data)) return data as any;
+    return (data as any).data || data;
+  }),
+  get: (id: number | string) => api.get(`/projects/${id}`).then(res => res.data),
+  create: (data: Record<string, unknown>) => api.post('/projects', data).then(res => res.data),
+  update: (id: number | string, data: Record<string, unknown>) => api.put(`/projects/${id}`, data).then(res => res.data),
+  delete: (id: number | string) => api.delete(`/projects/${id}`),
 };

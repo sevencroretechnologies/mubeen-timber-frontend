@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import DataTable, { TableColumn } from 'react-data-table-component';
-import { Plus, Search, Users, Eye, Edit, Trash2, Building2 } from 'lucide-react';
+import { Plus, Search, Users, Eye, Edit, Trash2, Building2, FolderKanban } from 'lucide-react';
 
 export default function CustomerList() {
     const navigate = useNavigate();
@@ -73,6 +73,10 @@ export default function CustomerList() {
 
     const handleAddClick = () => {
         navigate('/crm/customers/create');
+    };
+
+    const handleProjects = (customer: Customer) => {
+        navigate(`/crm/customers/${customer.id}/projects`);
     };
 
     const handleView = (customer: Customer) => {
@@ -136,7 +140,10 @@ export default function CustomerList() {
         {
             name: 'Actions',
             cell: (row) => (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => handleProjects(row)} title="Projects">
+                        <FolderKanban className="h-4 w-4 text-emerald-600" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => handleView(row)} title="View">
                         <Eye className="h-4 w-4" />
                     </Button>
@@ -148,7 +155,7 @@ export default function CustomerList() {
                     </Button>
                 </div>
             ),
-            width: '140px',
+            width: '180px',
         },
     ];
 
