@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { estimationsApi, customerApi, crmProductService, projectApi } from '@/services/api';
 import { showAlert, getErrorMessage } from '@/lib/sweetalert';
@@ -83,27 +83,41 @@ export default function EstimationForm() {
         }
     }, [id, isEdit]);
 
-    const calculateTotals = () => {
-        // Example CFT Calculation: (L * B * H * T) / 144
+    const derivedCft = useMemo(() => {
+        if (!length && !breadth && !height && !thickness && !quantity) {
+            return Number(cft) || 0;
+        }
+
         const l = Number(length) || 1;
         const b = Number(breadth) || 1;
         const h = Number(height) || 1;
         const t = Number(thickness) || 1;
         const q = Number(quantity) || 1;
         
-        // If they provided dimensions, calculate CFT
-        let calcCft = Number(cft);
-        if (length || breadth || height || thickness) {
-            calcCft = (l * b * h * t * q) / 144;
-            setCft(calcCft.toFixed(2));
+        const type = Number(estimationType);
+        let cftPerUnit = 0;
+
+        if (type === 1) { // Type 1: in inches -> (l*b*h)/144
+            cftPerUnit = (l * b * h) / 144;
+        } else if (type === 2) { // Type 2: in feet -> l*b*h
+            cftPerUnit = l * b * h;
+        } else if (type === 3) { // Type 3: thickness in inches -> (l*b*t)/12
+            cftPerUnit = (l * b * t) / 12;
+        } else if (type === 4) { // Type 4: thickness in feet -> l*b*t
+            cftPerUnit = l * b * t;
+        } else {
+            // Fallback
+            cftPerUnit = (l * b * h) / 144;
         }
 
+        return cftPerUnit * q;
+    }, [length, breadth, height, thickness, quantity, estimationType, cft]);
+
+    const derivedTotalAmount = useMemo(() => {
         const cost = Number(costPerCft) || 0;
         const labor = Number(laborCharges) || 0;
-        
-        const total = (calcCft * cost) + labor;
-        setTotalAmount(total.toFixed(2));
-    };
+        return (derivedCft * cost) + labor;
+    }, [derivedCft, costPerCft, laborCharges]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -124,10 +138,10 @@ export default function EstimationForm() {
                 height: height ? Number(height) : null,
                 thickness: thickness ? Number(thickness) : null,
                 quantity: quantity ? Number(quantity) : null,
-                cft: cft ? Number(cft) : null,
+                cft: parseFloat(derivedCft.toFixed(2)),
                 cost_per_cft: costPerCft ? Number(costPerCft) : null,
                 labor_charges: laborCharges ? Number(laborCharges) : null,
-                total_amount: totalAmount ? Number(totalAmount) : null,
+                total_amount: parseFloat(derivedTotalAmount.toFixed(2)),
             };
 
             if (isEdit && id) {
@@ -186,19 +200,21 @@ export default function EstimationForm() {
                                 </select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Estimation Type <span className="text-red-500">*</span></Label>
-                                <Input type="number" value={estimationType} onChange={(e) => setEstimationType(e.target.value)} required />
+                                <Label>Estimation Formula <span className="text-red-500">*</span></Label>
+                                <select value={estimationType} onChange={(e) => setEstimationType(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm" required>
+                                    <option value="1">CFT - Inches</option>
+                                    <option value="2">CFT - Feet</option>
+                                    <option value="3">CFT - Thickness in Inches</option>
+                                    <option value="4">CFT - Thickness in Feet</option>
+                                </select>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
+                    <CardHeader>
                         <CardTitle>Dimensions & Values</CardTitle>
-                        <Button type="button" variant="outline" size="sm" onClick={calculateTotals}>
-                            <Calculator className="mr-2 h-4 w-4" /> Auto-Calculate
-                        </Button>
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-6">
@@ -227,7 +243,7 @@ export default function EstimationForm() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-6 border-t">
                             <div className="space-y-2">
                                 <Label>Volume (CFT)</Label>
-                                <Input type="number" step="0.01" value={cft} onChange={(e) => setCft(e.target.value)} className="bg-blue-50/50" />
+                                <Input type="number" step="0.01" value={derivedCft.toFixed(2)} className="bg-blue-50/50 cursor-not-allowed text-gray-700" readOnly />
                             </div>
                             <div className="space-y-2">
                                 <Label>Cost per CFT (₹)</Label>
@@ -239,7 +255,7 @@ export default function EstimationForm() {
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-solarized-blue font-bold">Total Amount (₹)</Label>
-                                <Input type="number" step="0.01" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)} className="font-bold bg-green-50" />
+                                <Input type="number" step="0.01" value={derivedTotalAmount.toFixed(2)} className="font-bold bg-green-50/80 cursor-not-allowed text-gray-700" readOnly />
                             </div>
                         </div>
                     </CardContent>
