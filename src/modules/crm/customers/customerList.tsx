@@ -145,9 +145,9 @@ export default function CustomerList() {
             name: 'Actions',
             cell: (row) => (
                 <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => handleWorkflow(row)} title="Workflow">
+                    {/* <Button variant="ghost" size="icon" onClick={() => handleWorkflow(row)} title="Workflow">
                         <GitBranch className="h-4 w-4 text-purple-600" />
-                    </Button>
+                    </Button> */}
                     <Button variant="ghost" size="icon" onClick={() => handleProjects(row)} title="Projects">
                         <FolderKanban className="h-4 w-4 text-emerald-600" />
                     </Button>
