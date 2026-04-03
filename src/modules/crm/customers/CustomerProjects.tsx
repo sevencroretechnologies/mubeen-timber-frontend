@@ -667,51 +667,51 @@ export default function CustomerProjects() {
                                                                                         <table className="w-full text-sm border-collapse border-slate-200">
                                                                                             <thead>
                                                                                                 <tr className="bg-slate-50">
-                                                                                                    <th className="py-2.5 px-4 text-left font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200 w-12">#</th>
-                                                                                                    <th className="py-2.5 px-4 text-left font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200">Product</th>
-                                                                                                    <th className="py-2.5 px-4 text-left font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200">Type</th>
-                                                                                                    <th className="py-2.5 px-4 text-left font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200">Dimensions</th>
-                                                                                                    <th className="py-2.5 px-4 text-right font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200">CFT</th>
-                                                                                                    <th className="py-2.5 px-4 text-right font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200">Qty</th>
-                                                                                                    <th className="py-2.5 px-4 text-right font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200">Rate (₹)</th>
-                                                                                                    <th className="py-2.5 px-4 text-right font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200">Labor (₹)</th>
-                                                                                                    <th className="py-2.5 px-4 text-right font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200">Total (₹)</th>
-                                                                                                    <th className="py-2.5 px-4 text-center font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200 w-16">Action</th>
+                                                                                                    <th className="py-3 px-4 text-left font-bold text-slate-700 uppercase text-xs tracking-wider border border-slate-200 w-12">#</th>
+                                                                                                    <th className="py-3 px-4 text-left font-bold text-slate-700 uppercase text-xs tracking-wider border border-slate-200">Product</th>
+                                                                                                    <th className="py-3 px-4 text-left font-bold text-slate-700 uppercase text-xs tracking-wider border border-slate-200">Type</th>
+                                                                                                    <th className="py-3 px-4 text-left font-bold text-slate-700 uppercase text-xs tracking-wider border border-slate-200">Dimensions</th>
+                                                                                                    <th className="py-3 px-4 text-right font-bold text-slate-700 uppercase text-xs tracking-wider border border-slate-200">CFT</th>
+                                                                                                    <th className="py-3 px-4 text-right font-bold text-slate-700 uppercase text-xs tracking-wider border border-slate-200">Qty</th>
+                                                                                                    <th className="py-3 px-4 text-right font-bold text-slate-700 uppercase text-xs tracking-wider border border-slate-200">Rate (₹)</th>
+                                                                                                    <th className="py-3 px-4 text-right font-bold text-slate-700 uppercase text-xs tracking-wider border border-slate-200">Labor (₹)</th>
+                                                                                                    <th className="py-3 px-4 text-right font-bold text-slate-700 uppercase text-xs tracking-wider border border-slate-200">Total (₹)</th>
+                                                                                                    <th className="py-3 px-4 text-center font-bold text-slate-700 uppercase text-xs tracking-wider border border-slate-200 w-16">Action</th>
                                                                                                 </tr>
                                                                                             </thead>
                                                                                             <tbody className="divide-y divide-slate-100">
                                                                                                 {productEstimations.map((estimation, eIndex) => (
                                                                                                     <tr key={estimation.id} className="hover:bg-slate-50 transition-colors group">
                                                                                                         <td className="py-3 px-4 text-slate-400 font-medium border border-slate-100">{eIndex + 1}</td>
-                                                                                                        <td className="py-3 px-4 border border-slate-100 font-bold text-slate-600">{product.name}</td>
-                                                                                                        <td className="py-3 px-4 border border-slate-100">
-                                                                                                            <div className="font-bold text-slate-700 uppercase text-[10px] tracking-tight">
+                                                                                                        <td className="py-3.5 px-4 border border-slate-100 font-bold text-slate-700 text-sm">{product.name}</td>
+                                                                                                        <td className="py-3.5 px-4 border border-slate-100">
+                                                                                                            <div className="font-bold text-slate-800 uppercase text-xs tracking-tight">
                                                                                                                 {getEstimationTypeLabel(estimation.estimation_type)}
                                                                                                             </div>
                                                                                                         </td>
-                                                                                                        <td className="py-3 px-4 border border-slate-100">
-                                                                                                            <span className="text-[10px] font-bold text-blue-600 px-1 py-0.5">
+                                                                                                        <td className="py-3.5 px-4 border border-slate-100">
+                                                                                                            <span className="text-xs font-bold text-blue-700 bg-blue-50/50 px-2 py-0.5 rounded border border-blue-100/50">
                                                                                                                 {(estimation.estimation_type === 1 || estimation.estimation_type === 2) 
                                                                                                                     ? `${estimation.length || 0}×${estimation.breadth || 0}×${estimation.height || 0}`
                                                                                                                     : `${estimation.length || 0}×${estimation.breadth || 0}×${estimation.thickness || 0}`
                                                                                                                 }
                                                                                                             </span>
                                                                                                         </td>
-                                                                                                        <td className="py-3 px-4 text-right font-semibold text-slate-600 border border-slate-100">{Number(estimation.cft || 0).toFixed(2)}</td>
-                                                                                                        <td className="py-3 px-4 text-right font-semibold text-slate-600 border border-slate-100">{estimation.quantity || 1}</td>
-                                                                                                        <td className="py-3 px-4 text-right font-semibold text-slate-500 border border-slate-100">
+                                                                                                        <td className="py-3.5 px-4 text-right font-semibold text-slate-700 text-sm border border-slate-100">{Number(estimation.cft || 0).toFixed(2)}</td>
+                                                                                                        <td className="py-3.5 px-4 text-right font-semibold text-slate-700 text-sm border border-slate-100">{estimation.quantity || 1}</td>
+                                                                                                        <td className="py-3.5 px-4 text-right font-semibold text-slate-600 text-sm border border-slate-100">
                                                                                                             {Number(estimation.cost_per_cft || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                                                                                         </td>
-                                                                                                        <td className="py-3 px-4 text-right font-semibold text-blue-500 border border-slate-100">
+                                                                                                        <td className="py-3.5 px-4 text-right font-semibold text-blue-600 text-sm border border-slate-100">
                                                                                                             {Number(estimation.labor_charges || 0) > 0 
                                                                                                                 ? Number(estimation.labor_charges).toLocaleString('en-IN', { minimumFractionDigits: 2 })
                                                                                                                 : <span className="text-slate-300">-</span>
                                                                                                             }
                                                                                                         </td>
-                                                                                                        <td className="py-3 px-4 text-right font-black text-emerald-600 border border-slate-100">
+                                                                                                        <td className="py-3.5 px-4 text-right font-black text-emerald-600 text-base border border-slate-100">
                                                                                                             ₹{Number(estimation.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                                                                                         </td>
-                                                                                                        <td className="py-3 px-4 text-center border border-slate-100">
+                                                                                                        <td className="py-3.5 px-4 text-center border border-slate-100">
                                                                                                             <Button 
                                                                                                                 variant="ghost" 
                                                                                                                 size="icon" 
@@ -726,7 +726,7 @@ export default function CustomerProjects() {
                                                                                             </tbody>
                                                                                             <tfoot>
                                                                                                 <tr className="bg-emerald-50/10 font-bold border-t-2 border-emerald-100">
-                                                                                                    <td colSpan={8} className="py-4 px-4 text-right font-bold text-slate-500 uppercase text-[10px] tracking-widest border border-slate-200">
+                                                                                                    <td colSpan={8} className="py-5 px-4 text-right font-bold text-slate-600 uppercase text-xs tracking-widest border border-slate-200">
                                                                                                         Product Total Summary:
                                                                                                     </td>
                                                                                                     <td className="py-4 px-4 text-right font-black text-emerald-600 text-base border border-slate-200 bg-emerald-50/30">
