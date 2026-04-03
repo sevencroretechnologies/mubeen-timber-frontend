@@ -1,81 +1,32 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { crmProductService, crmCustomerService, projectService } from '@/services/api';
+import { crmProductService } from '@/services/api';
 import { showAlert, showConfirmDialog } from '@/lib/sweetalert';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import ProductForm from './ProductForm';
-import { Plus, Search, Package, Filter } from 'lucide-react';
-
-interface Customer {
-  id: number;
-  name: string;
-}
-
-interface Project {
-  id: number;
-  name: string;
-}
+import { Plus, Search, Package } from 'lucide-react';
 
 interface Product {
   id: number;
   name: string;
   description: string | null;
-  customer_id: number | null;
-  project_id: number | null;
-  customer?: Customer;
-  project?: Project;
   created_at: string;
 }
 
 export default function ProductList() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [customerFilter, setCustomerFilter] = useState<string>('all');
-  const [projectFilter, setProjectFilter] = useState<string>('all');
 
   // Form Modal State
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
 
-  const fetchCustomers = async () => {
-    try {
-      const response = await crmCustomerService.getAll();
-      const data = response.data?.data || response.data || [];
-      setCustomers(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Failed to fetch customers:', error);
-    }
-  };
-
-  const fetchProjects = async () => {
-    try {
-      const response = await projectService.getAll();
-      const data = response.data?.data || response.data || [];
-      setProjects(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Failed to fetch projects:', error);
-    }
-  };
-
   const fetchProducts = async () => {
     setLoading(true);
     try {
       const params: any = { search };
-      if (customerFilter !== 'all') params.customer_id = customerFilter;
-      if (projectFilter !== 'all') params.project_id = projectFilter;
-
       const response = await crmProductService.getAll(params);
       const data = response.data?.data?.data || response.data?.data || response.data || [];
       setProducts(Array.isArray(data) ? data : []);
@@ -88,9 +39,7 @@ export default function ProductList() {
 
   useEffect(() => {
     fetchProducts();
-    fetchCustomers();
-    fetchProjects();
-  }, [search, customerFilter, projectFilter]);
+  }, [search]);
 
   const handleDelete = async (id: number) => {
     const result = await showConfirmDialog(
@@ -147,40 +96,6 @@ export default function ProductList() {
                 className="pl-10"
               />
             </div>
-
-            {/* Customer Filter */}
-            <div className="w-full md:w-48">
-              <Select value={customerFilter} onValueChange={setCustomerFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Customers" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Customers</SelectItem>
-                  {customers.map((customer) => (
-                    <SelectItem key={customer.id} value={customer.id.toString()}>
-                      {customer.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Project Filter */}
-            <div className="w-full md:w-48">
-              <Select value={projectFilter} onValueChange={setProjectFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Projects" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Projects</SelectItem>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id.toString()}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
 
           {/* Products Table */}
@@ -190,24 +105,22 @@ export default function ProductList() {
                 <tr className="border-b border-solarized-base2">
                   <th className="text-left py-3 px-4 text-sm font-medium text-solarized-base01">Name</th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-solarized-base01">Description</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-solarized-base01">Customer</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-solarized-base01">Project</th>
                   <th className="text-right py-3 px-4 text-sm font-medium text-solarized-base01">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-8 text-solarized-base01">
+                    <td colSpan={3} className="text-center py-8 text-solarized-base01">
                       Loading...
                     </td>
                   </tr>
                 ) : products.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-12">
+                    <td colSpan={3} className="text-center py-12">
                       <Package className="mx-auto h-12 w-12 text-solarized-base01 mb-4" />
                       <p className="text-lg font-medium text-solarized-base02">No products found</p>
-                      <p className="text-sm text-solarized-base01">Try adjusting your filters or add a new product</p>
+                      <p className="text-sm text-solarized-base01">Try adjusting your search or add a new product</p>
                     </td>
                   </tr>
                 ) : (
@@ -216,20 +129,6 @@ export default function ProductList() {
                       <td className="py-3 px-4 font-medium">{product.name}</td>
                       <td className="py-3 px-4 text-solarized-base01 max-w-xs truncate">
                         {product.description || '-'}
-                      </td>
-                      <td className="py-3 px-4">
-                        {product.customer ? (
-                          <span className="inline-flex items-center px-2 py-1 rounded text-xs bg-blue-100 text-blue-800">
-                            {product.customer.name}
-                          </span>
-                        ) : '-'}
-                      </td>
-                      <td className="py-3 px-4">
-                        {product.project ? (
-                          <span className="inline-flex items-center px-2 py-1 rounded text-xs bg-green-100 text-green-800">
-                            {product.project.name}
-                          </span>
-                        ) : '-'}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex justify-end gap-2">
