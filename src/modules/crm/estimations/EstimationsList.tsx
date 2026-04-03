@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import DataTable, { TableColumn } from 'react-data-table-component';
-import { Plus, Search, FileSignature, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, Search, FileSignature, Trash2, Eye } from 'lucide-react';
 
 export default function EstimationsList() {
     const navigate = useNavigate();
@@ -57,21 +57,6 @@ export default function EstimationsList() {
         return types[type as keyof typeof types] || 'Unknown';
     };
 
-    // Helper to get dimensions display
-    const getDimensionsDisplay = (est: any) => {
-        const l = est.length || 0;
-        const b = est.breadth || 0;
-        const type = est.estimation_type;
-
-        if (type === 1 || type === 2) {
-            const h = est.height || 0;
-            return (l || b || h) ? `${l}×${b}×${h}` : '-';
-        } else {
-            const t = est.thickness || 0;
-            return (l || b || t) ? `${l}×${b}×${t}` : '-';
-        }
-    };
-
     // Filter for basic client-side search
     const filteredData = estimations.filter((est: any) =>
         (est.customer?.name || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -80,7 +65,6 @@ export default function EstimationsList() {
     );
 
     const columns: TableColumn<any>[] = [
-        { name: 'ID', selector: row => row.id, sortable: true, width: '60px' },
         {
             name: 'Customer',
             selector: row => row.customer?.name || 'Unknown',
@@ -107,23 +91,10 @@ export default function EstimationsList() {
             center: true,
         },
         {
-            name: 'Dimensions',
-            selector: row => getDimensionsDisplay(row),
-            width: '120px',
-            center: true,
-        },
-        {
             name: 'Qty',
             selector: row => row.quantity || 1,
             sortable: true,
             width: '60px',
-            right: true,
-        },
-        {
-            name: 'CFT',
-            selector: row => Number(row.cft || 0).toFixed(2),
-            sortable: true,
-            width: '80px',
             right: true,
         },
         {
@@ -156,18 +127,15 @@ export default function EstimationsList() {
             name: 'Actions',
             cell: (row) => (
                 <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => navigate(`/crm/customers/${row.customer_id}/projects`)} title="View Customer Projects">
+                    <Button variant="ghost" size="icon" onClick={() => navigate(`/crm/estimations/${row.id}`)} title="View Details">
                         <Eye className="h-4 w-4 text-blue-600" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => navigate(`/crm/estimations/${row.id}/edit`)} title="Edit">
-                        <Edit className="h-4 w-4 text-solarized-blue" />
                     </Button>
                     <Button variant="ghost" size="icon" onClick={() => handleDelete(row.id)} title="Delete">
                         <Trash2 className="h-4 w-4 text-red-600" />
                     </Button>
                 </div>
             ),
-            width: '140px',
+            width: '100px',
             center: true,
         },
     ];
