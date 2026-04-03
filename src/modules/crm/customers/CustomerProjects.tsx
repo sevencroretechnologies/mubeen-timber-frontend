@@ -149,40 +149,48 @@ export default function CustomerProjects() {
         }
     }, [id]);
 
+    // Fetch products that have estimations for a specific project
     const fetchProducts = useCallback(async (projectId: number) => {
         setIsLoadingProducts(true);
         try {
-            // Fetch all products - no longer filtered by project_id
-            const response = await crmProductService.getAll({ per_page: 100 });
-            const data = response?.data?.data?.data || response?.data?.data || response?.data || [];
-            const allProducts = Array.isArray(data) ? data : [];
+            // First, fetch all products (global)
+            const productsResponse = await crmProductService.getAll({ per_page: 100 });
+            const allProducts = productsResponse?.data?.data?.data || productsResponse?.data?.data || productsResponse?.data || [];
 
-            // Filter to show only products that have estimations for this project
-            // This maintains the UI behavior of showing "project products"
-            const projectEstimationProducts = estimations
-                .filter(e => e.project_id === projectId)
-                .map(e => e.product_id);
-            const uniqueProductIds = [...new Set(projectEstimationProducts)];
+            // Then, fetch estimations for this project to find which products are used
+            const estimationsResponse = await estimationsApi.list({ project_id: projectId, per_page: 100 });
+            const projectEstimations = estimationsResponse?.data?.data || estimationsResponse?.data || estimationsResponse || [];
 
-            const projectProducts = allProducts.filter(p =>
-                uniqueProductIds.includes(p.id)
-            );
+            // Extract unique product IDs from estimations
+            const productIdsInProject = [...new Set(
+                Array.isArray(projectEstimations)
+                    ? projectEstimations.map((e: Estimation) => e.product_id).filter(Boolean)
+                    : []
+            )];
+
+            // Filter products to show only those used in this project's estimations
+            const projectProducts = Array.isArray(allProducts)
+                ? allProducts.filter((p: Product) => productIdsInProject.includes(p.id))
+                : [];
 
             setProducts(projectProducts);
+
+            // Store all project estimations for later use
+            setEstimations(Array.isArray(projectEstimations) ? projectEstimations : []);
         } catch (error) {
             console.error('Failed to fetch products:', error);
             setProducts([]);
         } finally {
             setIsLoadingProducts(false);
         }
-    }, [estimations]);
+    }, []);
 
     const fetchEstimations = useCallback(async (productId: number) => {
         setIsLoadingEstimations(true);
         try {
             const response = await estimationsApi.list({ product_id: productId, per_page: 100 });
             const data = response?.data?.data || response?.data || response || [];
-            
+
             // Merge new estimations with existing ones, replacing only the ones for this product
             setEstimations(prev => {
                 const otherEstimations = prev.filter(e => e.product_id !== productId);
