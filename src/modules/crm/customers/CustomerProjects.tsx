@@ -170,10 +170,15 @@ export default function CustomerProjects() {
         try {
             const response = await estimationsApi.list({ product_id: productId, per_page: 100 });
             const data = response?.data?.data || response?.data || response || [];
-            setEstimations(Array.isArray(data) ? data : []);
+            
+            // Merge new estimations with existing ones, replacing only the ones for this product
+            setEstimations(prev => {
+                const otherEstimations = prev.filter(e => e.product_id !== productId);
+                return [...otherEstimations, ...(Array.isArray(data) ? data : [])];
+            });
         } catch (error) {
             console.error('Failed to fetch estimations:', error);
-            setEstimations([]);
+            // On error, we keep the previous state rather than clearing it all
         } finally {
             setIsLoadingEstimations(false);
         }
@@ -200,12 +205,10 @@ export default function CustomerProjects() {
         if (expandedProject === projectId) {
             setExpandedProject(null);
             setExpandedProduct(null);
-            setProducts([]);
-            setEstimations([]);
+            // We keep products and estimations in state for persistence
         } else {
             setExpandedProject(projectId);
             setExpandedProduct(null);
-            setEstimations([]);
             await fetchProducts(projectId);
         }
     };
@@ -214,7 +217,7 @@ export default function CustomerProjects() {
     const handleToggleProduct = async (productId: number) => {
         if (expandedProduct === productId) {
             setExpandedProduct(null);
-            setEstimations([]);
+            // We keep estimations in state for persistence
         } else {
             setExpandedProduct(productId);
             await fetchEstimations(productId);
@@ -589,14 +592,15 @@ export default function CustomerProjects() {
                                             <span className="shrink-0">{isProjectExpanded ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}</span>
                                             <div className="flex-1 min-w-0">
                                                 <h3 className="font-semibold text-base">{project.name}</h3>
-                                                {project.description && <p className="text-sm text-muted-foreground truncate">{project.description}</p>}
+                                                {/* {project.description && <p className="text-sm text-muted-foreground truncate">{project.description}</p>} */}
                                                 <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                                                    <span>Created: {new Date(project.created_at).toLocaleDateString()}</span>
+                                                    {/* <span>Created: {new Date(project.created_at).toLocaleDateString()}</span> */}
                                                     <span>Products: {projectProducts.length}</span>
                                                     {projectTotal > 0 && <span className="text-green-600 font-medium">Total: ₹{projectTotal.toFixed(2)}</span>}
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-1 shrink-0">
+                                            <Button size="sm" variant="outline" onClick={handleOpenAddProductModal}><Plus className="h-4 w-4 mr-1" />Add Product</Button>
                                                 <Button variant="ghost" size="icon" onClick={(e) => handleOpenEditProjectModal(project, e)}><Edit className="h-4 w-4 text-blue-600" /></Button>
                                                 <Button variant="ghost" size="icon" onClick={(e) => handleDeleteProject(project.id, e)}><Trash2 className="h-4 w-4 text-red-600" /></Button>
                                             </div>
@@ -607,7 +611,7 @@ export default function CustomerProjects() {
                                             <div className="border-t bg-muted/30">
                                                 <div className="flex items-center justify-between px-4 py-2 bg-muted/50">
                                                     <span className="text-sm font-medium flex items-center gap-2"><Package className="h-4 w-4 text-blue-600" /> Products</span>
-                                                    <Button size="sm" variant="outline" onClick={handleOpenAddProductModal}><Plus className="h-4 w-4 mr-1" />Add Product</Button>
+                                                    {/* <Button size="sm" variant="outline" onClick={handleOpenAddProductModal}><Plus className="h-4 w-4 mr-1" />Add Product</Button> */}
                                                 </div>
 
                                                 {isLoadingProducts ? (
@@ -619,7 +623,7 @@ export default function CustomerProjects() {
                                                         {projectProducts.map((product, prodIndex) => {
                                                             const isProductExpanded = expandedProduct === product.id;
                                                             const productEstimations = estimations.filter(e => e.product_id === product.id);
-                                                            const productTotal = getProductTotal(product.id);
+                                                            // const productTotal = getProductTotal(product.id);
 
                                                             return (
                                                                 <div key={product.id}>
@@ -636,7 +640,7 @@ export default function CustomerProjects() {
                                                                             <h4 className="font-medium text-sm">{product.name}</h4>
                                                                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
                                                                                 <span>{productEstimations.length} estimation{productEstimations.length !== 1 ? 's' : ''}</span>
-                                                                                {productTotal > 0 && <span className="text-green-600 font-medium">Total: ₹{productTotal.toFixed(2)}</span>}
+                                                                                {/* {productTotal > 0 && <span className="text-green-600 font-medium">Total: ₹{productTotal.toFixed(2)}</span>} */}
                                                                             </div>
                                                                         </div>
                                                                         <div className="flex items-center gap-1 shrink-0">
@@ -651,7 +655,7 @@ export default function CustomerProjects() {
                                                                         <div className="border-t bg-muted/20">
                                                                             <div className="flex items-center justify-between px-4 py-2 bg-muted/50">
                                                                                 <span className="text-sm font-medium flex items-center gap-2"><Calculator className="h-4 w-4 text-orange-600" /> Estimations</span>
-                                                                                <Button size="sm" variant="outline" onClick={(e) => handleOpenAddEstimationModal(product.id, e)}><Plus className="h-3 w-3 mr-1" />Add More</Button>
+                                                                                {/* <Button size="sm" variant="outline" onClick={(e) => handleOpenAddEstimationModal(product.id, e)}><Plus className="h-3 w-3 mr-1" />Add More</Button> */}
                                                                             </div>
 
                                                                             {isLoadingEstimations ? (
@@ -659,35 +663,91 @@ export default function CustomerProjects() {
                                                                             ) : productEstimations.length === 0 ? (
                                                                                 <div className="text-center py-6 text-muted-foreground text-xs">No estimations yet. Click "Add Estimation" to create one.</div>
                                                                             ) : (
-                                                                                <div className="p-3 pl-16 grid gap-2">
-                                                                                    {productEstimations.map((estimation, eIndex) => (
-                                                                                        <div key={estimation.id} className="flex items-center justify-between p-3 bg-background border rounded-lg">
-                                                                                            <div className="flex items-center gap-4">
-                                                                                                <span className="h-5 w-5 rounded-full bg-orange-100 text-orange-700 text-xs flex items-center justify-center font-semibold">{eIndex + 1}</span>
-                                                                                                <div>
-                                                                                                    <div className="text-sm font-medium">{getEstimationTypeLabel(estimation.estimation_type)}</div>
-                                                                                                    <div className="text-xs text-muted-foreground">
-                                                                                                        CFT: {Number(estimation.cft || 0).toFixed(2)} | Qty: {estimation.quantity || 1}
-                                                                                                        {(estimation.estimation_type === 1 || estimation.estimation_type === 2) && (estimation.length || estimation.breadth || estimation.height) && (
-                                                                                                            <span> | L×B×H: {estimation.length || 0}×{estimation.breadth || 0}×{estimation.height || 0}</span>
-                                                                                                        )}
-                                                                                                        {(estimation.estimation_type === 3 || estimation.estimation_type === 4) && (estimation.length || estimation.breadth || estimation.thickness) && (
-                                                                                                            <span> | L×B×T: {estimation.length || 0}×{estimation.breadth || 0}×{estimation.thickness || 0}</span>
-                                                                                                        )}
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                            <div className="flex items-center gap-3">
-                                                                                                <span className="text-sm font-bold text-green-600">₹{Number(estimation.total_amount || 0).toFixed(2)}</span>
-                                                                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => handleDeleteEstimation(estimation.id, e)}><Trash2 className="h-3 w-3 text-red-600" /></Button>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    ))}
-                                                                                    <div className="flex justify-between items-center pt-2 px-2 border-t">
-                                                                                        <span className="text-sm font-medium">Product Total:</span>
-                                                                                        <span className="text-base font-bold text-green-600">₹{Number(productEstimations.reduce((sum, e) => sum + Number(e.total_amount || 0), 0)).toFixed(2)}</span>
+                                                                                    <div className="overflow-x-auto bg-background border rounded-lg m-4 shadow-sm">
+                                                                                        <table className="w-full text-sm border-collapse border-slate-200">
+                                                                                            <thead>
+                                                                                                <tr className="bg-slate-50">
+                                                                                                    <th className="py-2.5 px-4 text-left font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200 w-12">#</th>
+                                                                                                    <th className="py-2.5 px-4 text-left font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200">Product</th>
+                                                                                                    <th className="py-2.5 px-4 text-left font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200">Type</th>
+                                                                                                    <th className="py-2.5 px-4 text-left font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200">Dimensions</th>
+                                                                                                    <th className="py-2.5 px-4 text-right font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200">CFT</th>
+                                                                                                    <th className="py-2.5 px-4 text-right font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200">Qty</th>
+                                                                                                    <th className="py-2.5 px-4 text-right font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200">Rate (₹)</th>
+                                                                                                    <th className="py-2.5 px-4 text-right font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200">Labor (₹)</th>
+                                                                                                    <th className="py-2.5 px-4 text-right font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200">Total (₹)</th>
+                                                                                                    <th className="py-2.5 px-4 text-center font-bold text-slate-600 uppercase text-[10px] tracking-wider border border-slate-200 w-16">Action</th>
+                                                                                                </tr>
+                                                                                            </thead>
+                                                                                            <tbody className="divide-y divide-slate-100">
+                                                                                                {productEstimations.map((estimation, eIndex) => (
+                                                                                                    <tr key={estimation.id} className="hover:bg-slate-50 transition-colors group">
+                                                                                                        <td className="py-3 px-4 text-slate-400 font-medium border border-slate-100">{eIndex + 1}</td>
+                                                                                                        <td className="py-3 px-4 border border-slate-100 font-bold text-slate-600">{product.name}</td>
+                                                                                                        <td className="py-3 px-4 border border-slate-100">
+                                                                                                            <div className="font-bold text-slate-700 uppercase text-[10px] tracking-tight">
+                                                                                                                {getEstimationTypeLabel(estimation.estimation_type)}
+                                                                                                            </div>
+                                                                                                        </td>
+                                                                                                        <td className="py-3 px-4 border border-slate-100">
+                                                                                                            <span className="text-[10px] font-bold text-blue-600 px-1 py-0.5">
+                                                                                                                {(estimation.estimation_type === 1 || estimation.estimation_type === 2) 
+                                                                                                                    ? `${estimation.length || 0}×${estimation.breadth || 0}×${estimation.height || 0}`
+                                                                                                                    : `${estimation.length || 0}×${estimation.breadth || 0}×${estimation.thickness || 0}`
+                                                                                                                }
+                                                                                                            </span>
+                                                                                                        </td>
+                                                                                                        <td className="py-3 px-4 text-right font-semibold text-slate-600 border border-slate-100">{Number(estimation.cft || 0).toFixed(2)}</td>
+                                                                                                        <td className="py-3 px-4 text-right font-semibold text-slate-600 border border-slate-100">{estimation.quantity || 1}</td>
+                                                                                                        <td className="py-3 px-4 text-right font-semibold text-slate-500 border border-slate-100">
+                                                                                                            {Number(estimation.cost_per_cft || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                                                                                        </td>
+                                                                                                        <td className="py-3 px-4 text-right font-semibold text-blue-500 border border-slate-100">
+                                                                                                            {Number(estimation.labor_charges || 0) > 0 
+                                                                                                                ? Number(estimation.labor_charges).toLocaleString('en-IN', { minimumFractionDigits: 2 })
+                                                                                                                : <span className="text-slate-300">-</span>
+                                                                                                            }
+                                                                                                        </td>
+                                                                                                        <td className="py-3 px-4 text-right font-black text-emerald-600 border border-slate-100">
+                                                                                                            ₹{Number(estimation.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                                                                                        </td>
+                                                                                                        <td className="py-3 px-4 text-center border border-slate-100">
+                                                                                                            <Button 
+                                                                                                                variant="ghost" 
+                                                                                                                size="icon" 
+                                                                                                                className="h-8 w-8 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
+                                                                                                                onClick={(e) => handleDeleteEstimation(estimation.id, e)}
+                                                                                                            >
+                                                                                                                <Trash2 className="h-4 w-4" />
+                                                                                                            </Button>
+                                                                                                        </td>
+                                                                                                    </tr>
+                                                                                                ))}
+                                                                                            </tbody>
+                                                                                            <tfoot>
+                                                                                                <tr className="bg-emerald-50/10 font-bold border-t-2 border-emerald-100">
+                                                                                                    <td colSpan={8} className="py-4 px-4 text-right font-bold text-slate-500 uppercase text-[10px] tracking-widest border border-slate-200">
+                                                                                                        Product Total Summary:
+                                                                                                    </td>
+                                                                                                    <td className="py-4 px-4 text-right font-black text-emerald-600 text-base border border-slate-200 bg-emerald-50/30">
+                                                                                                        ₹{Number(productEstimations.reduce((sum, e) => sum + Number(e.total_amount || 0), 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                                                                                    </td>
+                                                                                                    <td className="border border-slate-200"></td>
+                                                                                                </tr>
+                                                                                                <tr>
+                                                                                                    {/* <td colSpan={10} className="p-0 border border-slate-200">
+                                                                                                        <Button 
+                                                                                                            variant="ghost" 
+                                                                                                            className="w-full h-10 text-blue-600 hover:bg-blue-50/50 hover:text-blue-700 font-bold text-xs uppercase tracking-widest rounded-none"
+                                                                                                            onClick={(e) => { e.stopPropagation(); handleOpenAddEstimationModal(product.id, e); }}
+                                                                                                        >
+                                                                                                            <Plus className="h-4 w-4 mr-2" /> Add New Line
+                                                                                                        </Button>
+                                                                                                    </td> */}
+                                                                                                </tr>
+                                                                                            </tfoot>
+                                                                                        </table>
                                                                                     </div>
-                                                                                </div>
                                                                             )}
                                                                         </div>
                                                                     )}
@@ -795,9 +855,23 @@ export default function CustomerProjects() {
             <Dialog open={isEstimationModalOpen} onOpenChange={setIsEstimationModalOpen}>
                 <DialogContent className="sm:max-w-[600px]">
                     <DialogHeader>
-                        <DialogTitle>Add Estimation</DialogTitle>
+                        <DialogTitle>Add New Estimation</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+                    <div className="space-y-6 py-6 max-h-[70vh] overflow-y-auto px-1 custom-scrollbar">
+                        <div className="flex items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl transition-all duration-300">
+                            <div className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-blue-600 shrink-0">
+                                <Package className="h-6 w-6" />
+                            </div>
+                            <div className="min-w-0">
+                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Target Product</div>
+                                <div className="text-base font-black text-slate-800 uppercase tracking-tight truncate">
+                                    {products.find(p => p.id === currentProductId)?.name || 'Select Product'}
+                                </div>
+                            </div>
+                            {/* <div className="ml-auto">
+                                <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-full uppercase tracking-wider">Locked</span>
+                            </div> */}
+                        </div>
                         <div className="space-y-2">
                             <Label>Estimation Formula</Label>
                             <select value={estimationFormData.estimation_type} onChange={(e) => setEstimationFormData(p => ({ ...p, estimation_type: e.target.value }))} className="w-full border rounded-md px-3 py-2 text-sm">
@@ -820,8 +894,8 @@ export default function CustomerProjects() {
                         </div>
                         <div className="bg-blue-50 p-3 rounded-lg flex justify-between"><span className="text-sm font-medium">Volume (CFT):</span><span className="text-lg font-bold text-blue-600">{calculateCft().toFixed(2)}</span></div>
                         <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-2"><Label>Cost per CFT (₹)</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.cost_per_cft} onChange={(e) => setEstimationFormData(p => ({ ...p, cost_per_cft: e.target.value }))} /></div>
-                            <div className="space-y-2"><Label>Labor Charges (₹)</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.labor_charges} onChange={(e) => setEstimationFormData(p => ({ ...p, labor_charges: e.target.value }))} /></div>
+                            <div className="space-y-2"><Label>Material Cost per CFT (₹)</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.cost_per_cft} onChange={(e) => setEstimationFormData(p => ({ ...p, cost_per_cft: e.target.value }))} /></div>
+                            <div className="space-y-2"><Label>Additional / Labor Charges (₹)</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.labor_charges} onChange={(e) => setEstimationFormData(p => ({ ...p, labor_charges: e.target.value }))} /></div>
                         </div>
                         <div className="bg-green-50 p-3 rounded-lg flex justify-between"><span className="text-sm font-medium">Total Amount:</span><span className="text-2xl font-bold text-green-600">₹{calculateTotal().toFixed(2)}</span></div>
                     </div>
