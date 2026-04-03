@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import DataTable, { TableColumn } from 'react-data-table-component';
-import { Plus, Search, Users, Eye, Edit, Trash2, Building2, FolderKanban, GitBranch } from 'lucide-react';
+import { Plus, Search, Users, Eye, Edit, Trash2, Building2, FolderPlus } from 'lucide-react';
 
 export default function CustomerList() {
     const navigate = useNavigate();
@@ -105,64 +105,72 @@ export default function CustomerList() {
     };
 
     const columns: TableColumn<Customer>[] = [
-        {
-            name: 'ID',
-            selector: (_row, index) => (page - 1) * perPage + (index !== undefined ? index + 1 : 0),
-            width: '60px',
-        },
+        // {
+        //     name: 'ID',
+        //     selector: (_row, index) => (page - 1) * perPage + (index !== undefined ? index + 1 : 0),
+        //     width: '60px',
+        // },
         {
             name: 'Name',
             selector: (row) => row.name,
             sortable: true,
-            minWidth: '200px',
+            width: '200px',
             cell: (row) => row.name,
         },
         {
             name: 'Type',
             selector: (row) => row.customer_type || '-',
             sortable: true,
+            width: '90px',
         },
         {
             name: 'Customer Group',
             selector: (row) => row.customer_group_name || '-',
             sortable: true,
+            width: '130px',
         },
-        {
-            name: 'Territory',
-            selector: (row) => row.territory_name || '-',
-            sortable: true,
-        },
+        // {
+        //     name: 'Territory',
+        //     selector: (row) => row.territory_name || '-',
+        //     sortable: true,
+        // },
         {
             name: 'Email',
             selector: (row) => row.email || '-',
             sortable: true,
+            minWidth: '90px',
         },
         {
             name: 'Phone',
             selector: (row) => row.phone || '-',
+            minWidth: '90px',
         },
         {
             name: 'Actions',
             cell: (row) => (
-                <div className="flex items-center gap-1">
-                    {/* <Button variant="ghost" size="icon" onClick={() => handleWorkflow(row)} title="Workflow">
-                        <GitBranch className="h-4 w-4 text-purple-600" />
-                    </Button> */}
-                    <Button variant="ghost" size="icon" onClick={() => handleProjects(row)} title="Projects">
-                        <FolderKanban className="h-4 w-4 text-emerald-600" />
+                <div className="flex items-center gap-1 pl-1">
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleProjects(row)} 
+                        title="Projects"
+                        className="h-7 px-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-bold flex items-center shrink-0"
+                    >
+                        <FolderPlus className="h-3.5 w-3.5 mr-1" />
+                        <span className="text-[10px] uppercase tracking-wider">Add Project</span>
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleView(row)} title="View">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleView(row)} title="View">
                         <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(row)} title="Edit">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(row)} title="Edit">
                         <Edit className="h-4 w-4 text-blue-600" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(row.id)} title="Delete">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(row.id)} title="Delete">
                         <Trash2 className="h-4 w-4 text-red-600" />
                     </Button>
                 </div>
             ),
-            width: '200px',
+            width: '230px',
         },
     ];
 
@@ -266,12 +274,12 @@ export default function CustomerList() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Customer Group</Label>
-                                        <p className="text-sm font-medium">{selectedCustomer.customer_group_name || '—'}</p>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Territory</Label>
-                                        <p className="text-sm font-medium">{selectedCustomer.territory_name || '—'}</p>
-                                    </div>
+                                    <p className="text-sm font-medium">{selectedCustomer.customer_group_name || '—'}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Territory</Label>
+                                    <p className="text-sm font-medium">{selectedCustomer.territory_name || '—'}</p>
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -285,7 +293,7 @@ export default function CustomerList() {
                                 </div>
                             </div>
 
-                           
+
                         </div>
                     )}
                     <DialogFooter>
