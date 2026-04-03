@@ -43,8 +43,6 @@ interface Project {
 
 interface Product {
     id: number;
-    customer_id: number | null;
-    project_id: number | null;
     name: string;
     description: string | null;
     created_at: string;
@@ -154,16 +152,30 @@ export default function CustomerProjects() {
     const fetchProducts = useCallback(async (projectId: number) => {
         setIsLoadingProducts(true);
         try {
-            const response = await crmProductService.getAll({ project_id: projectId, per_page: 100 });
+            // Fetch all products - no longer filtered by project_id
+            const response = await crmProductService.getAll({ per_page: 100 });
             const data = response?.data?.data?.data || response?.data?.data || response?.data || [];
-            setProducts(Array.isArray(data) ? data : []);
+            const allProducts = Array.isArray(data) ? data : [];
+
+            // Filter to show only products that have estimations for this project
+            // This maintains the UI behavior of showing "project products"
+            const projectEstimationProducts = estimations
+                .filter(e => e.project_id === projectId)
+                .map(e => e.product_id);
+            const uniqueProductIds = [...new Set(projectEstimationProducts)];
+
+            const projectProducts = allProducts.filter(p =>
+                uniqueProductIds.includes(p.id)
+            );
+
+            setProducts(projectProducts);
         } catch (error) {
             console.error('Failed to fetch products:', error);
             setProducts([]);
         } finally {
             setIsLoadingProducts(false);
         }
-    }, []);
+    }, [estimations]);
 
     const fetchEstimations = useCallback(async (productId: number) => {
         setIsLoadingEstimations(true);
@@ -181,14 +193,15 @@ export default function CustomerProjects() {
 
     const fetchAllCustomerProducts = useCallback(async () => {
         try {
-            const response = await crmProductService.getAll({ customer_id: id, per_page: 100 });
+            // Fetch all products - no longer filtered by customer_id
+            const response = await crmProductService.getAll({ per_page: 100 });
             const data = response?.data?.data?.data || response?.data?.data || response?.data || [];
             setAllCustomerProducts(Array.isArray(data) ? data : []);
         } catch (error) {
-            console.error('Failed to fetch customer products:', error);
+            console.error('Failed to fetch products:', error);
             setAllCustomerProducts([]);
         }
-    }, [id]);
+    }, []);
 
     useEffect(() => {
         fetchCustomer();
@@ -332,8 +345,6 @@ export default function CustomerProjects() {
             // If editing existing product
             if (isEditingProduct && editingProduct) {
                 const payload = {
-                    customer_id: Number(id),
-                    project_id: expandedProject,
                     name: productFormData.name.trim(),
                     description: productFormData.description.trim() || null,
                 };
@@ -351,26 +362,13 @@ export default function CustomerProjects() {
                         return;
                     }
                     const payload = {
-                        customer_id: Number(id),
-                        project_id: expandedProject,
                         name: productFormData.name.trim(),
                         description: productFormData.description.trim() || null,
                     };
                     await crmProductService.create(payload);
                     showAlert('success', 'Created!', 'Product created successfully', 2000);
-                } else if (selectedExistingProductId) {
-                    // Link existing product to this project
-                    const product = allCustomerProducts.find(p => p.id === Number(selectedExistingProductId));
-                    if (product) {
-                        await crmProductService.update(product.id, {
-                            customer_id: Number(id),
-                            project_id: expandedProject,
-                            name: product.name,
-                            description: product.description,
-                        });
-                        showAlert('success', 'Added!', 'Product added to project successfully', 2000);
-                    }
                 }
+                // If selecting existing product, just close modal - product is already available
                 handleCloseProductModal();
                 if (expandedProject) fetchProducts(expandedProject);
             }
@@ -572,7 +570,8 @@ export default function CustomerProjects() {
                     ) : (
                         <div className="divide-y">
                             {projects.map((project, pIndex) => {
-                                const projectProducts = products.filter(p => p.project_id === project.id);
+                                // Products are now global - show products that have estimations for this project
+                                const projectProducts = expandedProject === project.id ? products : [];
                                 const isProjectExpanded = expandedProject === project.id;
                                 const projectTotal = getProjectTotal(project.id);
 

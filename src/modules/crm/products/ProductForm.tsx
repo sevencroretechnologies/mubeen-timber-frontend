@@ -1,31 +1,12 @@
 import { useState, useEffect } from 'react';
-import { crmProductService, crmCustomerService, projectService } from '@/services/api';
+import { crmProductService } from '@/services/api';
 import { showAlert } from '@/lib/sweetalert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
-
-interface Customer {
-  id: number;
-  name: string;
-}
-
-interface Project {
-  id: number;
-  name: string;
-}
-
-
 
 interface ProductFormProps {
   isOpen: boolean;
@@ -37,43 +18,13 @@ interface ProductFormProps {
 export default function ProductForm({ isOpen, onClose, onSuccess, productId }: ProductFormProps) {
   const isEdit = Boolean(productId);
 
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    customer_id: '' as string | number,
-    project_id: '' as string | number,
   });
-
-  const fetchCustomers = async () => {
-    try {
-      const response = await crmCustomerService.getAll();
-      let data = response.data?.data || response.data;
-      if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
-          data = data.data;
-      }
-      setCustomers(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Failed to fetch customers:', error);
-    }
-  };
-
-  const fetchProjects = async () => {
-    try {
-      const response = await projectService.getAll();
-      let data = response.data?.data || response.data;
-      if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
-          data = data.data;
-      }
-      setProjects(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Failed to fetch projects:', error);
-    }
-  };
 
   const fetchProduct = async (id: number) => {
     setIsLoading(true);
@@ -83,8 +34,6 @@ export default function ProductForm({ isOpen, onClose, onSuccess, productId }: P
       setFormData({
         name: data.name || '',
         description: data.description || '',
-        customer_id: data.customer_id || '',
-        project_id: data.project_id || '',
       });
     } catch (error) {
       showAlert('error', 'Error', 'Failed to fetch product details');
@@ -96,8 +45,6 @@ export default function ProductForm({ isOpen, onClose, onSuccess, productId }: P
 
   useEffect(() => {
     if (isOpen) {
-      fetchCustomers();
-      fetchProjects();
       if (productId) {
         fetchProduct(productId);
       } else {
@@ -105,8 +52,6 @@ export default function ProductForm({ isOpen, onClose, onSuccess, productId }: P
         setFormData({
           name: '',
           description: '',
-          customer_id: '',
-          project_id: '',
         });
       }
     }
@@ -125,8 +70,6 @@ export default function ProductForm({ isOpen, onClose, onSuccess, productId }: P
       const payload = {
         name: formData.name,
         description: formData.description || null,
-        customer_id: formData.customer_id ? Number(formData.customer_id) : null,
-        project_id: formData.project_id ? Number(formData.project_id) : null,
       };
 
       if (isEdit) {
@@ -167,44 +110,6 @@ export default function ProductForm({ isOpen, onClose, onSuccess, productId }: P
                 placeholder="Enter product name"
                 required
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="customer_id">Customer</Label>
-              <Select
-                value={formData.customer_id?.toString()}
-                onValueChange={(v) => setFormData({ ...formData, customer_id: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Customer (Optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map((customer) => (
-                    <SelectItem key={customer.id} value={customer.id.toString()}>
-                      {customer.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="project_id">Project</Label>
-              <Select
-                value={formData.project_id?.toString()}
-                onValueChange={(v) => setFormData({ ...formData, project_id: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Project (Optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id.toString()}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="space-y-2">
