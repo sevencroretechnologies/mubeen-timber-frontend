@@ -302,9 +302,9 @@ export default function EstimationsList() {
                     <h1 className="text-2xl font-bold text-solarized-base02">Estimations</h1>
                     <p className="text-muted-foreground">Manage order and project estimations here</p>
                 </div>
-                <Button onClick={() => navigate('/crm/estimations/create')} className="bg-solarized-blue hover:bg-solarized-blue/90">
+                {/* <Button onClick={() => navigate('/crm/estimations/create')} className="bg-solarized-blue hover:bg-solarized-blue/90">
                     <Plus className="mr-2 h-4 w-4" /> New Estimation
-                </Button>
+                </Button> */}
             </div>
 
             <Card>
