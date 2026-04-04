@@ -34,7 +34,7 @@ export default function PurchaseOrderForm() {
   const [expectedDate, setExpectedDate] = useState('');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<POItemRow[]>([
-    { wood_type_id: '', quantity: '', unit: '', unit_price: '', notes: '' },
+    { wood_type_id: '', quantity: '', unit: 'CFT', unit_price: '', notes: '' },
   ]);
 
   useEffect(() => {
@@ -86,7 +86,7 @@ export default function PurchaseOrderForm() {
   }, [id, isEdit]);
 
   const addItem = () => {
-    setItems([...items, { wood_type_id: '', quantity: '', unit: '', unit_price: '', notes: '' }]);
+    setItems([...items, { wood_type_id: '', quantity: '', unit: 'CFT', unit_price: '', notes: '' }]);
   };
 
   const removeItem = (index: number) => {
@@ -114,9 +114,9 @@ export default function PurchaseOrderForm() {
       showAlert('error', 'Validation', 'Please select supplier and warehouse');
       return;
     }
-    const validItems = items.filter((item) => item.wood_type_id && item.quantity && item.unit_price);
+    const validItems = items.filter((item) => item.wood_type_id && item.quantity && item.unit && item.unit_price);
     if (validItems.length === 0) {
-      showAlert('error', 'Validation', 'Please add at least one item');
+      showAlert('error', 'Validation', 'Please add at least one item with all fields filled');
       return;
     }
 
