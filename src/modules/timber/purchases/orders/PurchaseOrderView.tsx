@@ -27,7 +27,7 @@ export default function PurchaseOrderView() {
       setIsLoading(true);
       purchaseOrderApi.get(Number(id))
         .then((data) => {
-          setOrder((data as Record<string, unknown>).data as TimberPurchaseOrder || data as TimberPurchaseOrder);
+          setOrder((data as any).data as TimberPurchaseOrder || data as TimberPurchaseOrder);
         })
         .catch((error) => {
           console.error('Failed to fetch order:', error);
@@ -45,7 +45,7 @@ export default function PurchaseOrderView() {
       await purchaseOrderApi.send(order.id);
       showAlert('success', 'Sent', 'Purchase order marked as ordered', 2000);
       const data = await purchaseOrderApi.get(order.id);
-      setOrder((data as Record<string, unknown>).data as TimberPurchaseOrder || data as TimberPurchaseOrder);
+      setOrder((data as any).data as TimberPurchaseOrder || data as TimberPurchaseOrder);
     } catch (error) {
       showAlert('error', 'Error', getErrorMessage(error, 'Failed to send order'));
     }
@@ -69,7 +69,7 @@ export default function PurchaseOrderView() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-solarized-base02">PO: {order.po_number}</h1>
+            <h1 className="text-2xl font-bold text-solarized-base02">PO: {order.po_code}</h1>
             <p className="text-muted-foreground">Purchase order details</p>
           </div>
         </div>
@@ -97,7 +97,7 @@ export default function PurchaseOrderView() {
           <CardHeader><CardTitle>Order Information</CardTitle></CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              <div><Label className="text-xs text-muted-foreground uppercase">PO Number</Label><p className="text-base font-semibold">{order.po_number}</p></div>
+              <div><Label className="text-xs text-muted-foreground uppercase">PO Number</Label><p className="text-base font-semibold">{order.po_code}</p></div>
               <div><Label className="text-xs text-muted-foreground uppercase">Status</Label><div className="mt-1"><span className={`px-2 py-1 rounded-full text-xs font-medium ${statusBadge?.color}`}>{statusBadge?.label}</span></div></div>
               <div><Label className="text-xs text-muted-foreground uppercase">Supplier</Label><p className="text-sm font-medium">{order.supplier?.name || '-'}</p></div>
               <div><Label className="text-xs text-muted-foreground uppercase">Warehouse</Label><p className="text-sm">{order.warehouse?.name || '-'}</p></div>

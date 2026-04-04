@@ -102,7 +102,7 @@ export type PurchaseOrderStatus = 'draft' | 'ordered' | 'partial' | 'received' |
 
 export interface TimberPurchaseOrder {
   id: number;
-  po_number: string;
+  po_code: string;
   supplier_id: number;
   warehouse_id: number;
   status: PurchaseOrderStatus;

@@ -14,6 +14,7 @@ import api from '@/services/api';
 interface POItemRow {
   wood_type_id: string;
   quantity: string;
+  unit: string;
   unit_price: string;
   notes: string;
 }
@@ -33,7 +34,7 @@ export default function PurchaseOrderForm() {
   const [expectedDate, setExpectedDate] = useState('');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<POItemRow[]>([
-    { wood_type_id: '', quantity: '', unit_price: '', notes: '' },
+    { wood_type_id: '', quantity: '', unit: '', unit_price: '', notes: '' },
   ]);
 
   useEffect(() => {
@@ -71,6 +72,7 @@ export default function PurchaseOrderForm() {
             setItems(po.items.map((item) => ({
               wood_type_id: String(item.wood_type_id),
               quantity: String(item.quantity),
+              unit: item.wood_type?.unit || '',
               unit_price: String(item.unit_price),
               notes: item.notes || '',
             })));
@@ -84,7 +86,7 @@ export default function PurchaseOrderForm() {
   }, [id, isEdit]);
 
   const addItem = () => {
-    setItems([...items, { wood_type_id: '', quantity: '', unit_price: '', notes: '' }]);
+    setItems([...items, { wood_type_id: '', quantity: '', unit: '', unit_price: '', notes: '' }]);
   };
 
   const removeItem = (index: number) => {
@@ -129,6 +131,7 @@ export default function PurchaseOrderForm() {
         items: validItems.map((item) => ({
           wood_type_id: Number(item.wood_type_id),
           quantity: Number(item.quantity),
+          unit: item.unit,
           unit_price: Number(item.unit_price),
           notes: item.notes || undefined,
         })),
@@ -207,7 +210,7 @@ export default function PurchaseOrderForm() {
             <div className="space-y-4">
               {items.map((item, index) => (
                 <div key={index} className="grid grid-cols-12 gap-3 items-end p-3 border rounded-md bg-gray-50">
-                  <div className="col-span-4 space-y-1">
+                  <div className="col-span-3 space-y-1">
                     <Label className="text-xs">Wood Type <span className="text-red-500">*</span></Label>
                     <select value={item.wood_type_id} onChange={(e) => updateItem(index, 'wood_type_id', e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm">
                       <option value="">Select wood type</option>
@@ -217,6 +220,15 @@ export default function PurchaseOrderForm() {
                   <div className="col-span-2 space-y-1">
                     <Label className="text-xs">Quantity <span className="text-red-500">*</span></Label>
                     <Input type="number" step="0.01" min="0.01" placeholder="Qty" value={item.quantity} onChange={(e) => updateItem(index, 'quantity', e.target.value)} />
+                  </div>
+                  <div className="col-span-2 space-y-1">
+                    <Label className="text-xs">Unit <span className="text-red-500">*</span></Label>
+                    <select value={item.unit} onChange={(e) => updateItem(index, 'unit', e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm">
+                      <option value="CFT">CFT</option>
+                      <option value="SqFt">SqFt</option>
+                      <option value="Running/Ft">Running/Ft</option>
+                      <option value="Piece">Piece</option>
+                    </select>
                   </div>
                   <div className="col-span-2 space-y-1">
                     <Label className="text-xs">Unit Price <span className="text-red-500">*</span></Label>

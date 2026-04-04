@@ -33,7 +33,7 @@ export default function ReceiveGoodsForm() {
       setIsLoading(true);
       purchaseOrderApi.get(Number(id))
         .then((data) => {
-          const po = (data as Record<string, unknown>).data as TimberPurchaseOrder || data as TimberPurchaseOrder;
+          const po = (data as unknown as Record<string, unknown>).data as TimberPurchaseOrder || data as TimberPurchaseOrder;
           setOrder(po);
           if (po.items) {
             setItems(po.items.map((item) => ({
@@ -111,7 +111,7 @@ export default function ReceiveGoodsForm() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold text-solarized-base02">Receive Goods</h1>
-          <p className="text-muted-foreground">PO: {order.po_number} - {order.supplier?.name}</p>
+          <p className="text-muted-foreground">PO: {order.po_code} - {order.supplier?.name}</p>
         </div>
       </div>
 
