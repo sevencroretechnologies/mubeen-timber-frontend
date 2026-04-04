@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { estimationsApi } from "@/services/api";
 import api from "@/services/api";
+import Swal from "sweetalert2";
 import {
   showAlert,
   showConfirmDialog,
@@ -17,56 +18,71 @@ import {
   CheckCircle,
   XCircle,
   Package,
-  Edit3,
-  Ban,
-  Check,
-  Filter,
+  Pencil,
+  Clock,
+  MoreVertical,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import CollectMaterialModal from "./CollectMaterialModal";
 
-// Status badge component with icons
-const StatusBadge = ({ status }: { status: string }) => {
-  const styles: Record<
-    string,
-    { bg: string; text: string; label: string; icon: React.ReactNode }
-  > = {
-    draft: {
-      bg: "bg-gray-100",
-      text: "text-gray-700",
-      label: "Draft",
-      icon: <Edit3 className="h-3 w-3" />,
-    },
-    approved: {
-      bg: "bg-green-100",
-      text: "text-green-700",
-      label: "Approved",
-      icon: <Check className="h-3 w-3" />,
-    },
-    partially_collected: {
-      bg: "bg-amber-100",
-      text: "text-amber-700",
-      label: "Partial",
-      icon: <Package className="h-3 w-3" />,
-    },
-    collected: {
-      bg: "bg-purple-100",
-      text: "text-purple-700",
-      label: "Collected",
-      icon: <CheckCircle className="h-3 w-3" />,
-    },
-    cancelled: {
-      bg: "bg-red-100",
-      text: "text-red-700",
-      label: "Cancelled",
-      icon: <XCircle className="h-3 w-3" />,
-    },
-  };
+const statusStyles: Record<
+  string,
+  { bg: string; text: string; label: string; icon: React.ReactNode }
+> = {
+  draft: {
+    bg: "bg-gray-100",
+    text: "text-gray-700",
+    label: "Draft",
+    icon: <Clock className="h-3 w-3" />,
+  },
+  approved: {
+    bg: "bg-green-100",
+    text: "text-green-700",
+    label: "Approved",
+    icon: <CheckCircle className="h-3 w-3" />,
+  },
+  rejected: {
+    bg: "bg-red-100",
+    text: "text-red-700",
+    label: "Rejected",
+    icon: <XCircle className="h-3 w-3" />,
+  },
+  pending_approval: {
+    bg: "bg-amber-100",
+    text: "text-amber-700",
+    label: "Pending Approval",
+    icon: <Clock className="h-3 w-3" />,
+  },
+  collected: {
+    bg: "bg-purple-100",
+    text: "text-purple-700",
+    label: "Material Collected",
+    icon: <Package className="h-3 w-3" />,
+  },
+  partially_collected: {
+    bg: "bg-amber-100",
+    text: "text-amber-700",
+    label: "Partial",
+    icon: <Package className="h-3 w-3" />,
+  },
+};
 
-  const style = styles[status] || styles.draft;
+const StatusBadge = ({ status }: { status: string }) => {
+  const style = statusStyles[status] || {
+    bg: "bg-gray-100",
+    text: "text-gray-700",
+    label: status ? status.replace(/_/g, " ") : "Unknown",
+    icon: <Clock className="h-3 w-3" />,
+  };
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full ${style.bg} ${style.text}`}
+      className={`inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full ${style.bg} ${style.text}`}
     >
       {style.icon}
       {style.label}
@@ -74,81 +90,33 @@ const StatusBadge = ({ status }: { status: string }) => {
   );
 };
 
-// Collection progress component
-const CollectionProgress = ({
-  collected,
-  total,
-}: {
-  collected: number | string;
-  total: number | string;
-}) => {
-  const collectedNum = parseFloat(String(collected || 0));
-  const totalNum = parseFloat(String(total || 0));
-
-  if (!totalNum || totalNum === 0)
-    return <span className="text-gray-400">-</span>;
-
-  const percentage = Math.min(100, (collectedNum / totalNum) * 100);
-  const remaining = Math.max(0, totalNum - collectedNum);
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center gap-2 text-xs">
-        <span className="font-medium text-gray-700">
-          {collectedNum.toFixed(2)} / {totalNum.toFixed(2)} CFT
-        </span>
-        {remaining > 0 && (
-          <span className="text-amber-600 font-medium">
-            ({remaining.toFixed(2)} left)
-          </span>
-        )}
-      </div>
-      <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-        <div
-          className="h-2 rounded-full transition-all duration-500 ease-out"
-          style={{
-            width: `${percentage}%`,
-            backgroundColor:
-              percentage >= 100
-                ? "#22c55e"
-                : percentage >= 50
-                  ? "#eab308"
-                  : "#3b82f6",
-          }}
-        />
-      </div>
-      <div className="text-right text-xs text-gray-500">
-        {percentage.toFixed(0)}%
-      </div>
-    </div>
-  );
-};
-
 // Action button component
 const ActionButton = ({
   onClick,
-  variant = "edit",
+  variant = "view",
   children,
   disabled = false,
   title,
 }: {
   onClick: () => void;
-  variant?: "approve" | "reject" | "collect" | "edit" | "view" | "cancel";
+  variant?: "approve" | "reject" | "collect" | "edit" | "view" | "secondary";
   children: React.ReactNode;
   disabled?: boolean;
   title?: string;
 }) => {
-  const styles = {
+  const styles: Record<string, string> = {
     approve:
-      "bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 text-xs font-medium rounded-md",
+      "bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 text-xs font-semibold rounded-md shadow-sm",
     reject:
-      "bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 text-xs font-medium rounded-md",
+      "bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 text-xs font-semibold rounded-md shadow-sm",
     collect:
-      "bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 text-xs font-medium rounded-md",
-    edit: "bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 text-xs font-medium rounded-md",
-    view: "bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 text-xs font-medium rounded-md",
-    cancel:
-      "bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 text-xs font-medium rounded-md",
+      "bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 text-xs font-semibold rounded-md shadow-sm",
+    edit:
+      "bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 text-xs font-semibold rounded-md shadow-sm",
+    view:
+      "bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 text-xs font-semibold rounded-md shadow-sm",
+    secondary:
+      "bg-white hover:bg-gray-50 text-gray-700 px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-200 shadow-sm",
   };
 
   return (
@@ -184,74 +152,131 @@ const ActionsCell = ({
   onView: (id: number) => void;
 }) => {
   const status = row.status;
+  const isRejected = status === "rejected" || status === "cancelled";
+  const isApproved = status === "approved" || status === "partially_collected";
 
-  if (status === "draft") {
+  if (status === "draft" || status === "pending_approval") {
     return (
-      <div className="flex items-center gap-1.5 justify-end">
+      <div className="flex items-center justify-end gap-2">
         <ActionButton
           variant="approve"
           onClick={() => onApprove(row.id)}
           title="Approve estimation"
         >
-          <CheckCircle className="h-3.5 w-3.5 mr-1" /> Approve
+          <CheckCircle className="h-4 w-4 mr-1" /> Approve
         </ActionButton>
-        <ActionButton
-          variant="edit"
-          onClick={() => onEdit(row.id)}
-          title="Edit estimation"
-        >
-          <Edit3 className="h-3.5 w-3.5 mr-1" /> Edit
-        </ActionButton>
-        <ActionButton
-          variant="reject"
-          onClick={() => onDelete(row.id)}
-          title="Delete estimation"
-        >
-          <XCircle className="h-3.5 w-3.5 mr-1" /> Delete
-        </ActionButton>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50"
+              aria-label="More actions"
+              title="More actions"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[190px]">
+            <DropdownMenuItem onSelect={() => onEdit(row.id)}>
+              <Pencil className="h-4 w-4 text-blue-600" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onDelete(row.id)}>
+              <XCircle className="h-4 w-4 text-red-600" />
+              Reject
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onView(row.id)}>
+              <Eye className="h-4 w-4 text-slate-600" />
+              View
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     );
   }
 
-  if (status === "approved" || status === "partially_collected") {
+  if (isApproved) {
     return (
-      <div className="flex items-center gap-1.5 justify-end">
+      <div className="flex items-center justify-end gap-2">
         <ActionButton
           variant="collect"
           onClick={() => onCollect(row)}
           title="Collect material"
         >
-          <Package className="h-3.5 w-3.5 mr-1" /> Collect Material
+          <Package className="h-4 w-4 mr-1" /> Collect Material
         </ActionButton>
-        {status === "partially_collected" && (
-          <ActionButton
-            variant="approve"
-            onClick={() => onMarkComplete(row.id)}
-            title="Mark as complete"
-          >
-            <CheckCircle className="h-3.5 w-3.5 mr-1" /> Complete
-          </ActionButton>
-        )}
-        <ActionButton
-          variant="cancel"
-          onClick={() => onCancel(row.id)}
-          title="Cancel estimation"
-        >
-          <Ban className="h-3.5 w-3.5 mr-1" /> Cancel
-        </ActionButton>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50"
+              aria-label="More actions"
+              title="More actions"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[190px]">
+            <DropdownMenuItem onSelect={() => onView(row.id)}>
+              <Eye className="h-4 w-4 text-slate-600" />
+              View
+            </DropdownMenuItem>
+            {status === "partially_collected" && (
+              <DropdownMenuItem onSelect={() => onMarkComplete(row.id)}>
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                Mark as Complete
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onSelect={() => onCancel(row.id)}>
+              <XCircle className="h-4 w-4 text-red-600" />
+              Cancel
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     );
   }
 
-  // For collected or cancelled - only view
+  if (isRejected) {
+    return (
+      <div className="flex items-center justify-end gap-2">
+        <ActionButton
+          variant="view"
+          onClick={() => onView(row.id)}
+          title="View estimation"
+        >
+          <Eye className="h-4 w-4 mr-1" /> View
+        </ActionButton>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50"
+              aria-label="More actions"
+              title="More actions"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[190px]">
+            <DropdownMenuItem onSelect={() => onEdit(row.id)}>
+              <Pencil className="h-4 w-4 text-blue-600" />
+              Reconsider
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex items-center gap-1.5 justify-end">
+    <div className="flex items-center justify-end gap-2">
       <ActionButton
         variant="view"
         onClick={() => onView(row.id)}
-        title="View details"
+        title="View estimation"
       >
-        <Eye className="h-3.5 w-3.5 mr-1" /> View
+        <Eye className="h-4 w-4 mr-1" /> View
       </ActionButton>
     </div>
   );
@@ -262,6 +287,7 @@ export default function EstimationsList() {
   const [estimations, setEstimations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [perPage, setPerPage] = useState(25);
   const [collectModal, setCollectModal] = useState<{
@@ -271,6 +297,31 @@ export default function EstimationsList() {
     open: false,
     estimation: null,
   });
+
+  const statusOptions = [
+    { value: "all", label: "All" },
+    { value: "draft", label: "Draft" },
+    { value: "pending_approval", label: "Pending Approval" },
+    { value: "approved", label: "Approved" },
+    { value: "rejected", label: "Rejected" },
+    { value: "partially_collected", label: "Partial" },
+    { value: "collected", label: "Material Collected" },
+    { value: "cancelled", label: "Cancelled" },
+  ];
+
+  const statusCounts = useMemo(
+    () =>
+      estimations.reduce(
+        (acc, estimation) => {
+          const current = estimation.status || "unknown";
+          acc[current] = (acc[current] || 0) + 1;
+          acc.total += 1;
+          return acc;
+        },
+        { total: 0 } as Record<string, number>,
+      ),
+    [estimations],
+  );
 
   const fetchEstimations = useCallback(async () => {
     setIsLoading(true);
@@ -294,21 +345,51 @@ export default function EstimationsList() {
     fetchEstimations();
   }, [fetchEstimations]);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [search]);
+
   const handleDelete = async (id: number) => {
-    const result = await showConfirmDialog(
-      "Delete Estimation",
-      "Are you sure you want to delete this estimation? This action cannot be undone.",
-    );
+    const result = await Swal.fire({
+      title: "Reject Estimation",
+      input: "textarea",
+      inputLabel: "Enter rejection reason",
+      inputPlaceholder: "Provide a short reason for rejection...",
+      inputAttributes: {
+        "aria-label": "Rejection reason",
+      },
+      showCancelButton: true,
+      confirmButtonText: "Reject",
+      cancelButtonText: "Cancel",
+      customClass: {
+        popup: "swal-solarized",
+        title: "swal-title",
+        htmlContainer: "swal-text",
+      },
+      preConfirm: (value) => {
+        if (!value || !String(value).trim()) {
+          Swal.showValidationMessage("Please enter a rejection reason.");
+        }
+      },
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+    });
+
     if (!result.isConfirmed) return;
+
     try {
       await estimationsApi.delete(id);
-      showAlert("success", "Deleted!", "Estimation deleted successfully", 2000);
+      showAlert("success", "Rejected!", "Estimation rejected successfully.", 2000);
       fetchEstimations();
     } catch (error) {
       showAlert(
         "error",
         "Error",
-        getErrorMessage(error, "Failed to delete estimation"),
+        getErrorMessage(error, "Failed to reject estimation"),
       );
     }
   };
@@ -422,12 +503,14 @@ export default function EstimationsList() {
 
   // Filter estimations by search and status
   const filteredData = estimations.filter((est: any) => {
+    const value = debouncedSearch || search;
     const matchesSearch =
-      (est.customer?.name || "").toLowerCase().includes(search.toLowerCase()) ||
-      (est.product?.name || "").toLowerCase().includes(search.toLowerCase()) ||
-      (est.project?.name || "").toLowerCase().includes(search.toLowerCase());
+      (est.customer?.name || "").toLowerCase().includes(value.toLowerCase()) ||
+      (est.product?.name || "").toLowerCase().includes(value.toLowerCase()) ||
+      (est.project?.name || "").toLowerCase().includes(value.toLowerCase());
 
-    const matchesStatus = statusFilter === "all" || est.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all" || est.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -443,19 +526,27 @@ export default function EstimationsList() {
       name: "Customer",
       selector: (row) => row.customer?.name || "Unknown",
       sortable: true,
-      minWidth: "140px",
+      minWidth: "160px",
+      cell: (row) => (
+        <div className="space-y-0.5">
+          <div className="font-semibold text-slate-900">{row.customer?.name || "Unknown"}</div>
+          <div className="text-xs text-slate-500">{row.product?.name || ""}</div>
+        </div>
+      ),
     },
     {
       name: "Project",
       selector: (row) => row.project?.name || "-",
       sortable: true,
-      minWidth: "120px",
+      minWidth: "140px",
+      cell: (row) => <div className="text-sm text-slate-700">{row.project?.name || "-"}</div>,
     },
     {
       name: "Product",
       selector: (row) => row.product?.name || "Unknown",
       sortable: true,
-      minWidth: "120px",
+      minWidth: "140px",
+      cell: (row) => <div className="text-sm text-slate-700">{row.product?.name || "Unknown"}</div>,
     },
     {
       name: "Type",
@@ -464,22 +555,26 @@ export default function EstimationsList() {
       width: "90px",
       center: true,
     },
-    {
-      name: "CFT",
-      selector: (row) => `${Number(row.cft || 0).toFixed(2)} CFT`,
-      sortable: true,
-      width: "90px",
-      right: true,
-    },
+    // {
+    //   name: "CFT",
+    //   selector: (row) => `${Number(row.cft || 0).toFixed(2)} CFT`,
+    //   sortable: true,
+    //   width: "90px",
+    //   right: true,
+    // },
     {
       name: "Amount (₹)",
-      selector: (row) =>
-        row.total_amount
-          ? `₹${Number(row.total_amount).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-          : "-",
+      selector: (row) => row.total_amount || 0,
       sortable: true,
-      width: "120px",
+      width: "140px",
       right: true,
+      cell: (row) => (
+        <div className="text-right font-semibold text-slate-900">
+          {row.total_amount
+            ? `₹${Number(row.total_amount).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            : "-"}
+        </div>
+      ),
     },
     {
       name: "Status",
@@ -540,16 +635,19 @@ export default function EstimationsList() {
     },
     cells: {
       style: {
-        paddingLeft: "12px",
-        paddingRight: "12px",
+        paddingLeft: "16px",
+        paddingRight: "16px",
         fontSize: "14px",
         borderBottom: "1px solid #f3f4f6",
       },
     },
     rows: {
       style: {
+        minHeight: "64px",
+        backgroundColor: "#ffffff",
+        transition: "background-color 0.2s ease",
         "&:hover": {
-          backgroundColor: "#f9fafb",
+          backgroundColor: "#f8fafc",
         },
       },
     },
@@ -571,62 +669,53 @@ export default function EstimationsList() {
 
       {/* Filters Card */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by customer, project, or product..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
-              />
+        <CardContent className="pt-6 pb-6">
+          <div className="space-y-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Search by customer, project, or product..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-11 rounded-2xl border border-slate-200 shadow-sm"
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {statusOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setStatusFilter(option.value)}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                      statusFilter === option.value
+                        ? "bg-slate-900 text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Status Filter */}
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="border rounded-md px-3 py-2 text-sm bg-white"
-              >
-                <option value="all">All Status</option>
-                <option value="draft">Draft</option>
-                <option value="approved">Approved</option>
-                <option value="partially_collected">Partially Collected</option>
-                <option value="collected">Collected</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-
-            {/* Stats */}
-            <div className="flex items-center gap-4 text-sm ml-auto">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-gray-300"></span>
-                <span className="text-gray-600">
-                  Draft:{" "}
-                  {estimations.filter((e) => e.status === "draft").length}
-                </span>
+            <div className="grid gap-4 sm:grid-cols-4">
+              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Total estimations</p>
+                <p className="mt-3 text-2xl font-semibold text-slate-900">{statusCounts.total || 0}</p>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                <span className="text-gray-600">
-                  Approved:{" "}
-                  {estimations.filter((e) => e.status === "approved").length}
-                </span>
+              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Draft</p>
+                <p className="mt-3 text-2xl font-semibold text-slate-900">{statusCounts.draft || 0}</p>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                <span className="text-gray-600">
-                  Partial:{" "}
-                  {
-                    estimations.filter(
-                      (e) => e.status === "partially_collected",
-                    ).length
-                  }
-                </span>
+              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Approved</p>
+                <p className="mt-3 text-2xl font-semibold text-emerald-700">{statusCounts.approved || 0}</p>
+              </div>
+              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Pending / Rejected</p>
+                <p className="mt-3 text-2xl font-semibold text-amber-700">{(statusCounts.pending_approval || 0) + (statusCounts.rejected || 0)}</p>
               </div>
             </div>
           </div>

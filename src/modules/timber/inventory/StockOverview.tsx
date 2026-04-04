@@ -108,13 +108,13 @@ export default function StockOverview() {
       right: true,
       cell: (row) => Number(row.available_quantity).toFixed(2),
     },
-    {
-      name: 'Avg Cost',
-      selector: (row) => row.average_cost,
-      sortable: true,
-      right: true,
-      cell: (row) => `₹${Number(row.average_cost).toFixed(2)}`,
-    },
+    // {
+    //   name: 'Avg Cost',
+    //   selector: (row) => row.average_cost,
+    //   sortable: true,
+    //   right: true,
+    //   cell: (row) => `₹${Number(row.average_cost).toFixed(2)}`,
+    // },
     {
       name: 'Status',
       cell: (row) => getStockLevelBadge(row),

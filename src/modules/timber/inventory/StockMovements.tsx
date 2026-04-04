@@ -112,15 +112,15 @@ export default function StockMovements() {
     },
     {
       name: 'Before',
-      selector: (row) => row.quantity_before,
+      selector: (row) => row.before_quantity,
       right: true,
-      cell: (row) => Number(row.quantity_before).toFixed(2),
+      cell: (row) => Number(row.before_quantity).toFixed(2),
     },
     {
       name: 'After',
-      selector: (row) => row.quantity_after,
+      selector: (row) => row.after_quantity,
       right: true,
-      cell: (row) => <span className="font-semibold">{Number(row.quantity_after).toFixed(2)}</span>,
+      cell: (row) => <span className="font-semibold">{Number(row.after_quantity).toFixed(2)}</span>,
     },
     {
       name: 'Notes',

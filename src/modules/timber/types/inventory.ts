@@ -83,8 +83,8 @@ export interface TimberStockMovement {
   quantity: number;
   unit_price: number;
   total_price: number;
-  quantity_before: number;
-  quantity_after: number;
+  before_quantity: number;
+  after_quantity: number;
   reference_type: string | null;
   reference_id: number | null;
   notes: string | null;
