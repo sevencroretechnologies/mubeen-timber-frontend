@@ -159,7 +159,7 @@ export default function EstimationsList() {
     };
 
     const getEstimationTypeLabel = (type: number) => {
-        const types = { 1: 'Inches', 2: 'Feet', 3: 'Thk (In)', 4: 'Thk (Ft)' };
+        const types = { 1: 'Inches', 2: 'Feet', 3: 'Thk (In)', 4: 'Thk (Ft)', 5: 'Direct Entry' };
         return types[type as keyof typeof types] || 'Unknown';
     };
 

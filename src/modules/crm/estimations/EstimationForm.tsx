@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Save, Calculator } from 'lucide-react';
+import { ArrowLeft, Save, Calculator, DollarSign } from 'lucide-react';
 
 export default function EstimationForm() {
     const navigate = useNavigate();
@@ -17,6 +17,7 @@ export default function EstimationForm() {
     const [customers, setCustomers] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
     const [projects, setProjects] = useState<any[]>([]);
+    const [directAmount, setDirectAmount] = useState('');
 
     const [customerId, setCustomerId] = useState('');
     const [projectId, setProjectId] = useState('');
@@ -76,6 +77,11 @@ export default function EstimationForm() {
                 setCostPerCft(String(est.cost_per_cft || ''));
                 setLaborCharges(String(est.labor_charges || ''));
                 setTotalAmount(String(est.total_amount || ''));
+
+                // If Direct Amount mode, load the total_amount as directAmount
+                if (est.estimation_type === 5) {
+                    setDirectAmount(String(est.total_amount || ''));
+                }
             }).catch((error) => {
                 showAlert('error', 'Error', 'Failed to load estimation details');
                 console.error(error);
@@ -114,10 +120,16 @@ export default function EstimationForm() {
     }, [length, breadth, height, thickness, quantity, estimationType, cft]);
 
     const derivedTotalAmount = useMemo(() => {
+        // Direct Amount mode
+        if (estimationType === '5') {
+            return Number(directAmount) || 0;
+        }
+
+        // Formula-based calculation
         const cost = Number(costPerCft) || 0;
         const labor = Number(laborCharges) || 0;
         return (derivedCft * cost) + labor;
-    }, [derivedCft, costPerCft, laborCharges]);
+    }, [derivedCft, costPerCft, laborCharges, estimationType, directAmount]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -126,23 +138,38 @@ export default function EstimationForm() {
             return;
         }
 
+        // Direct Amount mode validation
+        if (estimationType === '5' && !directAmount) {
+            showAlert('error', 'Validation', 'Please enter the direct amount.');
+            return;
+        }
+
         setIsSubmitting(true);
         try {
-            const payload = {
+            const payload: Record<string, any> = {
                 customer_id: Number(customerId),
                 project_id: projectId ? Number(projectId) : null,
                 product_id: Number(productId),
                 estimation_type: Number(estimationType),
-                length: length ? Number(length) : null,
-                breadth: breadth ? Number(breadth) : null,
-                height: height ? Number(height) : null,
-                thickness: thickness ? Number(thickness) : null,
-                quantity: quantity ? Number(quantity) : null,
-                cft: parseFloat(derivedCft.toFixed(2)),
-                cost_per_cft: costPerCft ? Number(costPerCft) : null,
-                labor_charges: laborCharges ? Number(laborCharges) : null,
                 total_amount: parseFloat(derivedTotalAmount.toFixed(2)),
             };
+
+            // Only include dimensions and cost details in formula-based modes
+            if (estimationType !== '5') {
+                payload.length = length ? Number(length) : null;
+                payload.breadth = breadth ? Number(breadth) : null;
+                payload.height = height ? Number(height) : null;
+                payload.thickness = thickness ? Number(thickness) : null;
+                payload.quantity = quantity ? Number(quantity) : null;
+                payload.cft = parseFloat(derivedCft.toFixed(2));
+                payload.cost_per_cft = costPerCft ? Number(costPerCft) : null;
+                payload.labor_charges = laborCharges ? Number(laborCharges) : null;
+            } else {
+                // Direct Amount mode - set CFT as null or 0
+                payload.cft = null;
+                payload.cost_per_cft = null;
+                payload.labor_charges = null;
+            }
 
             if (isEdit && id) {
                 await estimationsApi.update(id, payload);
@@ -206,6 +233,7 @@ export default function EstimationForm() {
                                     <option value="2">CFT - Feet</option>
                                     <option value="3">CFT - Thickness in Inches</option>
                                     <option value="4">CFT - Thickness in Feet</option>
+                                    <option value="5">Direct Amount</option>
                                 </select>
                             </div>
                         </div>
@@ -217,47 +245,78 @@ export default function EstimationForm() {
                         <CardTitle>Dimensions & Values</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-6">
-                            <div className="space-y-2">
-                                <Label>Length</Label>
-                                <Input type="number" step="0.01" value={length} onChange={(e) => setLength(e.target.value)} />
+                        {estimationType === '5' ? (
+                            // Direct Amount Mode
+                            <div className="max-w-md">
+                                <div className="flex items-center gap-3 p-6 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg border border-amber-200">
+                                    <div className="p-3 bg-amber-100 rounded-full">
+                                        <DollarSign className="h-6 w-6 text-amber-600" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <Label className="text-sm font-semibold text-amber-900">Direct Amount (₹) <span className="text-red-500">*</span></Label>
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            value={directAmount}
+                                            onChange={(e) => setDirectAmount(e.target.value)}
+                                            placeholder="Enter amount directly"
+                                            className="mt-2 text-lg font-semibold border-amber-300 focus:border-amber-500"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                    <p className="text-sm text-blue-800">
+                                        <strong>Final Amount:</strong> ₹{derivedTotalAmount.toFixed(2)}
+                                    </p>
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <Label>Breadth</Label>
-                                <Input type="number" step="0.01" value={breadth} onChange={(e) => setBreadth(e.target.value)} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Height</Label>
-                                <Input type="number" step="0.01" value={height} onChange={(e) => setHeight(e.target.value)} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Thickness</Label>
-                                <Input type="number" step="0.01" value={thickness} onChange={(e) => setThickness(e.target.value)} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Quantity</Label>
-                                <Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
-                            </div>
-                        </div>
+                        ) : (
+                            // Formula-based Mode
+                            <>
+                                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-6">
+                                    <div className="space-y-2">
+                                        <Label>Length</Label>
+                                        <Input type="number" step="0.01" value={length} onChange={(e) => setLength(e.target.value)} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Breadth</Label>
+                                        <Input type="number" step="0.01" value={breadth} onChange={(e) => setBreadth(e.target.value)} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Height</Label>
+                                        <Input type="number" step="0.01" value={height} onChange={(e) => setHeight(e.target.value)} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Thickness</Label>
+                                        <Input type="number" step="0.01" value={thickness} onChange={(e) => setThickness(e.target.value)} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Quantity</Label>
+                                        <Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+                                    </div>
+                                </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-6 border-t">
-                            <div className="space-y-2">
-                                <Label>Volume (CFT)</Label>
-                                <Input type="number" step="0.01" value={derivedCft.toFixed(2)} className="bg-blue-50/50 cursor-not-allowed text-gray-700" readOnly />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Cost per CFT (₹)</Label>
-                                <Input type="number" step="0.01" value={costPerCft} onChange={(e) => setCostPerCft(e.target.value)} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Labor Charges (₹)</Label>
-                                <Input type="number" step="0.01" value={laborCharges} onChange={(e) => setLaborCharges(e.target.value)} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-solarized-blue font-bold">Total Amount (₹)</Label>
-                                <Input type="number" step="0.01" value={derivedTotalAmount.toFixed(2)} className="font-bold bg-green-50/80 cursor-not-allowed text-gray-700" readOnly />
-                            </div>
-                        </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-6 border-t">
+                                    <div className="space-y-2">
+                                        <Label>Volume (CFT)</Label>
+                                        <Input type="number" step="0.01" value={derivedCft.toFixed(2)} className="bg-blue-50/50 cursor-not-allowed text-gray-700" readOnly />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Cost per CFT (₹)</Label>
+                                        <Input type="number" step="0.01" value={costPerCft} onChange={(e) => setCostPerCft(e.target.value)} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Labor Charges (₹)</Label>
+                                        <Input type="number" step="0.01" value={laborCharges} onChange={(e) => setLaborCharges(e.target.value)} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-solarized-blue font-bold">Total Amount (₹)</Label>
+                                        <Input type="number" step="0.01" value={derivedTotalAmount.toFixed(2)} className="font-bold bg-green-50/80 cursor-not-allowed text-gray-700" readOnly />
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </CardContent>
                 </Card>
 
