@@ -228,8 +228,12 @@ export default function CustomerProjects() {
         if (expandedProject === projectId) {
             setExpandedProject(null);
             setExpandedProduct(null);
-            // We keep products and estimations in state for persistence
+            setProducts([]);
+            setEstimations([]);
         } else {
+            // Clear previous products immediately before loading new ones
+            setProducts([]);
+            setEstimations([]);
             setExpandedProject(projectId);
             setExpandedProduct(null);
             await fetchProducts(projectId);

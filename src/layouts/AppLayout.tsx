@@ -73,7 +73,7 @@ const navigation: NavItem[] = [
       { name: "Stock Movements", href: "/inventory/movements" },
       { name: "Stock Adjustment", href: "/inventory/adjust" },
       { name: "Low Stock Alerts", href: "/inventory/alerts" },
-      { name: "Requisitions", href: "/inventory/requisitions" },
+      // { name: "Requisitions", href: "/inventory/requisitions" },
       { name: "Warehouses", href: "/inventory/warehouses" },
     ],
   },
