@@ -30,6 +30,7 @@ import {
     Calculator,
     ChevronDown,
     ChevronRight,
+    DollarSign,
 } from 'lucide-react';
 
 interface Project {
@@ -116,6 +117,7 @@ export default function CustomerProjects() {
         quantity: '1',
         cost_per_cft: '',
         labor_charges: '',
+        direct_amount: '',
     });
     const [currentProductId, setCurrentProductId] = useState<number | null>(null);
 
@@ -409,6 +411,11 @@ export default function CustomerProjects() {
 
     // Estimation Handlers
     const calculateCft = () => {
+        // Direct Amount mode - no CFT calculation
+        if (estimationFormData.estimation_type === '5') {
+            return 0;
+        }
+
         const l = Number(estimationFormData.length) || 1;
         const b = Number(estimationFormData.breadth) || 1;
         const h = Number(estimationFormData.height) || 1;
@@ -428,6 +435,11 @@ export default function CustomerProjects() {
     };
 
     const calculateTotal = () => {
+        // Direct Amount mode
+        if (estimationFormData.estimation_type === '5') {
+            return Number(estimationFormData.direct_amount) || 0;
+        }
+
         const cft = calculateCft();
         const cost = Number(estimationFormData.cost_per_cft) || 0;
         const labor = Number(estimationFormData.labor_charges) || 0;
@@ -446,6 +458,7 @@ export default function CustomerProjects() {
             quantity: '1',
             cost_per_cft: '',
             labor_charges: '',
+            direct_amount: '',
         });
         setIsEstimationModalOpen(true);
     };
@@ -462,29 +475,45 @@ export default function CustomerProjects() {
             quantity: '1',
             cost_per_cft: '',
             labor_charges: '',
+            direct_amount: '',
         });
     };
 
     const handleSaveEstimation = async () => {
         if (!currentProductId || !expandedProject) return;
 
+        // Direct Amount mode validation
+        if (estimationFormData.estimation_type === '5' && !estimationFormData.direct_amount) {
+            showAlert('error', 'Validation', 'Please enter the direct amount.');
+            return;
+        }
+
         setIsSavingEstimation(true);
         try {
-            const payload = {
+            const payload: Record<string, any> = {
                 customer_id: Number(id),
                 project_id: expandedProject,
                 product_id: currentProductId,
                 estimation_type: Number(estimationFormData.estimation_type),
-                length: estimationFormData.length ? Number(estimationFormData.length) : null,
-                breadth: estimationFormData.breadth ? Number(estimationFormData.breadth) : null,
-                height: estimationFormData.height ? Number(estimationFormData.height) : null,
-                thickness: estimationFormData.thickness ? Number(estimationFormData.thickness) : null,
-                quantity: estimationFormData.quantity ? Number(estimationFormData.quantity) : null,
-                cft: calculateCft(),
-                cost_per_cft: estimationFormData.cost_per_cft ? Number(estimationFormData.cost_per_cft) : null,
-                labor_charges: estimationFormData.labor_charges ? Number(estimationFormData.labor_charges) : null,
                 total_amount: calculateTotal(),
             };
+
+            // Only include dimensions and cost details in formula-based modes
+            if (estimationFormData.estimation_type !== '5') {
+                payload.length = estimationFormData.length ? Number(estimationFormData.length) : null;
+                payload.breadth = estimationFormData.breadth ? Number(estimationFormData.breadth) : null;
+                payload.height = estimationFormData.height ? Number(estimationFormData.height) : null;
+                payload.thickness = estimationFormData.thickness ? Number(estimationFormData.thickness) : null;
+                payload.quantity = estimationFormData.quantity ? Number(estimationFormData.quantity) : null;
+                payload.cft = calculateCft();
+                payload.cost_per_cft = estimationFormData.cost_per_cft ? Number(estimationFormData.cost_per_cft) : null;
+                payload.labor_charges = estimationFormData.labor_charges ? Number(estimationFormData.labor_charges) : null;
+            } else {
+                // Direct Amount mode
+                payload.cft = null;
+                payload.cost_per_cft = null;
+                payload.labor_charges = null;
+            }
 
             await estimationsApi.create(payload);
             showAlert('success', 'Created!', 'Estimation added successfully', 2000);
@@ -512,7 +541,7 @@ export default function CustomerProjects() {
 
     // Helper functions
     const getEstimationTypeLabel = (type: number) => {
-        const types = { 1: 'Inches', 2: 'Feet', 3: 'Thickness (In)', 4: 'Thickness (Ft)' };
+        const types = { 1: 'Inches', 2: 'Feet', 3: 'Thickness (In)', 4: 'Thickness (Ft)', 5: 'Direct Entry' };
         return types[type as keyof typeof types] || 'Unknown';
     };
 
@@ -886,24 +915,51 @@ export default function CustomerProjects() {
                                 <option value="2">CFT - Feet (L×B×H)</option>
                                 <option value="3">CFT - Thickness in Inches (L×B×T/12)</option>
                                 <option value="4">CFT - Thickness in Feet (L×B×T)</option>
+                                <option value="5">Direct Amount</option>
                             </select>
                         </div>
-                        <div className="grid grid-cols-5 gap-2">
-                            <div className="space-y-1"><Label className="text-xs">Length</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.length} onChange={(e) => setEstimationFormData(p => ({ ...p, length: e.target.value }))} /></div>
-                            <div className="space-y-1"><Label className="text-xs">Breadth</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.breadth} onChange={(e) => setEstimationFormData(p => ({ ...p, breadth: e.target.value }))} /></div>
-                            {(estimationFormData.estimation_type === '1' || estimationFormData.estimation_type === '2') && (
-                                <div className="space-y-1"><Label className="text-xs">Height</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.height} onChange={(e) => setEstimationFormData(p => ({ ...p, height: e.target.value }))} /></div>
-                            )}
-                            {(estimationFormData.estimation_type === '3' || estimationFormData.estimation_type === '4') && (
-                                <div className="space-y-1"><Label className="text-xs">Thickness</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.thickness} onChange={(e) => setEstimationFormData(p => ({ ...p, thickness: e.target.value }))} /></div>
-                            )}
-                            <div className="space-y-1"><Label className="text-xs">Quantity</Label><Input type="number" placeholder="1" value={estimationFormData.quantity} onChange={(e) => setEstimationFormData(p => ({ ...p, quantity: e.target.value }))} /></div>
-                        </div>
-                        <div className="bg-blue-50 p-3 rounded-lg flex justify-between"><span className="text-sm font-medium">Volume (CFT):</span><span className="text-lg font-bold text-blue-600">{calculateCft().toFixed(2)}</span></div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-2"><Label>Material Cost per CFT (₹)</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.cost_per_cft} onChange={(e) => setEstimationFormData(p => ({ ...p, cost_per_cft: e.target.value }))} /></div>
-                            <div className="space-y-2"><Label>Labor Charges (₹)</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.labor_charges} onChange={(e) => setEstimationFormData(p => ({ ...p, labor_charges: e.target.value }))} /></div>
-                        </div>
+
+                        {estimationFormData.estimation_type === '5' ? (
+                            // Direct Amount Mode
+                            <>
+                                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl border border-amber-200">
+                                    <div className="p-2 bg-amber-100 rounded-full">
+                                        <DollarSign className="h-5 w-5 text-amber-600" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <Label className="text-sm font-semibold text-amber-900">Direct Amount (₹)</Label>
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="Enter amount directly"
+                                            value={estimationFormData.direct_amount}
+                                            onChange={(e) => setEstimationFormData(p => ({ ...p, direct_amount: e.target.value }))}
+                                            className="mt-1 border-amber-300 focus:border-amber-500"
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            // Formula-based Mode
+                            <>
+                                <div className="grid grid-cols-5 gap-2">
+                                    <div className="space-y-1"><Label className="text-xs">Length</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.length} onChange={(e) => setEstimationFormData(p => ({ ...p, length: e.target.value }))} /></div>
+                                    <div className="space-y-1"><Label className="text-xs">Breadth</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.breadth} onChange={(e) => setEstimationFormData(p => ({ ...p, breadth: e.target.value }))} /></div>
+                                    {(estimationFormData.estimation_type === '1' || estimationFormData.estimation_type === '2') && (
+                                        <div className="space-y-1"><Label className="text-xs">Height</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.height} onChange={(e) => setEstimationFormData(p => ({ ...p, height: e.target.value }))} /></div>
+                                    )}
+                                    {(estimationFormData.estimation_type === '3' || estimationFormData.estimation_type === '4') && (
+                                        <div className="space-y-1"><Label className="text-xs">Thickness</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.thickness} onChange={(e) => setEstimationFormData(p => ({ ...p, thickness: e.target.value }))} /></div>
+                                    )}
+                                    <div className="space-y-1"><Label className="text-xs">Quantity</Label><Input type="number" placeholder="1" value={estimationFormData.quantity} onChange={(e) => setEstimationFormData(p => ({ ...p, quantity: e.target.value }))} /></div>
+                                </div>
+                                <div className="bg-blue-50 p-3 rounded-lg flex justify-between"><span className="text-sm font-medium">Volume (CFT):</span><span className="text-lg font-bold text-blue-600">{calculateCft().toFixed(2)}</span></div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-2"><Label>Material Cost per CFT (₹)</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.cost_per_cft} onChange={(e) => setEstimationFormData(p => ({ ...p, cost_per_cft: e.target.value }))} /></div>
+                                    <div className="space-y-2"><Label>Labor Charges (₹)</Label><Input type="number" step="0.01" placeholder="0" value={estimationFormData.labor_charges} onChange={(e) => setEstimationFormData(p => ({ ...p, labor_charges: e.target.value }))} /></div>
+                                </div>
+                            </>
+                        )}
                         <div className="bg-green-50 p-3 rounded-lg flex justify-between"><span className="text-sm font-medium">Total Amount:</span><span className="text-2xl font-bold text-green-600">₹{calculateTotal().toFixed(2)}</span></div>
                     </div>
                     <DialogFooter>
