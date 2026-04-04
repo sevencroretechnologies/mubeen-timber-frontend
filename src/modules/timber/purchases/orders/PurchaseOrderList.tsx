@@ -99,10 +99,10 @@ export default function PurchaseOrderList() {
     },
     {
       name: 'PO Number',
-      selector: (row) => row.po_number,
+      selector: (row) => row.po_code,
       sortable: true,
       minWidth: '140px',
-      cell: (row) => <span className="font-medium text-solarized-blue">{row.po_number}</span>,
+      cell: (row) => <span className="font-medium text-solarized-blue">{row.po_code}</span>,
     },
     {
       name: 'Supplier',
