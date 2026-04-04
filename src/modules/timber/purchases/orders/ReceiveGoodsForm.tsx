@@ -81,8 +81,8 @@ export default function ReceiveGoodsForm() {
     try {
       await purchaseOrderApi.receive(Number(id), {
         items: receivingItems.map((item) => ({
-          id: item.id,
-          received_quantity: Number(item.received_quantity),
+          item_id: item.id,
+          quantity: Number(item.received_quantity),
         })),
         notes: notes || undefined,
       });
