@@ -451,6 +451,9 @@ export const estimationsApi = {
   create: (data: any) => api.post('/estimations', data),
   update: (id: number | string, data: any) => api.put(`/estimations/${id}`, data),
   delete: (id: number | string) => api.delete(`/estimations/${id}`),
+  cancel: (id: number | string) => api.post(`/estimations/${id}/cancel`),
+  reject: (id: number | string, data?: { reason?: string }) => api.post(`/estimations/${id}/cancel`, data),
+  approve: (id: number | string) => api.post(`/estimations/${id}/approve`),
 };
 
 export const projectApi = {

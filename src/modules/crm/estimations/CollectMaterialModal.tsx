@@ -170,7 +170,7 @@ export default function CollectMaterialModal({
                             <span className="text-gray-600">Estimated CFT:</span>
                             <span className="font-medium">{cft.toFixed(2)} CFT</span>
                         </div>
-                        <div className="flex justify-between text-sm">
+                        {/* <div className="flex justify-between text-sm">
                             <span className="text-gray-600">Already Collected:</span>
                             <span className="font-medium text-blue-600">
                                 {collectedCft.toFixed(2)} CFT
@@ -181,7 +181,7 @@ export default function CollectMaterialModal({
                             <span className="font-medium text-orange-600">
                                 {remainingCft.toFixed(2)} CFT
                             </span>
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* Wood Type Selection */}
@@ -203,7 +203,7 @@ export default function CollectMaterialModal({
                             <option value="">Select Wood Type</option>
                             {woodTypes.map((wt) => (
                                 <option key={wt.id} value={wt.id}>
-                                    {wt.name} {wt.code ? `(${wt.code})` : ''}
+                                    {wt.name} 
                                 </option>
                             ))}
                         </select>
