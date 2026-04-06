@@ -13,6 +13,7 @@ import {
   User,
   Warehouse,
   ShoppingCart,
+  Hammer 
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import {
@@ -50,9 +51,9 @@ const navigation: NavItem[] = [
     children: [
       { name: "Dashboard", href: "/crm/dashboard" },
       { name: "Leads", href: "/crm/leads" },
-      { name: "Customers", href: "/crm/customers" },
+      // { name: "Customers", href: "/crm/customers" },
       { name: "Opportunities", href: "/crm/opportunities" },
-      { name: "Estimations", href: "/crm/estimations" },
+      // { name: "Estimations", href: "/crm/estimations" },
       { name: "Campaigns", href: "/crm/campaigns" },
       { name: "Sources", href: "/crm/sources" },
       { name: "Territories", href: "/crm/territories" },
@@ -84,6 +85,16 @@ const navigation: NavItem[] = [
     children: [
       { name: "Purchase Orders", href: "/purchases/orders" },
       { name: "Suppliers", href: "/purchases/suppliers" },
+    ],
+  },
+
+  {
+    name: "Timber",
+    href: "/purchases",
+    icon: Hammer,
+    children: [
+      { name: "Customers", href: "/crm/customers" },
+      { name: "Estimations", href: "/crm/estimations" },
     ],
   },
   {

@@ -977,6 +977,16 @@ export default function CustomerProjects() {
                                     {isCreatingNewProduct ? (
                                         <div className="space-y-3">
                                             <Input placeholder="e.g., Door, Window, Table" value={productFormData.name} onChange={(e) => setProductFormData(p => ({ ...p, name: e.target.value }))} autoFocus />
+                                            <div className="space-y-2 mt-2">
+                                                <Label className="text-xs">Description</Label>
+                                                <Textarea 
+                                                    placeholder="Enter product description (optional)" 
+                                                    value={productFormData.description} 
+                                                    onChange={(e) => setProductFormData(p => ({ ...p, description: e.target.value }))} 
+                                                    rows={2}
+                                                    className="resize-none"
+                                                />
+                                            </div>
                                             <Button type="button" variant="link" className="p-0 h-auto text-sm" onClick={() => setIsCreatingNewProduct(false)}>← Select existing product</Button>
                                         </div>
                                     ) : (
