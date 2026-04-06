@@ -298,16 +298,16 @@ export default function EstimationsList() {
     estimation: null,
   });
 
-  const statusOptions = [
-    { value: "all", label: "All" },
-    { value: "draft", label: "Draft" },
-    { value: "pending_approval", label: "Pending Approval" },
-    { value: "approved", label: "Approved" },
-    { value: "rejected", label: "Rejected" },
-    { value: "partially_collected", label: "Partial" },
-    { value: "collected", label: "Material Collected" },
-    { value: "cancelled", label: "Cancelled" },
-  ];
+  // const statusOptions = [
+  //   { value: "all", label: "All" },
+  //   { value: "draft", label: "Draft" },
+  //   { value: "pending_approval", label: "Pending Approval" },
+  //   { value: "approved", label: "Approved" },
+  //   { value: "rejected", label: "Rejected" },
+  //   { value: "partially_collected", label: "Partial" },
+  //   { value: "collected", label: "Material Collected" },
+  //   { value: "cancelled", label: "Cancelled" },
+  // ];
 
   const statusCounts = useMemo(
     () =>
@@ -682,7 +682,7 @@ export default function EstimationsList() {
                 />
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              {/* <div className="flex flex-wrap items-center gap-2">
                 {statusOptions.map((option) => (
                   <button
                     key={option.value}
@@ -697,7 +697,7 @@ export default function EstimationsList() {
                     {option.label}
                   </button>
                 ))}
-              </div>
+              </div> */}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-4">
