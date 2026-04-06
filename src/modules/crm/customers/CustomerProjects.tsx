@@ -104,6 +104,18 @@ export default function CustomerProjects() {
         name: '',
         description: '',
     });
+    // Estimation fields for product modal
+    const [productModalEstimationData, setProductModalEstimationData] = useState({
+        estimation_type: '1',
+        length: '',
+        breadth: '',
+        height: '',
+        thickness: '',
+        quantity: '1',
+        cost_per_cft: '',
+        labor_charges: '',
+        direct_amount: '',
+    });
 
     // Estimation Modal
     const [isEstimationModalOpen, setIsEstimationModalOpen] = useState(false);
@@ -170,7 +182,7 @@ export default function CustomerProjects() {
                     : []
             )];
 
-            // Filter products to show only those used in this project's estimations
+            // Show only products that have estimations for this project
             const projectProducts = Array.isArray(allProducts)
                 ? allProducts.filter((p: Product) => productIdsInProject.includes(p.id))
                 : [];
@@ -354,12 +366,23 @@ export default function CustomerProjects() {
         setIsCreatingNewProduct(true);
         setSelectedExistingProductId('');
         setProductFormData({ name: '', description: '' });
+        setProductModalEstimationData({
+            estimation_type: '1',
+            length: '',
+            breadth: '',
+            height: '',
+            thickness: '',
+            quantity: '1',
+            cost_per_cft: '',
+            labor_charges: '',
+            direct_amount: '',
+        });
     };
 
     const handleSaveProduct = async () => {
         setIsSavingProduct(true);
         try {
-            // If editing existing product
+            // If editing existing product (no estimation needed)
             if (isEditingProduct && editingProduct) {
                 const payload = {
                     name: productFormData.name.trim(),
@@ -370,7 +393,7 @@ export default function CustomerProjects() {
                 handleCloseProductModal();
                 if (expandedProject) fetchProducts(expandedProject);
             }
-            // If creating/selecting new product
+            // If creating/selecting product with estimation
             else {
                 if (isCreatingNewProduct) {
                     if (!productFormData.name.trim()) {
@@ -378,19 +401,129 @@ export default function CustomerProjects() {
                         setIsSavingProduct(false);
                         return;
                     }
-                    const payload = {
-                        name: productFormData.name.trim(),
-                        description: productFormData.description.trim() || null,
+                    // Validate estimation fields for Direct Amount mode
+                    if (productModalEstimationData.estimation_type === '5' && !productModalEstimationData.direct_amount) {
+                        showAlert('error', 'Validation', 'Please enter the direct amount.');
+                        setIsSavingProduct(false);
+                        return;
+                    }
+                    // Calculate total and CFT
+                    const calculateCft = () => {
+                        if (productModalEstimationData.estimation_type === '5') return 0;
+                        const l = Number(productModalEstimationData.length) || 1;
+                        const b = Number(productModalEstimationData.breadth) || 1;
+                        const h = Number(productModalEstimationData.height) || 1;
+                        const t = Number(productModalEstimationData.thickness) || 1;
+                        const q = Number(productModalEstimationData.quantity) || 1;
+                        const type = Number(productModalEstimationData.estimation_type);
+                        let cftPerUnit = 0;
+                        if (type === 1) cftPerUnit = (l * b * h) / 144;
+                        else if (type === 2) cftPerUnit = l * b * h;
+                        else if (type === 3) cftPerUnit = (l * b * t) / 12;
+                        else if (type === 4) cftPerUnit = l * b * t;
+                        else cftPerUnit = (l * b * h) / 144;
+                        return cftPerUnit * q;
                     };
-                    await crmProductService.create(payload);
-                    showAlert('success', 'Created!', 'Product created successfully', 2000);
+                    const calculateTotal = () => {
+                        if (productModalEstimationData.estimation_type === '5') {
+                            return Number(productModalEstimationData.direct_amount) || 0;
+                        }
+                        const cft = calculateCft();
+                        const cost = Number(productModalEstimationData.cost_per_cft) || 0;
+                        const labor = Number(productModalEstimationData.labor_charges) || 0;
+                        return (cft * cost) + labor;
+                    };
+                    // Create estimation with new product using combined API
+                    const payload: Record<string, any> = {
+                        customer_id: Number(id),
+                        project_id: expandedProject,
+                        product_name: productFormData.name.trim(),
+                        estimation_type: Number(productModalEstimationData.estimation_type),
+                        total_amount: calculateTotal(),
+                    };
+                    // Add dimensions for formula-based modes
+                    if (productModalEstimationData.estimation_type !== '5') {
+                        payload.length = productModalEstimationData.length ? Number(productModalEstimationData.length) : null;
+                        payload.breadth = productModalEstimationData.breadth ? Number(productModalEstimationData.breadth) : null;
+                        payload.height = productModalEstimationData.height ? Number(productModalEstimationData.height) : null;
+                        payload.thickness = productModalEstimationData.thickness ? Number(productModalEstimationData.thickness) : null;
+                        payload.quantity = productModalEstimationData.quantity ? Number(productModalEstimationData.quantity) : null;
+                        payload.cft = calculateCft();
+                        payload.cost_per_cft = productModalEstimationData.cost_per_cft ? Number(productModalEstimationData.cost_per_cft) : null;
+                        payload.labor_charges = productModalEstimationData.labor_charges ? Number(productModalEstimationData.labor_charges) : null;
+                    } else {
+                        payload.cft = null;
+                        payload.cost_per_cft = null;
+                        payload.labor_charges = null;
+                    }
+                    await estimationsApi.create(payload);
+                    showAlert('success', 'Created!', 'Product & Estimation created successfully', 2000);
+                } else if (selectedExistingProductId) {
+                    // Validate estimation fields for Direct Amount mode
+                    if (productModalEstimationData.estimation_type === '5' && !productModalEstimationData.direct_amount) {
+                        showAlert('error', 'Validation', 'Please enter the direct amount.');
+                        setIsSavingProduct(false);
+                        return;
+                    }
+                    // Calculate total and CFT
+                    const calculateCft = () => {
+                        if (productModalEstimationData.estimation_type === '5') return 0;
+                        const l = Number(productModalEstimationData.length) || 1;
+                        const b = Number(productModalEstimationData.breadth) || 1;
+                        const h = Number(productModalEstimationData.height) || 1;
+                        const t = Number(productModalEstimationData.thickness) || 1;
+                        const q = Number(productModalEstimationData.quantity) || 1;
+                        const type = Number(productModalEstimationData.estimation_type);
+                        let cftPerUnit = 0;
+                        if (type === 1) cftPerUnit = (l * b * h) / 144;
+                        else if (type === 2) cftPerUnit = l * b * h;
+                        else if (type === 3) cftPerUnit = (l * b * t) / 12;
+                        else if (type === 4) cftPerUnit = l * b * t;
+                        else cftPerUnit = (l * b * h) / 144;
+                        return cftPerUnit * q;
+                    };
+                    const calculateTotal = () => {
+                        if (productModalEstimationData.estimation_type === '5') {
+                            return Number(productModalEstimationData.direct_amount) || 0;
+                        }
+                        const cft = calculateCft();
+                        const cost = Number(productModalEstimationData.cost_per_cft) || 0;
+                        const labor = Number(productModalEstimationData.labor_charges) || 0;
+                        return (cft * cost) + labor;
+                    };
+                    // Create estimation with existing product
+                    const payload: Record<string, any> = {
+                        customer_id: Number(id),
+                        project_id: expandedProject,
+                        product_id: Number(selectedExistingProductId),
+                        estimation_type: Number(productModalEstimationData.estimation_type),
+                        total_amount: calculateTotal(),
+                    };
+                    // Add dimensions for formula-based modes
+                    if (productModalEstimationData.estimation_type !== '5') {
+                        payload.length = productModalEstimationData.length ? Number(productModalEstimationData.length) : null;
+                        payload.breadth = productModalEstimationData.breadth ? Number(productModalEstimationData.breadth) : null;
+                        payload.height = productModalEstimationData.height ? Number(productModalEstimationData.height) : null;
+                        payload.thickness = productModalEstimationData.thickness ? Number(productModalEstimationData.thickness) : null;
+                        payload.quantity = productModalEstimationData.quantity ? Number(productModalEstimationData.quantity) : null;
+                        payload.cft = calculateCft();
+                        payload.cost_per_cft = productModalEstimationData.cost_per_cft ? Number(productModalEstimationData.cost_per_cft) : null;
+                        payload.labor_charges = productModalEstimationData.labor_charges ? Number(productModalEstimationData.labor_charges) : null;
+                    } else {
+                        payload.cft = null;
+                        payload.cost_per_cft = null;
+                        payload.labor_charges = null;
+                    }
+                    await estimationsApi.create(payload);
+                    showAlert('success', 'Created!', 'Estimation added successfully', 2000);
                 }
-                // If selecting existing product, just close modal - product is already available
                 handleCloseProductModal();
-                if (expandedProject) fetchProducts(expandedProject);
+                if (expandedProject) {
+                    fetchProducts(expandedProject);
+                }
             }
         } catch (error) {
-            showAlert('error', 'Error', getErrorMessage(error, 'Failed to save product'));
+            showAlert('error', 'Error', getErrorMessage(error, 'Failed to save'));
         } finally {
             setIsSavingProduct(false);
         }
@@ -831,43 +964,126 @@ export default function CustomerProjects() {
 
             {/* Product Modal */}
             <Dialog open={isProductModalOpen} onOpenChange={setIsProductModalOpen}>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[600px]">
                     <DialogHeader>
-                        <DialogTitle>{isEditingProduct ? 'Edit Product' : 'Add Product'}</DialogTitle>
+                        <DialogTitle>{isEditingProduct ? 'Edit Product' : 'Add Product & Estimation'}</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4 py-4">
+                    <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
                         {!isEditingProduct ? (
-                            <div className="space-y-2">
-                                <Label>Product <span className="text-red-500">*</span></Label>
-                                {isCreatingNewProduct ? (
-                                    <div className="space-y-3">
-                                        <Input placeholder="e.g., Door, Window, Table" value={productFormData.name} onChange={(e) => setProductFormData(p => ({ ...p, name: e.target.value }))} autoFocus />
-                                        <Button type="button" variant="link" className="p-0 h-auto text-sm" onClick={() => setIsCreatingNewProduct(false)}>← Select existing product</Button>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-3">
+                            <>
+                                {/* Product Selection */}
+                                <div className="space-y-2">
+                                    <Label>Product <span className="text-red-500">*</span></Label>
+                                    {isCreatingNewProduct ? (
+                                        <div className="space-y-3">
+                                            <Input placeholder="e.g., Door, Window, Table" value={productFormData.name} onChange={(e) => setProductFormData(p => ({ ...p, name: e.target.value }))} autoFocus />
+                                            <Button type="button" variant="link" className="p-0 h-auto text-sm" onClick={() => setIsCreatingNewProduct(false)}>← Select existing product</Button>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            <select
+                                                value={selectedExistingProductId}
+                                                onChange={(e) => {
+                                                    if (e.target.value === 'new') {
+                                                        setIsCreatingNewProduct(true);
+                                                        setSelectedExistingProductId('');
+                                                        setProductFormData({ name: '', description: '' });
+                                                    } else {
+                                                        setSelectedExistingProductId(e.target.value);
+                                                    }
+                                                }}
+                                                className="w-full border rounded-md px-3 py-2 text-sm"
+                                            >
+                                                <option value="">Select a product</option>
+                                                {allCustomerProducts.map((p) => (
+                                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                                ))}
+                                                <option value="new">+ Create new product</option>
+                                            </select>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="border-t pt-4">
+                                    <div className="text-sm font-semibold text-slate-600 mb-3">Estimation Details</div>
+
+                                    {/* Estimation Formula */}
+                                    <div className="space-y-2">
+                                        <Label>Estimation Formula</Label>
                                         <select
-                                            value={selectedExistingProductId}
-                                            onChange={(e) => {
-                                                if (e.target.value === 'new') {
-                                                    setIsCreatingNewProduct(true);
-                                                    setSelectedExistingProductId('');
-                                                    setProductFormData({ name: '', description: '' });
-                                                } else {
-                                                    setSelectedExistingProductId(e.target.value);
-                                                }
-                                            }}
+                                            value={productModalEstimationData.estimation_type}
+                                            onChange={(e) => setProductModalEstimationData(p => ({ ...p, estimation_type: e.target.value }))}
                                             className="w-full border rounded-md px-3 py-2 text-sm"
                                         >
-                                            <option value="">Select a product</option>
-                                            {allCustomerProducts.map((p) => (
-                                                <option key={p.id} value={p.id}>{p.name}</option>
-                                            ))}
-                                            <option value="new">+ Create new product</option>
+                                            <option value="1">CFT - Inches (L×B×H/144)</option>
+                                            <option value="2">CFT - Feet (L×B×H)</option>
+                                            <option value="3">CFT - Thickness in Inches (L×B×T/12)</option>
+                                            <option value="4">CFT - Thickness in Feet (L×B×T)</option>
+                                            <option value="5">Direct Amount</option>
                                         </select>
                                     </div>
-                                )}
-                            </div>
+
+                                    {productModalEstimationData.estimation_type === '5' ? (
+                                        // Direct Amount Mode
+                                        <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl border border-amber-200">
+                                            <div className="p-2 bg-amber-100 rounded-full">
+                                                <DollarSign className="h-5 w-5 text-amber-600" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <Label className="text-sm font-semibold text-amber-900">Direct Amount (₹)</Label>
+                                                <Input
+                                                    type="number"
+                                                    step="0.01"
+                                                    placeholder="Enter amount directly"
+                                                    value={productModalEstimationData.direct_amount}
+                                                    onChange={(e) => setProductModalEstimationData(p => ({ ...p, direct_amount: e.target.value }))}
+                                                    className="mt-1 border-amber-300 focus:border-amber-500"
+                                                />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        // Formula-based Mode
+                                        <>
+                                            <div className="grid grid-cols-5 gap-2">
+                                                <div className="space-y-1">
+                                                    <Label className="text-xs">Length</Label>
+                                                    <Input type="number" step="0.01" placeholder="0" value={productModalEstimationData.length} onChange={(e) => setProductModalEstimationData(p => ({ ...p, length: e.target.value }))} />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Label className="text-xs">Breadth</Label>
+                                                    <Input type="number" step="0.01" placeholder="0" value={productModalEstimationData.breadth} onChange={(e) => setProductModalEstimationData(p => ({ ...p, breadth: e.target.value }))} />
+                                                </div>
+                                                {(productModalEstimationData.estimation_type === '1' || productModalEstimationData.estimation_type === '2') && (
+                                                    <div className="space-y-1">
+                                                        <Label className="text-xs">Height</Label>
+                                                        <Input type="number" step="0.01" placeholder="0" value={productModalEstimationData.height} onChange={(e) => setProductModalEstimationData(p => ({ ...p, height: e.target.value }))} />
+                                                    </div>
+                                                )}
+                                                {(productModalEstimationData.estimation_type === '3' || productModalEstimationData.estimation_type === '4') && (
+                                                    <div className="space-y-1">
+                                                        <Label className="text-xs">Thickness</Label>
+                                                        <Input type="number" step="0.01" placeholder="0" value={productModalEstimationData.thickness} onChange={(e) => setProductModalEstimationData(p => ({ ...p, thickness: e.target.value }))} />
+                                                    </div>
+                                                )}
+                                                <div className="space-y-1">
+                                                    <Label className="text-xs">Quantity</Label>
+                                                    <Input type="number" placeholder="1" value={productModalEstimationData.quantity} onChange={(e) => setProductModalEstimationData(p => ({ ...p, quantity: e.target.value }))} />
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-2">
+                                                    <Label>Material Cost per CFT (₹)</Label>
+                                                    <Input type="number" step="0.01" placeholder="0" value={productModalEstimationData.cost_per_cft} onChange={(e) => setProductModalEstimationData(p => ({ ...p, cost_per_cft: e.target.value }))} />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Labor Charges (₹)</Label>
+                                                    <Input type="number" step="0.01" placeholder="0" value={productModalEstimationData.labor_charges} onChange={(e) => setProductModalEstimationData(p => ({ ...p, labor_charges: e.target.value }))} />
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </>
                         ) : (
                             <>
                                 <div className="space-y-2">

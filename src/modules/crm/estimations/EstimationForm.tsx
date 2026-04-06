@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Save, Calculator, DollarSign } from 'lucide-react';
+import { ArrowLeft, Save, DollarSign } from 'lucide-react';
 
 export default function EstimationForm() {
     const navigate = useNavigate();
@@ -16,12 +16,15 @@ export default function EstimationForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [customers, setCustomers] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
+    const [allProducts, setAllProducts] = useState<any[]>([]);
     const [projects, setProjects] = useState<any[]>([]);
     const [directAmount, setDirectAmount] = useState('');
 
     const [customerId, setCustomerId] = useState('');
     const [projectId, setProjectId] = useState('');
     const [productId, setProductId] = useState('');
+    const [productMode, setProductMode] = useState<'existing' | 'create_new'>('existing');
+    const [newProductName, setNewProductName] = useState('');
     const [estimationType, setEstimationType] = useState('1');
     const [length, setLength] = useState('');
     const [breadth, setBreadth] = useState('');
@@ -31,7 +34,6 @@ export default function EstimationForm() {
     const [cft, setCft] = useState('');
     const [costPerCft, setCostPerCft] = useState('');
     const [laborCharges, setLaborCharges] = useState('');
-    const [totalAmount, setTotalAmount] = useState('');
 
     useEffect(() => {
         const fetchDependencies = async () => {
@@ -51,6 +53,7 @@ export default function EstimationForm() {
                 };
 
                 setCustomers(extractArray(custRes));
+                setAllProducts(extractArray(prodRes));
                 setProducts(extractArray(prodRes));
                 setProjects(extractArray(projRes));
             } catch (error) {
@@ -60,6 +63,55 @@ export default function EstimationForm() {
         fetchDependencies();
     }, []);
 
+    // Filter products based on selected project
+    useEffect(() => {
+        const fetchProjectProducts = async () => {
+            if (!projectId) {
+                // No project selected - show all products
+                setProducts(allProducts);
+                return;
+            }
+
+            try {
+                // Fetch estimations for this project to get related products
+                const estimationsRes = await estimationsApi.list({ project_id: Number(projectId), per_page: 100 });
+                const projectEstimations = estimationsRes?.data?.data || estimationsRes?.data || [];
+
+                // Extract unique product IDs from estimations
+                const productIdsInProject = [...new Set(
+                    Array.isArray(projectEstimations)
+                        ? projectEstimations.map((e: any) => e.product_id).filter(Boolean)
+                        : []
+                )];
+
+                // Only show products that have estimations for this project
+                if (productIdsInProject.length > 0) {
+                    const filtered = allProducts.filter((p: any) => productIdsInProject.includes(p.id));
+                    setProducts(filtered);
+                } else {
+                    // Project has no estimations - show no products (user must create new)
+                    setProducts([]);
+                }
+            } catch (error) {
+                console.error('Failed to fetch project products:', error);
+                setProducts([]);
+            }
+        };
+
+        fetchProjectProducts();
+    }, [projectId, allProducts]);
+
+    // Reset product selection if current product is not in filtered list
+    useEffect(() => {
+        if (productId && products.length > 0) {
+            const productExists = products.some((p: any) => p.id === Number(productId));
+            if (!productExists && !isEdit) {
+                setProductId('');
+                setProductMode('existing');
+            }
+        }
+    }, [products, productId]);
+
     useEffect(() => {
         if (isEdit && id) {
             estimationsApi.get(id).then((res) => {
@@ -67,6 +119,7 @@ export default function EstimationForm() {
                 setCustomerId(String(est.customer_id || ''));
                 setProjectId(String(est.project_id || ''));
                 setProductId(String(est.product_id || ''));
+                setProductMode('existing'); // Always existing when editing
                 setEstimationType(String(est.estimation_type || '1'));
                 setLength(String(est.length || ''));
                 setBreadth(String(est.breadth || ''));
@@ -76,7 +129,6 @@ export default function EstimationForm() {
                 setCft(String(est.cft || ''));
                 setCostPerCft(String(est.cost_per_cft || ''));
                 setLaborCharges(String(est.labor_charges || ''));
-                setTotalAmount(String(est.total_amount || ''));
 
                 // If Direct Amount mode, load the total_amount as directAmount
                 if (est.estimation_type === 5) {
@@ -133,8 +185,18 @@ export default function EstimationForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!customerId || !productId) {
-            showAlert('error', 'Validation', 'Please select a Customer and Product.');
+        if (!customerId) {
+            showAlert('error', 'Validation', 'Please select a Customer.');
+            return;
+        }
+
+        // Product validation
+        if (productMode === 'create_new' && !newProductName) {
+            showAlert('error', 'Validation', 'Please enter a product name.');
+            return;
+        }
+        if (productMode === 'existing' && !productId) {
+            showAlert('error', 'Validation', 'Please select a Product.');
             return;
         }
 
@@ -149,10 +211,16 @@ export default function EstimationForm() {
             const payload: Record<string, any> = {
                 customer_id: Number(customerId),
                 project_id: projectId ? Number(projectId) : null,
-                product_id: Number(productId),
                 estimation_type: Number(estimationType),
                 total_amount: parseFloat(derivedTotalAmount.toFixed(2)),
             };
+
+            // If creating new product, send product_name instead of product_id
+            if (productMode === 'create_new') {
+                payload.product_name = newProductName;
+            } else {
+                payload.product_id = Number(productId);
+            }
 
             // Only include dimensions and cost details in formula-based modes
             if (estimationType !== '5') {
@@ -214,10 +282,35 @@ export default function EstimationForm() {
                             </div>
                             <div className="space-y-2">
                                 <Label>Product <span className="text-red-500">*</span></Label>
-                                <select value={productId} onChange={(e) => setProductId(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm" required>
+                                <select
+                                    value={productMode === 'create_new' ? 'create_new' : productId}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        if (value === 'create_new') {
+                                            setProductMode('create_new');
+                                            setProductId('');
+                                        } else {
+                                            setProductMode('existing');
+                                            setProductId(value);
+                                        }
+                                    }}
+                                    className="w-full border rounded-md px-3 py-2 text-sm"
+                                    required
+                                >
                                     <option value="">Select Product</option>
+                                    {!isEdit && <option value="create_new" className="font-semibold text-blue-600">+ Create New Product</option>}
                                     {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                                 </select>
+                                {productMode === 'create_new' && (
+                                    <Input
+                                        type="text"
+                                        placeholder="Enter new product name"
+                                        value={newProductName}
+                                        onChange={(e) => setNewProductName(e.target.value)}
+                                        className="mt-2"
+                                        required
+                                    />
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <Label>Project</Label>
