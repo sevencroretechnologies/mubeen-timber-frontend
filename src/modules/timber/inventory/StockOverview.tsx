@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import DataTable, { TableColumn } from 'react-data-table-component';
-import { Search, Package, AlertTriangle, Eye } from 'lucide-react';
+import { Search, Package, AlertTriangle, Eye, Settings, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useNavigate } from 'react-router-dom';
+import { showAlert, getErrorMessage } from '@/lib/sweetalert';
 
 export default function StockOverview() {
   const navigate = useNavigate();
@@ -26,6 +27,12 @@ export default function StockOverview() {
   const [totalRows, setTotalRows] = useState(0);
   const [selectedItem, setSelectedItem] = useState<TimberStockLedger | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isThresholdOpen, setIsThresholdOpen] = useState(false);
+  const [isSavingThreshold, setIsSavingThreshold] = useState(false);
+  const [thresholdData, setThresholdData] = useState({
+    minimum_threshold: '',
+    maximum_threshold: '',
+  });
 
   const fetchStock = useCallback(async (currentPage: number = 1) => {
     setIsLoading(true);
@@ -65,6 +72,52 @@ export default function StockOverview() {
   const handleView = (item: TimberStockLedger) => {
     setSelectedItem(item);
     setIsViewOpen(true);
+  };
+
+  const handleEditThreshold = (item: TimberStockLedger) => {
+    setSelectedItem(item);
+    setThresholdData({
+      minimum_threshold: String(item.minimum_threshold ?? ''),
+      maximum_threshold: String(item.maximum_threshold ?? ''),
+    });
+    setIsThresholdOpen(true);
+  };
+
+  const handleSaveThreshold = async () => {
+    if (!selectedItem) return;
+
+    const min = parseFloat(thresholdData.minimum_threshold);
+    const max = parseFloat(thresholdData.maximum_threshold);
+
+    if (isNaN(min) || min < 0) {
+      showAlert('error', 'Validation', 'Minimum threshold must be a valid number');
+      return;
+    }
+
+    if (thresholdData.maximum_threshold && (isNaN(max) || max < 0)) {
+      showAlert('error', 'Validation', 'Maximum threshold must be a valid number');
+      return;
+    }
+
+    if (min > 0 && max > 0 && min >= max) {
+      showAlert('error', 'Validation', 'Minimum threshold must be less than maximum threshold');
+      return;
+    }
+
+    setIsSavingThreshold(true);
+    try {
+      await stockApi.setThreshold(selectedItem.wood_type_id, {
+        minimum_threshold: min,
+        maximum_threshold: thresholdData.maximum_threshold ? max : undefined,
+      });
+      showAlert('success', 'Saved', 'Threshold settings updated successfully', 2000);
+      setIsThresholdOpen(false);
+      fetchStock(page);
+    } catch (error) {
+      showAlert('error', 'Error', getErrorMessage(error, 'Failed to update thresholds'));
+    } finally {
+      setIsSavingThreshold(false);
+    }
   };
 
   const getStockLevelBadge = (item: TimberStockLedger) => {
@@ -123,11 +176,16 @@ export default function StockOverview() {
     {
       name: 'Actions',
       cell: (row) => (
-        <Button variant="ghost" size="icon" onClick={() => handleView(row)} title="View Details">
-          <Eye className="h-4 w-4" />
-        </Button>
+        <div className="flex gap-1">
+          <Button variant="ghost" size="icon" onClick={() => handleView(row)} title="View Details">
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => handleEditThreshold(row)} title="Edit Thresholds">
+            <Settings className="h-4 w-4 text-blue-600" />
+          </Button>
+        </div>
       ),
-      width: '80px',
+      width: '100px',
     },
   ];
 
@@ -225,6 +283,113 @@ export default function StockOverview() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsViewOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Threshold Settings Modal */}
+      <Dialog open={isThresholdOpen} onOpenChange={setIsThresholdOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5 text-solarized-blue" />
+              Stock Threshold Settings
+            </DialogTitle>
+          </DialogHeader>
+          {selectedItem && (
+            <div className="space-y-6 py-4">
+              {/* Stock Info */}
+              <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-blue-600">
+                  <Package className="h-6 w-6" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider">Wood Type</p>
+                  <p className="text-base font-bold">{selectedItem.wood_type?.name}</p>
+                  <p className="text-sm text-muted-foreground">{selectedItem.warehouse?.name}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider">Current Stock</p>
+                  <p className="text-2xl font-bold text-solarized-blue">{Number(selectedItem.current_quantity).toFixed(2)}</p>
+                  <p className="text-xs">CFT</p>
+                </div>
+              </div>
+
+              {/* Threshold Inputs */}
+              <div className="space-y-5">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                      Minimum Threshold
+                    </Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="e.g., 50"
+                      value={thresholdData.minimum_threshold}
+                      onChange={(e) => setThresholdData(p => ({ ...p, minimum_threshold: e.target.value }))}
+                    />
+                    <p className="text-xs text-muted-foreground">Alert when stock falls below this level</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+                      Maximum Threshold
+                    </Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="e.g., 500"
+                      value={thresholdData.maximum_threshold}
+                      onChange={(e) => setThresholdData(p => ({ ...p, maximum_threshold: e.target.value }))}
+                    />
+                    <p className="text-xs text-muted-foreground">Alert for overstock (optional)</p>
+                  </div>
+                </div>
+
+                {/* Visual Indicator */}
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-blue-800 uppercase tracking-wider">Stock Level Preview</span>
+                    <span className="text-sm font-bold text-blue-900">
+                      Current: {Number(selectedItem.current_quantity).toFixed(2)} CFT
+                    </span>
+                  </div>
+                  <div className="h-3 bg-gray-200 rounded-full overflow-hidden relative">
+                    <div
+                      className="h-full bg-gradient-to-r from-green-400 to-green-600 transition-all duration-300"
+                      style={{
+                        width: `${Math.min(100, (Number(selectedItem.current_quantity) / Math.max(1, Number(thresholdData.maximum_threshold) || Number(selectedItem.current_quantity) * 1.5)) * 100)}%`
+                      }}
+                    />
+                    {Number(thresholdData.minimum_threshold) > 0 && (
+                      <div
+                        className="absolute h-full w-0.5 bg-red-500 top-0 transition-all duration-300"
+                        style={{ left: `${Math.min(100, (Number(thresholdData.minimum_threshold) / Math.max(1, Number(thresholdData.maximum_threshold) || Number(selectedItem.current_quantity) * 1.5)) * 100)}%` }}
+                      />
+                    )}
+                  </div>
+                  <div className="flex justify-between mt-1 text-xs text-muted-foreground">
+                    <span>0</span>
+                    {Number(thresholdData.minimum_threshold) > 0 && (
+                      <span className="text-red-600 font-medium">Min: {Number(thresholdData.minimum_threshold).toFixed(2)}</span>
+                    )}
+                    {Number(thresholdData.maximum_threshold) > 0 && (
+                      <span className="text-yellow-600 font-medium">Max: {Number(thresholdData.maximum_threshold).toFixed(2)}</span>
+                    )}
+                    <span>Capacity</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsThresholdOpen(false)} disabled={isSavingThreshold}>Cancel</Button>
+            <Button onClick={handleSaveThreshold} disabled={isSavingThreshold} className="bg-solarized-blue">
+              {isSavingThreshold && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Thresholds
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

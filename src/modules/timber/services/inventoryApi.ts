@@ -2,6 +2,7 @@ import api from '@/services/api';
 import type {
   TimberSupplier,
   TimberWarehouse,
+  TimberWoodType,
   TimberStockLedger,
   TimberStockMovement,
   TimberPurchaseOrder,
@@ -47,6 +48,23 @@ export const warehouseApi = {
   update: (id: number, data: Partial<WarehouseFormData>) =>
     api.put(`${PREFIX}/warehouses/${id}`, data).then((r) => r.data),
   delete: (id: number) => api.delete(`${PREFIX}/warehouses/${id}`),
+};
+
+// Wood Types
+export const woodTypeApi = {
+  list: (params?: Record<string, unknown>) =>
+    api.get(`${PREFIX}/wood-types`, { params }).then((res) => {
+      const data = res.data;
+      if (data && typeof data === 'object' && 'data' in data) return data;
+      return { data };
+    }),
+  get: (id: number) =>
+    api.get<{ data: TimberWoodType }>(`${PREFIX}/wood-types/${id}`).then((r) => r.data.data || r.data),
+  create: (data: { name: string; code?: string; category?: string; default_rate: number; unit: string; description?: string }) =>
+    api.post(`${PREFIX}/wood-types`, data).then((r) => r.data),
+  update: (id: number, data: Partial<TimberWoodType>) =>
+    api.put(`${PREFIX}/wood-types/${id}`, data).then((r) => r.data),
+  delete: (id: number) => api.delete(`${PREFIX}/wood-types/${id}`),
 };
 
 // Stock

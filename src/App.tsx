@@ -61,6 +61,7 @@ import StockOverview from '@/modules/timber/inventory/StockOverview';
 import StockMovements from '@/modules/timber/inventory/StockMovements';
 import StockAdjustmentForm from '@/modules/timber/inventory/StockAdjustmentForm';
 import LowStockAlerts from '@/modules/timber/inventory/LowStockAlerts';
+import WoodTypesList from '@/modules/timber/inventory/WoodTypesList';
 import MaterialRequisitionList from '@/modules/timber/inventory/MaterialRequisitionList';
 import MaterialRequisitionForm from '@/modules/timber/inventory/MaterialRequisitionForm';
 import WarehouseList from '@/modules/timber/purchases/orders/WarehouseList';
@@ -144,6 +145,7 @@ function App() {
             <Route path="/inventory/movements" element={<StockMovements />} />
             <Route path="/inventory/adjust" element={<StockAdjustmentForm />} />
             <Route path="/inventory/alerts" element={<LowStockAlerts />} />
+            <Route path="/inventory/wood-types" element={<WoodTypesList />} />
             <Route path="/inventory/requisitions" element={<MaterialRequisitionList />} />
             <Route path="/inventory/requisitions/create" element={<MaterialRequisitionForm />} />
             <Route path="/inventory/warehouses" element={<WarehouseList />} />
