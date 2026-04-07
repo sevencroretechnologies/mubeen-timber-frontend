@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
     estimationsApi,
     crmProductService,
@@ -24,7 +24,6 @@ import {
 } from 'lucide-react';
 import {
     Command,
-    CommandEmpty,
     CommandGroup,
     CommandInput,
     CommandItem,
@@ -45,9 +44,9 @@ import { cn } from "@/lib/utils";
 
 export default function CreateEstimation() {
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
+    const { project_id } = useParams<{ project_id: string }>();
     const { user } = useAuth();
-    const projectIdFromUrl = searchParams.get('project_id');
+
 
     // UI State
     const [isSaving, setIsSaving] = useState(false);
@@ -55,7 +54,7 @@ export default function CreateEstimation() {
 
     // Form data
     const [formData, setFormData] = useState({
-        project_id: projectIdFromUrl || '',
+        project_id: project_id || '',
         customer_id: '',
         product_id: '',
         total_cft: '',
@@ -102,7 +101,6 @@ export default function CreateEstimation() {
             const res = await crmProductService.getAll({ per_page: 500 });
             
             const extractArray = (res: any): any[] => {
-                console.log('CRM Products API Raw Response:', res);
                 const body = res?.data || res;
                 if (Array.isArray(body)) return body;
                 if (body?.data && Array.isArray(body.data)) return body.data;
@@ -111,7 +109,6 @@ export default function CreateEstimation() {
             };
 
             const fetchedProducts = extractArray(res);
-            console.log('Extracted products:', fetchedProducts);
             setProducts(fetchedProducts);
         } catch (err) {
             console.error('Products fetch failed:', err);
@@ -119,10 +116,10 @@ export default function CreateEstimation() {
     }, []);
 
     const fetchProject = useCallback(async () => {
-        if (!projectIdFromUrl) return;
+        if (!project_id) return;
         setIsLoading(true);
         try {
-            const res = await projectApi.get(Number(projectIdFromUrl));
+            const res = await projectApi.get(Number(project_id));
             const projectData = (res as any).data || res;
             setProject(projectData);
             
@@ -144,7 +141,7 @@ export default function CreateEstimation() {
         } finally {
             setIsLoading(false);
         }
-    }, [projectIdFromUrl]);
+    }, [project_id]);
 
     useEffect(() => {
         fetchProducts();
@@ -325,6 +322,9 @@ export default function CreateEstimation() {
                                                     <Hammer className="h-5 w-5 text-amber-500" />
                                                     Product Selection & Creation
                                                 </DialogTitle>
+                                                <div className="sr-only">
+                                                    Search through existing products or provide dimensions to create a new one.
+                                                </div>
                                             </DialogHeader>
                                         </div>
 

@@ -108,7 +108,7 @@ function App() {
             <Route path="/crm" element={<CrmDashboard />} />
             <Route path="/crm/dashboard" element={<CrmDashboard />} />
             <Route path="/crm/estimations" element={<EstimationsList />} />
-            <Route path="/crm/estimations/create" element={<CreateEstimation />} />
+            <Route path="/crm/estimations/create/:project_id" element={<CreateEstimation />} />
             <Route path="/crm/estimations/:id" element={<EstimationView />} />
             <Route path="/crm/estimations/:id/edit" element={<EstimationForm />} />
             <Route path="/crm/leads" element={<LeadsList />} />

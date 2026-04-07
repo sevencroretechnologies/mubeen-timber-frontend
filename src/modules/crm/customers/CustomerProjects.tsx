@@ -303,7 +303,7 @@ export default function CustomerProjects() {
                                             <div className="flex items-center justify-between">
                                                 <h4 className="font-semibold text-amber-800">Estimates</h4>
                                                  <Button
-                                                    onClick={() => navigate(`/crm/estimations/create?project_id=${project.id}`)}
+                                                    onClick={() => navigate(`/crm/estimations/create/${project.id}`)}
                                                     className="bg-amber-500 hover:bg-amber-600 text-white text-sm"
                                                 >
                                                     <Plus className="h-4 w-4 mr-2" />
