@@ -65,6 +65,8 @@ interface Estimation {
         discount: number;
         approximate_tax: number;
     };
+    grand_total?: string | number;
+    total?: string | number;
 }
 
 export default function CustomerProjects() {
@@ -246,19 +248,26 @@ export default function CustomerProjects() {
     };
 
     const getEstimationTotal = (estimation: Estimation): number => {
-        let total = 0;
-        // Add products total
+        // Favor grand_total or total from API if available
+        const apiTotal = estimation.grand_total ?? estimation.total;
+        if (apiTotal !== undefined && apiTotal !== null) {
+            return typeof apiTotal === 'string' 
+                ? parseFloat(apiTotal) 
+                : apiTotal;
+        }
+
+        let totalVal = 0;
+        // Fallback to manual calculation if grand_total/total is missing
         if (estimation.products && Array.isArray(estimation.products)) {
-            total += estimation.products.reduce((sum, p) => sum + (p.total_amount || 0), 0);
+            totalVal += estimation.products.reduce((sum, p) => sum + (p.total_amount || 0), 0);
         }
-        // Add charges
         if (estimation.otherCharge) {
-            total += estimation.otherCharge.labour_charges || 0;
-            total += estimation.otherCharge.transport_and_handling || 0;
-            total += estimation.otherCharge.approximate_tax || 0;
-            total -= estimation.otherCharge.discount || 0;
+            totalVal += Number(estimation.otherCharge.labour_charges || 0);
+            totalVal += Number(estimation.otherCharge.transport_and_handling || 0);
+            totalVal += Number(estimation.otherCharge.approximate_tax || 0);
+            totalVal -= Number(estimation.otherCharge.discount || 0);
         }
-        return total;
+        return totalVal;
     };
 
     const getStatusColor = (status: string): string => {
