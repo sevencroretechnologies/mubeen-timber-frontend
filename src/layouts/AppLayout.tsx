@@ -91,7 +91,7 @@ const navigation: NavItem[] = [
 
   {
     name: "Timber",
-    href: "/purchases",
+    href: "/timber",
     icon: Hammer,
     children: [
       { name: "Customers", href: "/crm/customers" },
