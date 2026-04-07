@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { customerApi, projectApi } from '@/services/api';
+import { customerApi, projectApi, estimationsApi } from '@/services/api';
 import type { Customer } from '@/types';
 import { showAlert, showConfirmDialog, getErrorMessage } from '@/lib/sweetalert';
 import { Card, CardContent } from '@/components/ui/card';
@@ -26,6 +26,8 @@ import {
     Loader2,
     ChevronDown,
     ChevronRight,
+    FileText,
+    IndianRupee,
 } from 'lucide-react';
 
 interface Project {
@@ -37,6 +39,34 @@ interface Project {
     updated_at: string;
 }
 
+interface Estimation {
+    id: number;
+    project_id: number;
+    customer_id: number;
+    description: string | null;
+    additional_notes: string | null;
+    status: string;
+    created_at: string;
+    products?: Array<{
+        id: number;
+        product_id: number | null;
+        length: number;
+        breadth: number;
+        height: number;
+        thickness: number;
+        cft: number;
+        quantity: number;
+        cost_per_cft: number;
+        total_amount: number;
+    }>;
+    otherCharge?: {
+        labour_charges: number;
+        transport_and_handling: number;
+        discount: number;
+        approximate_tax: number;
+    };
+}
+
 export default function CustomerProjects() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -44,6 +74,8 @@ export default function CustomerProjects() {
     const [customer, setCustomer] = useState<Customer | null>(null);
     const [projects, setProjects] = useState<Project[]>([]);
     const [expandedProjectId, setExpandedProjectId] = useState<number | null>(null);
+    const [estimations, setEstimations] = useState<Record<number, Estimation[]>>({});
+    const [isLoadingEstimations, setIsLoadingEstimations] = useState<Record<number, boolean>>({});
 
     const [isLoadingCustomer, setIsLoadingCustomer] = useState(true);
     const [isLoadingProjects, setIsLoadingProjects] = useState(true);
@@ -176,11 +208,80 @@ export default function CustomerProjects() {
         }
     };
 
-    const handleToggleProject = (projectId: number) => {
+    const handleToggleProject = async (projectId: number) => {
         if (expandedProjectId === projectId) {
             setExpandedProjectId(null);
         } else {
             setExpandedProjectId(projectId);
+            // Fetch estimations for this project if not already loaded
+            if (!estimations[projectId]) {
+                await fetchEstimations(projectId);
+            }
+        }
+    };
+
+    const fetchEstimations = async (projectId: number) => {
+        setIsLoadingEstimations(prev => ({ ...prev, [projectId]: true }));
+        try {
+            const response = await estimationsApi.list({ project_id: projectId });
+            // Handle different response formats
+            let estimationsData = response;
+            if (response && typeof response === 'object' && (response as any).data) {
+                if (Array.isArray((response as any).data)) {
+                    estimationsData = (response as any).data;
+                } else if ((response as any).data.data && Array.isArray((response as any).data.data)) {
+                    estimationsData = (response as any).data.data;
+                }
+            }
+            setEstimations(prev => ({
+                ...prev,
+                [projectId]: Array.isArray(estimationsData) ? estimationsData : []
+            }));
+        } catch (error) {
+            console.error('Failed to fetch estimations:', error);
+            showAlert('error', 'Error', 'Failed to load estimations');
+        } finally {
+            setIsLoadingEstimations(prev => ({ ...prev, [projectId]: false }));
+        }
+    };
+
+    const getEstimationTotal = (estimation: Estimation): number => {
+        let total = 0;
+        // Add products total
+        if (estimation.products && Array.isArray(estimation.products)) {
+            total += estimation.products.reduce((sum, p) => sum + (p.total_amount || 0), 0);
+        }
+        // Add charges
+        if (estimation.otherCharge) {
+            total += estimation.otherCharge.labour_charges || 0;
+            total += estimation.otherCharge.transport_and_handling || 0;
+            total += estimation.otherCharge.approximate_tax || 0;
+            total -= estimation.otherCharge.discount || 0;
+        }
+        return total;
+    };
+
+    const getStatusColor = (status: string): string => {
+        switch (status) {
+            case 'approved': return 'bg-green-100 text-green-700';
+            case 'pending': return 'bg-yellow-100 text-yellow-700';
+            case 'rejected': return 'bg-red-100 text-red-700';
+            case 'cancelled': return 'bg-gray-100 text-gray-700';
+            case 'collected': return 'bg-blue-100 text-blue-700';
+            case 'partially_collected': return 'bg-purple-100 text-purple-700';
+            default: return 'bg-slate-100 text-slate-700';
+        }
+    };
+
+    const handleDeleteEstimation = async (estimationId: number, projectId: number) => {
+        const result = await showConfirmDialog('Delete Estimation', 'Are you sure you want to delete this estimation?');
+        if (!result.isConfirmed) return;
+        try {
+            await estimationsApi.delete(estimationId);
+            showAlert('success', 'Deleted!', 'Estimation deleted successfully');
+            await fetchEstimations(projectId);
+        } catch (error) {
+            showAlert('error', 'Error', getErrorMessage(error, 'Failed to delete estimation'));
         }
     };
 
@@ -297,12 +398,12 @@ export default function CustomerProjects() {
                                         </div>
                                     </div>
 
-                                    {/* Expanded Project Details - Move to Estimates Navigation */}
+                                    {/* Expanded Project Details - Estimates List */}
                                     {expandedProjectId === project.id && (
                                         <div className="border-t border-amber-100 bg-amber-50/30 p-4">
-                                            <div className="flex items-center justify-between">
+                                            <div className="flex items-center justify-between mb-4">
                                                 <h4 className="font-semibold text-amber-800">Estimates</h4>
-                                                 <Button
+                                                <Button
                                                     onClick={() => navigate(`/crm/estimations/create/${project.id}`)}
                                                     className="bg-amber-500 hover:bg-amber-600 text-white text-sm"
                                                 >
@@ -310,7 +411,79 @@ export default function CustomerProjects() {
                                                     Add Estimate
                                                 </Button>
                                             </div>
-                                        </div>
+
+                                            {/* Estimations List */}
+                                            {isLoadingEstimations[project.id] ? (
+                                                <div className="flex items-center justify-center py-8">
+                                                    <Loader2 className="h-5 w-5 animate-spin text-amber-500" />
+                                                </div>
+                                            ) : estimations[project.id]?.length === 0 ? (
+                                                <div className="text-center py-6 text-sm text-gray-500 bg-white rounded-lg border border-dashed border-gray-300">
+                                                    <FileText className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                                                    <p>No estimates yet. Create your first estimate!</p>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-2">
+                                                    {estimations[project.id]?.map((estimation) => {
+                                                        const total = getEstimationTotal(estimation);
+                                                        return (
+                                                            <div
+                                                                key={estimation.id}
+                                                                className="bg-white p-3 rounded-lg border border-amber-200 hover:border-amber-300 transition-colors"
+                                                            >
+                                                                <div className="flex items-center justify-between">
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className="flex items-center gap-2 mb-1">
+                                                                    <span className={`text-xs px-2 py-0.5 rounded font-medium ${getStatusColor(estimation.status)}`}>
+                                                                        {estimation.status?.replace('_', ' ').toUpperCase()}
+                                                                    </span>
+                                                                    <span className="text-xs text-gray-400">
+                                                                        #{estimation.id}
+                                                                    </span>
+                                                                    <span className="text-xs text-gray-400">
+                                                                        {new Date(estimation.created_at).toLocaleDateString()}
+                                                                    </span>
+                                                                </div>
+                                                                {estimation.description && (
+                                                                    <p className="text-sm text-gray-700 truncate mb-1">
+                                                                        {estimation.description}
+                                                                    </p>
+                                                                )}
+                                                                {estimation.products && estimation.products.length > 0 && (
+                                                                    <p className="text-xs text-gray-500">
+                                                                        {estimation.products.length} product(s) • {estimation.products.reduce((sum, p) => sum + (p.cft || 0) * (p.quantity || 1), 0).toFixed(2)} CFT
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="text-right">
+                                                                    <p className="text-sm font-bold text-green-600 flex items-center gap-1">
+                                                                        <IndianRupee className="h-3 w-3" />
+                                                                        {total.toFixed(2)}
+                                                                    </p>
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => navigate(`/crm/estimations/${estimation.id}`)}
+                                                                    className="p-1.5 hover:bg-amber-100 rounded text-amber-600"
+                                                                    title="View Details"
+                                                                >
+                                                                    <FileText className="h-4 w-4" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDeleteEstimation(estimation.id, project.id)}
+                                                                    className="p-1.5 hover:bg-red-50 rounded text-red-500"
+                                                                    title="Delete"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
                                     )}
                                 </div>
                             ))
