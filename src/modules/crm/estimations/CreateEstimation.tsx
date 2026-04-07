@@ -333,7 +333,7 @@ export default function CreateEstimation() {
                                             <div className="space-y-4">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                                                    <Label className="text-[#842A1B] font-bold text-xs uppercase tracking-wider">Search or Select Product</Label>
+                                                    <Label className="text-[#842A1B] font-bold text-xs uppercase tracking-wider">Create new product</Label>
                                                 </div>
                                                 
                                                 <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen}>
@@ -418,17 +418,17 @@ export default function CreateEstimation() {
                                             </div>
 
                                             {/* Visual Divider */}
-                                            <div className="relative">
+                                            {/* <div className="relative">
                                                 <div className="absolute inset-0 flex items-center" aria-hidden="true">
                                                     <div className="w-full border-t border-slate-200"></div>
                                                 </div>
                                                 <div className="relative flex justify-center text-xs uppercase">
                                                     <span className="bg-white px-4 font-bold text-slate-400 tracking-widest text-[10px]">Add Description to Create New</span>
                                                 </div>
-                                            </div>
+                                            </div> */}
 
                                             {/* Simplified Creation Section */}
-                                            <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-5 space-y-5">
+                                            <div className="border border-slate-100 rounded-xl p-5 space-y-5">
                                                 <div className="space-y-4">
                                                     <div className="space-y-2">
                                                         <Label className="text-slate-700 font-bold text-xs flex items-center gap-2">
@@ -444,7 +444,7 @@ export default function CreateEstimation() {
                                                     </div>
                                                 </div>
 
-                                                <Button
+                                                {/* <Button
                                                     type="button"
                                                     onClick={handleCreateProduct}
                                                     disabled={isSavingProduct || !searchValue.trim()}
@@ -461,11 +461,30 @@ export default function CreateEstimation() {
                                                             Create
                                                         </>
                                                     )}
-                                                </Button>
+                                                </Button> */}
                                             </div>
                                         </div>
 
                                         <div className="bg-slate-100 border-t p-3 flex justify-end">
+
+                                             <Button
+                                                    type="button"
+                                                    onClick={handleCreateProduct}
+                                                    // disabled={isSavingProduct || !searchValue.trim()}
+                                                    className="bg-[#111827] hover:bg-[#1f2937] text-white font-bold shadow-md transition-all active:scale-[0.98] mr-2"
+                                                >
+                                                    {isSavingProduct ? (
+                                                        <>
+                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                            Processing...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Plus className="h-4 w-4 mr-2" />
+                                                            Create
+                                                        </>
+                                                    )}
+                                                </Button>
                                             <Button 
                                                 variant="ghost" 
                                                 size="sm" 
