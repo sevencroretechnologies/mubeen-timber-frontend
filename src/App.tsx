@@ -53,9 +53,9 @@ import CrmSettings from '@/modules/crm/settings/CrmSettings';
 
 // Estimations
 import EstimationsList from '@/modules/crm/estimations/EstimationsList';
-import EstimationForm from '@/modules/crm/estimations/EstimationForm';
 import EstimationView from '@/modules/crm/estimations/EstimationView';
 import CreateEstimation from '@/modules/crm/estimations/CreateEstimation';
+import EditEstimation from '@/modules/crm/estimations/EditEstimation';
 
 // Timber Inventory & Purchases
 import StockOverview from '@/modules/timber/inventory/StockOverview';
@@ -110,7 +110,7 @@ function App() {
             <Route path="/crm/estimations" element={<EstimationsList />} />
             <Route path="/crm/estimations/create/:project_id" element={<CreateEstimation />} />
             <Route path="/crm/estimations/:id" element={<EstimationView />} />
-            <Route path="/crm/estimations/:id/edit" element={<EstimationForm />} />
+            <Route path="/crm/estimations/:id/edit" element={<EditEstimation />} />
             <Route path="/crm/leads" element={<LeadsList />} />
             <Route path="/crm/leads/create" element={<LeadForm />} />
             <Route path="/crm/leads/:id/edit" element={<LeadForm />} />

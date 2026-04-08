@@ -17,6 +17,7 @@ import {
   XCircle,
   Package,
   Clock,
+  Edit2,
   Loader2,
 } from "lucide-react";
 import CollectMaterialModal from "./CollectMaterialModal";
@@ -129,6 +130,7 @@ const ActionsCell = ({
   onCollect,
   onView,
   onCancel, // Reject
+  onEdit,
   isProcessing = false,
 }: {
   row: any;
@@ -136,6 +138,7 @@ const ActionsCell = ({
   onCollect: (estimation: any) => void;
   onView: (id: number) => void;
   onCancel: (id: number) => void;
+  onEdit: (id: number) => void;
   isProcessing?: boolean;
 }) => {
   const status = normalizeStatus(row.status);
@@ -152,6 +155,13 @@ const ActionsCell = ({
             title="Approve estimation"
           >
             <CheckCircle className="h-4 w-4" /> Approve
+          </ActionButton>
+          <ActionButton
+            variant="edit"
+            onClick={() => onEdit(row.id)}
+            title="Edit draft estimation"
+          >
+            <Edit2 className="h-4 w-4" /> Edit
           </ActionButton>
           <ActionButton
             variant="reject"
@@ -338,6 +348,10 @@ export default function EstimationsList() {
     navigate(`/crm/estimations/${id}`);
   };
 
+  const handleEdit = (id: number) => {
+    navigate(`/crm/estimations/${id}/edit`);
+  };
+
   const getEstimationTypeLabel = (type: number) => {
     const types = {
       1: "Inches",
@@ -449,6 +463,7 @@ export default function EstimationsList() {
           onCollect={openCollectModal}
           onView={handleView}
           onCancel={handleReject}
+          onEdit={handleEdit}
           isProcessing={processingIds.has(row.id)}
         />
       ),

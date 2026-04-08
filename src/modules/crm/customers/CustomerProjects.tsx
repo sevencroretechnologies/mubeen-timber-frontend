@@ -10,6 +10,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
     DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -472,6 +473,13 @@ export default function CustomerProjects() {
                                                                     </p>
                                                                 </div>
                                                                 <button
+                                                                    onClick={() => navigate(`/crm/estimations/${estimation.id}/edit`)}
+                                                                    className="p-1.5 hover:bg-amber-100 rounded text-amber-600"
+                                                                    title="Edit Estimation"
+                                                                >
+                                                                    <Edit className="h-4 w-4" />
+                                                                </button>
+                                                                <button
                                                                     onClick={() => navigate(`/crm/estimations/${estimation.id}`)}
                                                                     className="p-1.5 hover:bg-amber-100 rounded text-amber-600"
                                                                     title="View Details"
@@ -486,6 +494,7 @@ export default function CustomerProjects() {
                                                                     <Trash2 className="h-4 w-4" />
                                                                 </button>
                                                             </div>
+
                                                         </div>
                                                     </div>
                                                     );
@@ -506,6 +515,9 @@ export default function CustomerProjects() {
                 <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
                         <DialogTitle>{isEditingProject ? 'Edit Project' : 'Add Project'}</DialogTitle>
+                        <DialogDescription className="sr-only">
+                            {isEditingProject ? 'Update the details of your project.' : 'Create a new project for this customer.'}
+                        </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
