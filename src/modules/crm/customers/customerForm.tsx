@@ -189,10 +189,10 @@ export default function CustomerForm() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                    <Breadcrumb>
-                        <BreadcrumbList>
+            <div className="flex justify-between items-start gap-4 mb-4">
+                <div className="space-y-1 min-w-0">
+                    <Breadcrumb className="mb-1">
+                        <BreadcrumbList className="flex-wrap text-[10px] sm:text-xs">
                             <BreadcrumbItem>
                                 <BreadcrumbLink asChild>
                                     <Link to="/crm/dashboard">CRM</Link>
@@ -206,18 +206,25 @@ export default function CustomerForm() {
                             </BreadcrumbItem>
                             <BreadcrumbSeparator />
                             <BreadcrumbItem>
-                                <BreadcrumbPage>{isEdit ? "Edit" : "New"}</BreadcrumbPage>
+                                <BreadcrumbPage className="font-medium text-solarized-base01">{isEdit ? "Edit" : "New"}</BreadcrumbPage>
                             </BreadcrumbItem>
                         </BreadcrumbList>
                     </Breadcrumb>
-                    <h1 className="text-2xl font-bold tracking-tight">
+                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-solarized-blue truncate">
                         {isEdit ? "Edit Customer" : "New Customer"}
                     </h1>
                 </div>
-                <Button variant="outline" onClick={() => navigate("/crm/customers")}>
-                    <ChevronLeft className="mr-2 h-4 w-4" /> Back to Customers
+                <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => navigate("/crm/customers")}
+                    className="h-8 sm:h-9 w-fit shadow-sm border-gray-200 shrink-0 px-3"
+                >
+                    <ChevronLeft className="mr-1 h-3.5 w-3.5" /> <span className="hidden sm:inline">Back to Customers</span><span className="sm:hidden text-xs">Back</span>
                 </Button>
             </div>
+
+
 
             <form onSubmit={handleSubmit} className="space-y-8 pb-10">
                 {/* Basic Information */}
