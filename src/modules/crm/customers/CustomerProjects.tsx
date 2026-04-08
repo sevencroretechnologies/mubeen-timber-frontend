@@ -10,6 +10,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
     DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -305,7 +306,7 @@ export default function CustomerProjects() {
     }
 
     return (
-        <div className="min-h-screen bg-amber-50/30 p-6">
+        <div className="min-h-screen bg-amber-50/30 p-0" >
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-6">
@@ -446,12 +447,12 @@ export default function CustomerProjects() {
                                                                     <span className={`text-xs px-2 py-0.5 rounded font-medium ${getStatusColor(estimation.status)}`}>
                                                                         {estimation.status?.replace('_', ' ').toUpperCase()}
                                                                     </span>
-                                                                    <span className="text-xs text-gray-400">
+                                                                    {/* <span className="text-xs text-gray-400">
                                                                         #{estimation.id}
                                                                     </span>
                                                                     <span className="text-xs text-gray-400">
                                                                         {new Date(estimation.created_at).toLocaleDateString()}
-                                                                    </span>
+                                                                    </span> */}
                                                                 </div>
                                                                 {estimation.description && (
                                                                     <p className="text-sm text-gray-700 truncate mb-1">
@@ -472,6 +473,13 @@ export default function CustomerProjects() {
                                                                     </p>
                                                                 </div>
                                                                 <button
+                                                                    onClick={() => navigate(`/crm/estimations/${estimation.id}/edit`)}
+                                                                    className="p-1.5 hover:bg-amber-100 rounded text-amber-600"
+                                                                    title="Edit Estimation"
+                                                                >
+                                                                    <Edit className="h-4 w-4" />
+                                                                </button>
+                                                                <button
                                                                     onClick={() => navigate(`/crm/estimations/${estimation.id}`)}
                                                                     className="p-1.5 hover:bg-amber-100 rounded text-amber-600"
                                                                     title="View Details"
@@ -486,6 +494,7 @@ export default function CustomerProjects() {
                                                                     <Trash2 className="h-4 w-4" />
                                                                 </button>
                                                             </div>
+
                                                         </div>
                                                     </div>
                                                     );
@@ -503,9 +512,12 @@ export default function CustomerProjects() {
 
             {/* Project Modal */}
             <Dialog open={isProjectModalOpen} onOpenChange={setIsProjectModalOpen}>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[500px] w-[calc(100%-5rem)]">
                     <DialogHeader>
                         <DialogTitle>{isEditingProject ? 'Edit Project' : 'Add Project'}</DialogTitle>
+                        <DialogDescription className="sr-only">
+                            {isEditingProject ? 'Update the details of your project.' : 'Create a new project for this customer.'}
+                        </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">

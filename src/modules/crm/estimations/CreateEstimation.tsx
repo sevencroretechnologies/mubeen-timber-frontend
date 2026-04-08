@@ -44,6 +44,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Popover,
@@ -130,6 +131,51 @@ export default function CreateEstimation() {
     rate: 0,
     total: 0,
   });
+
+  const [productErrors, setProductErrors] = useState<{ [key: string]: string }>({});
+
+  const validateProductField = (name: string, value: any) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue <= 0) {
+      setProductErrors((prev) => ({
+        ...prev,
+        [name]: "Value must be greater than 0",
+      }));
+      return false;
+    } else {
+      setProductErrors((prev) => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+      return true;
+    }
+  };
+
+  const isProductFormValid = useMemo(() => {
+    if (!currentProduct.product_id) return false;
+
+    const type = currentProduct.cft_calculation_type;
+    let requiredFields: string[] = ["quantity", "rate"];
+
+    if (type === "5") {
+      requiredFields.push("cft");
+    } else {
+      requiredFields.push("length", "breadth");
+      if (["1", "2"].includes(type)) requiredFields.push("height");
+      if (["3", "4"].includes(type)) requiredFields.push("thickness");
+    }
+
+    // Check if any required field has an error or is empty/zero
+    for (const field of requiredFields) {
+      if (productErrors[field]) return false;
+      const val = (currentProduct as any)[field];
+      const numVal = parseFloat(val);
+      if (isNaN(numVal) || numVal <= 0) return false;
+    }
+
+    return true;
+  }, [currentProduct, productErrors]);
 
   // Helper function to round to 2 decimal places
   const roundToTwo = (num: number) => Math.round(num * 100) / 100;
@@ -311,9 +357,11 @@ export default function CreateEstimation() {
       return;
     }
 
+    const isEditing = !!currentProduct.tempId;
+
     const productToAdd: EstimationProduct = {
       ...currentProduct,
-      tempId: `temp_${Date.now()}`,
+      tempId: isEditing ? currentProduct.tempId : `temp_${Date.now()}`,
       cft:
         currentProduct.cft_calculation_type === "5"
           ? typeof currentProduct.cft === "string"
@@ -335,10 +383,18 @@ export default function CreateEstimation() {
       thickness: currentProduct.thickness || "0",
     };
 
-    setEstimationProducts([...estimationProducts, productToAdd]);
+    if (isEditing) {
+      setEstimationProducts((prev) =>
+        prev.map((p) => (p.tempId === currentProduct.tempId ? productToAdd : p)),
+      );
+      showAlert("success", "Updated!", "Product updated in estimation");
+    } else {
+      setEstimationProducts([...estimationProducts, productToAdd]);
+      showAlert("success", "Added!", "Product added to estimation");
+    }
+
     resetCurrentProduct();
     setIsProductModalOpen(false);
-    showAlert("success", "Added!", "Product added to estimation");
   };
 
   const handleRemoveProduct = (tempId: string) => {
@@ -369,6 +425,7 @@ export default function CreateEstimation() {
     });
     setSearchValue("");
     setIsComboboxOpen(false);
+    setProductErrors({});
   };
 
   const handleSelectExistingProduct = (product: any) => {
@@ -478,6 +535,19 @@ export default function CreateEstimation() {
     });
   };
 
+  const handlePositiveNumber = (value: string) => {
+    // Remove negative sign and non-numeric chars except dot
+    let sanitized = value.replace(/[^0-9.]/g, '');
+
+    // Prevent multiple dots
+    const parts = sanitized.split('.');
+    if (parts.length > 2) {
+      sanitized = parts[0] + '.' + parts.slice(1).join('');
+    }
+
+    return sanitized;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -557,7 +627,7 @@ export default function CreateEstimation() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50/30 to-orange-50/30 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50/30 to-orange-50/30 py-4 sm:py-8 px-0">
       <div className="max-w-5xl mx-auto">
         {/* Header with Back Button */}
         <div className="flex items-center gap-4 mb-6">
@@ -588,7 +658,7 @@ export default function CreateEstimation() {
               </CardTitle>
             </CardHeader>
 
-            <CardContent className="space-y-6 pt-6">
+            <CardContent className="space-y-4 sm:space-y-6 pt-4 sm:pt-6 p-3 sm:p-6">
               {/* Basic Information */}
               <div className="space-y-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
                 <h3 className="text-amber-800 font-bold text-sm uppercase tracking-tight flex items-center gap-2">
@@ -631,7 +701,7 @@ export default function CreateEstimation() {
 
               {/* Products Section */}
               <div className="space-y-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <h3 className="text-amber-800 font-bold text-sm uppercase tracking-tight flex items-center gap-2">
                     <Hammer className="h-4 w-4 text-amber-600" />
                     Products
@@ -666,8 +736,8 @@ export default function CreateEstimation() {
                         key={product.tempId}
                         className="bg-white p-3 rounded-lg border border-slate-200 hover:border-amber-300 transition-all"
                       >
-                        <div className="flex justify-between items-start gap-3">
-                          <div className="flex-1">
+                        <div className="flex flex-col sm:flex-row justify-between items-start gap-3 w-full">
+                          <div className="flex-1 w-full">
                             <div className="flex items-center gap-2">
                               <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-medium">
                                 #{index + 1}
@@ -681,31 +751,32 @@ export default function CreateEstimation() {
                               </h4>
                             </div>
                             <div className="flex flex-wrap gap-3 mt-2 text-xs text-slate-600">
-                              <span>L: {product.length}"</span>
-                              <span>B: {product.breadth}"</span>
+                              <span>L: {product.length}</span>
+                              <span>B: {product.breadth}</span>
                               {parseFloat(product.height) > 0 && (
-                                <span>H: {product.height}"</span>
+                                <span>H: {product.height}</span>
                               )}
                               {parseFloat(product.thickness) > 0 && (
-                                <span>T: {product.thickness}"</span>
+                                <span>T: {product.thickness}</span>
                               )}
                             </div>
                             <div className="flex items-center gap-3 mt-2 text-xs">
                               <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
-                                CFT: {product.cft.toFixed(2)}
+                                CFT: {Number(product.cft).toFixed(2)}
                               </span>
                               <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded">
                                 Qty: {product.quantity}
                               </span>
                               <span className="bg-purple-50 text-purple-700 px-2 py-0.5 rounded">
-                                ₹{product.rate}/CFT
+                                ₹{Number(product.rate).toFixed(2)}/CFT
                               </span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-3 sm:pt-0 mt-2 sm:mt-0 border-t sm:border-0 border-slate-100">
                             <span className="text-sm font-bold text-green-600">
-                              ₹{product.total.toFixed(2)}
+                              ₹{Number(product.total).toFixed(2)}
                             </span>
+                            <div className="flex items-center gap-1">
                             <Button
                               type="button"
                               variant="ghost"
@@ -726,6 +797,7 @@ export default function CreateEstimation() {
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -815,7 +887,7 @@ export default function CreateEstimation() {
                 </h3>
 
                 {/* File Input */}
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                   <label className="flex items-center gap-2 px-4 py-2 bg-white border border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-colors">
                     <Paperclip className="h-4 w-4 text-slate-500" />
                     <span className="text-sm text-slate-600">
@@ -867,13 +939,13 @@ export default function CreateEstimation() {
                 <h3 className="text-amber-900 font-bold text-sm uppercase tracking-tight mb-4">
                   Estimation Summary
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 text-sm">
                   <div className="bg-white p-3 rounded-lg border border-amber-200">
                     <p className="text-[10px] text-slate-500 uppercase font-semibold">
                       Total CFT
                     </p>
                     <p className="text-lg font-bold text-amber-700">
-                      {productsSummary.totalCft.toFixed(2)}
+                      {Number(productsSummary.totalCft).toFixed(2)}
                     </p>
                   </div>
                   <div className="bg-white p-3 rounded-lg border border-amber-200">
@@ -881,7 +953,7 @@ export default function CreateEstimation() {
                       Products Amount
                     </p>
                     <p className="text-lg font-bold text-green-600">
-                      ₹{productsSummary.totalAmount.toFixed(2)}
+                      ₹{Number(productsSummary.totalAmount).toFixed(2)}
                     </p>
                   </div>
                   <div className="bg-white p-3 rounded-lg border border-amber-200">
@@ -889,34 +961,34 @@ export default function CreateEstimation() {
                       Charges
                     </p>
                     <p className="text-lg font-bold text-blue-600">
-                      ₹{chargesTotal.toFixed(2)}
+                      ₹{Number(chargesTotal).toFixed(2)}
                     </p>
                   </div>
                   <div className="bg-gradient-to-br from-amber-500 to-orange-500 p-3 rounded-lg border border-amber-600 shadow-sm">
-                    <p className="text-[10px text-white uppercase font-semibold">
+                    <p className="text-[10px] text-white uppercase font-semibold">
                       Grand Total
                     </p>
                     <p className="text-xl font-black text-white">
-                      ₹{grandTotal.toFixed(2)}
+                      ₹{Number(grandTotal).toFixed(2)}
                     </p>
                   </div>
                 </div>
               </div>
             </CardContent>
 
-            <CardFooter className="flex justify-end gap-3 pt-4 border-t bg-slate-50">
+            <CardFooter className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t bg-slate-50 p-4 sm:p-6">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => navigate(-1)}
-                className="px-6 h-9"
+                className="w-full sm:w-auto px-6 h-9"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={isSaving || estimationProducts.length === 0}
-                className="px-8 h-9 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-sm transition-all text-xs disabled:opacity-50"
+                className="w-full sm:w-auto px-8 h-9 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-sm transition-all text-xs disabled:opacity-50"
               >
                 {isSaving ? (
                   <>
@@ -943,12 +1015,15 @@ export default function CreateEstimation() {
           if (!open) resetCurrentProduct();
         }}
       >
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px] w-[calc(100%-3rem)] sm:w-full min-h-[85vh] sm:min-h-[650px] max-h-[90vh] overflow-y-auto rounded-lg top-[5%] translate-y-0 sm:top-[50%] sm:translate-y-[-50%]">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
               <Hammer className="h-5 w-5 text-amber-600" />
-              Add Product to Estimation
+              {currentProduct.tempId ? "Edit Product in Estimation" : "Add Product to Estimation"}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Add or edit product details for the estimation.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-5 py-4">
@@ -966,7 +1041,7 @@ export default function CreateEstimation() {
                   >
                     {currentProduct.product_id
                       ? products.find((p) => p.id === currentProduct.product_id)
-                          ?.name
+                        ?.name
                       : "Search or select a product..."}
                     <ChevronDown className="h-4 w-4 opacity-50" />
                   </Button>
@@ -1114,62 +1189,87 @@ export default function CreateEstimation() {
                   }
                   className="w-full h-10 border rounded-md px-3 py-2 bg-white text-sm"
                 >
-                  {CFT_CALCULATION_TYPES.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label} - {type.description}
-                    </option>
-                  ))}
+                  {CFT_CALCULATION_TYPES.map((type) => {
+                    const shortDesc = type.description
+                      .replace("Dimensions in ", "")
+                      .replace("Thickness in ", "")
+                      .replace("Enter CFT manually", "Manual Entry");
+                    return (
+                      <option key={type.value} value={type.value}>
+                        {type.label} ({shortDesc})
+                      </option>
+                    )
+                  })}
                 </select>
               </div>
-              <div className="grid grid-cols-4 gap-2">
-                <div>
-                  <Label className="text-[10px] text-slate-500">Length</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0"
-                    value={currentProduct.length}
-                    onChange={(e) =>
-                      setCurrentProduct((p) => ({
-                        ...p,
-                        length: e.target.value,
-                      }))
-                    }
-                    className="h-9 text-sm bg-white"
-                  />
-                </div>
-                <div>
-                  <Label className="text-[10px] text-slate-500">Breadth</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0"
-                    value={currentProduct.breadth}
-                    onChange={(e) =>
-                      setCurrentProduct((p) => ({
-                        ...p,
-                        breadth: e.target.value,
-                      }))
-                    }
-                    className="h-9 text-sm bg-white"
-                  />
-                </div>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-4">
+                {currentProduct.cft_calculation_type !== "5" && (
+                  <>
+                    <div>
+                      <Label className="text-[10px] text-slate-500">Length</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        placeholder="0"
+                        value={currentProduct.length}
+                        onKeyDown={(e) => ["-", "e", "E"].includes(e.key) && e.preventDefault()}
+                        onChange={(e) => {
+                          const val = handlePositiveNumber(e.target.value);
+                          setCurrentProduct((p) => ({ ...p, length: val }));
+                          validateProductField("length", val);
+                        }}
+                        onBlur={(e) => validateProductField("length", e.target.value)}
+                        className={`h-9 text-sm bg-white ${productErrors.length ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                      />
+                      {productErrors.length && (
+                        <p className="text-red-500 text-[10px] mt-1">{productErrors.length}</p>
+                      )}
+                    </div>
+                    <div>
+                      <Label className="text-[10px] text-slate-500">Breadth</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        placeholder="0"
+                        value={currentProduct.breadth}
+                        onKeyDown={(e) => ["-", "e", "E"].includes(e.key) && e.preventDefault()}
+                        onChange={(e) => {
+                          const val = handlePositiveNumber(e.target.value);
+                          setCurrentProduct((p) => ({ ...p, breadth: val }));
+                          validateProductField("breadth", val);
+                        }}
+                        onBlur={(e) => validateProductField("breadth", e.target.value)}
+                        className={`h-9 text-sm bg-white ${productErrors.breadth ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                      />
+                      {productErrors.breadth && (
+                        <p className="text-red-500 text-[10px] mt-1">{productErrors.breadth}</p>
+                      )}
+                    </div>
+                  </>
+                )}
                 {["1", "2"].includes(currentProduct.cft_calculation_type) && (
                   <div>
                     <Label className="text-[10px] text-slate-500">Height</Label>
                     <Input
                       type="number"
                       step="0.01"
+                      min="0.01"
                       placeholder="0"
                       value={currentProduct.height}
-                      onChange={(e) =>
-                        setCurrentProduct((p) => ({
-                          ...p,
-                          height: e.target.value,
-                        }))
-                      }
-                      className="h-9 text-sm bg-white"
+                      onKeyDown={(e) => ["-", "e", "E"].includes(e.key) && e.preventDefault()}
+                      onChange={(e) => {
+                        const val = handlePositiveNumber(e.target.value);
+                        setCurrentProduct((p) => ({ ...p, height: val }));
+                        validateProductField("height", val);
+                      }}
+                      onBlur={(e) => validateProductField("height", e.target.value)}
+                      className={`h-9 text-sm bg-white ${productErrors.height ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                     />
+                    {productErrors.height && (
+                      <p className="text-red-500 text-[10px] mt-1">{productErrors.height}</p>
+                    )}
                   </div>
                 )}
                 {["3", "4"].includes(currentProduct.cft_calculation_type) && (
@@ -1180,16 +1280,21 @@ export default function CreateEstimation() {
                     <Input
                       type="number"
                       step="0.01"
+                      min="0.01"
                       placeholder="0"
                       value={currentProduct.thickness}
-                      onChange={(e) =>
-                        setCurrentProduct((p) => ({
-                          ...p,
-                          thickness: e.target.value,
-                        }))
-                      }
-                      className="h-9 text-sm bg-white"
+                      onKeyDown={(e) => ["-", "e", "E"].includes(e.key) && e.preventDefault()}
+                      onChange={(e) => {
+                        const val = handlePositiveNumber(e.target.value);
+                        setCurrentProduct((p) => ({ ...p, thickness: val }));
+                        validateProductField("thickness", val);
+                      }}
+                      onBlur={(e) => validateProductField("thickness", e.target.value)}
+                      className={`h-9 text-sm bg-white ${productErrors.thickness ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                     />
+                    {productErrors.thickness && (
+                      <p className="text-red-500 text-[10px] mt-1">{productErrors.thickness}</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -1199,16 +1304,21 @@ export default function CreateEstimation() {
                   <Input
                     type="number"
                     step="0.01"
+                    min="0.01"
                     placeholder="Enter CFT manually"
                     value={currentProduct.cft}
-                    onChange={(e) =>
-                      setCurrentProduct((p) => ({
-                        ...p,
-                        cft: parseFloat(e.target.value) || 0,
-                      }))
-                    }
-                    className="bg-white"
+                    onKeyDown={(e) => ["-", "e", "E"].includes(e.key) && e.preventDefault()}
+                    onChange={(e) => {
+                      const val = handlePositiveNumber(e.target.value);
+                      setCurrentProduct((p) => ({ ...p, cft: parseFloat(val)}));
+                      validateProductField("cft", val);
+                    }}
+                    onBlur={(e) => validateProductField("cft", e.target.value)}
+                    className={`bg-white ${productErrors.cft ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                   />
+                  {productErrors.cft && (
+                    <p className="text-red-500 text-[10px] mt-1">{productErrors.cft}</p>
+                  )}
                 </div>
               )}
             </div>
@@ -1220,16 +1330,21 @@ export default function CreateEstimation() {
                 <Input
                   type="number"
                   min="1"
+                  step="1"
                   placeholder="1"
                   value={currentProduct.quantity}
-                  onChange={(e) =>
-                    setCurrentProduct((p) => ({
-                      ...p,
-                      quantity: parseInt(e.target.value) || 1,
-                    }))
-                  }
-                  className="bg-white"
+                  onKeyDown={(e) => ["-", "e", "E", "."].includes(e.key) && e.preventDefault()}
+                  onChange={(e) => {
+                    const val = handlePositiveNumber(e.target.value);
+                    setCurrentProduct((p) => ({ ...p, quantity: parseInt(val) }));
+                    validateProductField("quantity", val);
+                  }}
+                  onBlur={(e) => validateProductField("quantity", e.target.value)}
+                  className={`bg-white ${productErrors.quantity ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                 />
+                {productErrors.quantity && (
+                  <p className="text-red-500 text-[10px] mt-1">{productErrors.quantity}</p>
+                )}
               </div>
               <div>
                 <Label className="text-xs font-semibold">
@@ -1238,16 +1353,21 @@ export default function CreateEstimation() {
                 <Input
                   type="number"
                   step="0.01"
+                  min="0.01"
                   placeholder="0.00"
                   value={currentProduct.rate}
-                  onChange={(e) =>
-                    setCurrentProduct((p) => ({
-                      ...p,
-                      rate: parseFloat(e.target.value) || 0,
-                    }))
-                  }
-                  className="bg-white"
+                  onKeyDown={(e) => ["-", "e", "E"].includes(e.key) && e.preventDefault()}
+                  onChange={(e) => {
+                    const val = handlePositiveNumber(e.target.value);
+                    setCurrentProduct((p) => ({ ...p, rate: parseFloat(val) }));
+                    validateProductField("rate", val);
+                  }}
+                  onBlur={(e) => validateProductField("rate", e.target.value)}
+                  className={`bg-white ${productErrors.rate ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                 />
+                {productErrors.rate && (
+                  <p className="text-red-500 text-[10px] mt-1">{productErrors.rate}</p>
+                )}
               </div>
             </div>
 
@@ -1290,10 +1410,20 @@ export default function CreateEstimation() {
               <Button
                 type="button"
                 onClick={handleAddProduct}
-                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold"
+                disabled={!isProductFormValid}
+                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold disabled:opacity-50"
               >
-                <Plus className="h-4 w-4 mr-1" />
-                Add Product
+                {currentProduct.tempId ? (
+                  <>
+                    <Edit2 className="h-4 w-4 mr-1" />
+                    Update Product
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Product
+                  </>
+                )}
               </Button>
             </div>
           </div>

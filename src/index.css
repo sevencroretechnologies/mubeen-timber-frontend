@@ -25,3 +25,30 @@
   }
 }
 
+@layer components {
+  /* Simplified Customer Responsive Card */
+  .responsive-card {
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm transition-all;
+  }
+
+  .responsive-card-header {
+    @apply flex justify-between items-start p-4 border-b border-gray-50;
+  }
+
+  .responsive-card-body {
+    @apply p-4 space-y-2;
+  }
+
+  .responsive-card-footer {
+    @apply p-4 bg-gray-50/50 flex gap-2 rounded-b-lg;
+  }
+
+  /* Responsive visibility utilities */
+  .hide-on-mobile {
+    @apply hidden md:block;
+  }
+
+  .show-on-mobile {
+    @apply block md:hidden;
+  }
+}
