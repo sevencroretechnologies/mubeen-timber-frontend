@@ -447,12 +447,12 @@ export default function CustomerProjects() {
                                                                     <span className={`text-xs px-2 py-0.5 rounded font-medium ${getStatusColor(estimation.status)}`}>
                                                                         {estimation.status?.replace('_', ' ').toUpperCase()}
                                                                     </span>
-                                                                    <span className="text-xs text-gray-400">
+                                                                    {/* <span className="text-xs text-gray-400">
                                                                         #{estimation.id}
                                                                     </span>
                                                                     <span className="text-xs text-gray-400">
                                                                         {new Date(estimation.created_at).toLocaleDateString()}
-                                                                    </span>
+                                                                    </span> */}
                                                                 </div>
                                                                 {estimation.description && (
                                                                     <p className="text-sm text-gray-700 truncate mb-1">
