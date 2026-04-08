@@ -13,7 +13,9 @@ import {
   User,
   Warehouse,
   ShoppingCart,
-  Hammer 
+  Hammer,
+  BarChart3,
+  TreesIcon
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import {
@@ -43,7 +45,11 @@ interface NavItem {
 }
 
 const navigation: NavItem[] = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  {
+    name: "Dashboard",
+    href: "/dashboard/timber",
+    icon: LayoutDashboard,
+  },
   {
     name: "CRM",
     href: "/crm",
@@ -51,14 +57,14 @@ const navigation: NavItem[] = [
     children: [
       { name: "Dashboard", href: "/crm/dashboard" },
       { name: "Leads", href: "/crm/leads" },
-      // { name: "Customers", href: "/crm/customers" },
+      { name: "Customers", href: "/crm/customers" },
       { name: "Opportunities", href: "/crm/opportunities" },
-      // { name: "Estimations", href: "/crm/estimations" },
+      { name: "Estimations", href: "/crm/estimations" },
       { name: "Campaigns", href: "/crm/campaigns" },
       { name: "Sources", href: "/crm/sources" },
       { name: "Territories", href: "/crm/territories" },
-      // { name: "Product List", href: "/crm/products" },
-      // { name: "Projects", href: "/crm/projects" },
+      { name: "Product List", href: "/crm/products" },
+      { name: "Projects", href: "/crm/projects" },
       { name: "Prospects", href: "/crm/prospects" },
       { name: "Contacts", href: "/crm/contacts" },
       { name: "Opportunity Lost Reasons", href: "/crm/opportunity-lost-reasons" },
@@ -75,7 +81,7 @@ const navigation: NavItem[] = [
       { name: "Stock Adjustment", href: "/inventory/adjust" },
       { name: "Low Stock Alerts", href: "/inventory/alerts" },
       { name: "Wood Types", href: "/inventory/wood-types" },
-      // { name: "Requisitions", href: "/inventory/requisitions" },
+      { name: "Requisitions", href: "/inventory/requisitions" },
       { name: "Warehouses", href: "/inventory/warehouses" },
     ],
   },
@@ -94,8 +100,9 @@ const navigation: NavItem[] = [
     href: "/timber",
     icon: Hammer,
     children: [
-      { name: "Customers", href: "/crm/customers" },
+      { name: "Dashboard", href: "/dashboard/timber" },
       { name: "Estimations", href: "/crm/estimations" },
+      { name: "Projects", href: "/crm/projects" },
     ],
   },
   {
