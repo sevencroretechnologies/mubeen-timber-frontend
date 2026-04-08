@@ -217,53 +217,116 @@ export default function EstimationView() {
                         </CardTitle>
                     </div>
                 </CardHeader>
-                <CardContent className="p-0 overflow-x-auto">
-                    <Table>
-                        <TableHeader className="bg-slate-50/50">
-                            <TableRow>
-                                <TableHead className="w-[250px] font-semibold text-slate-700">Product</TableHead>
-                                <TableHead className="font-semibold text-slate-700">Formula</TableHead>
-                                <TableHead className="font-semibold text-slate-700">Dimensions</TableHead>
-                                <TableHead className="text-right font-semibold text-slate-700">Qty</TableHead>
-                                <TableHead className="text-right font-semibold text-slate-700">CFT</TableHead>
-                                <TableHead className="text-right font-semibold text-slate-700">Rate</TableHead>
-                                <TableHead className="text-right font-semibold text-slate-700">Total (₹)</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {estimation.products && estimation.products.length > 0 ? (
-                                estimation.products.map((product) => (
-                                    <TableRow key={product.id} className="hover:bg-slate-50/80 transition-colors border-b">
-                                        <TableCell className="font-medium">
-                                            {product.product?.name || `Product #${product.product_id}`}
-                                            {product.product?.description && (
-                                                <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{product.product.description}</div>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                                            {getCftTypeLabel(product.cft_calculation_type)}
-                                        </TableCell>
-                                        <TableCell className="font-mono text-xs text-slate-600 bg-slate-50 px-2 py-1 rounded inline-block mt-2 border border-slate-100">
-                                            {getDimensionsDisplay(product)}
-                                        </TableCell>
-                                        <TableCell className="text-right font-medium">{product.quantity}</TableCell>
-                                        <TableCell className="text-right font-semibold text-blue-600">{Number(product.cft || 0).toFixed(2)}</TableCell>
-                                        <TableCell className="text-right text-slate-600">₹{Number(product.cost_per_cft || 0).toFixed(2)}</TableCell>
-                                        <TableCell className="text-right font-semibold text-slate-900 bg-slate-50/50">
-                                            ₹{Number(product.total_amount || 0).toFixed(2)}
+                <CardContent className="p-0">
+                    {/* Desktop View: Table */}
+                    <div className="hidden md:block overflow-x-auto">
+                        <Table>
+                            <TableHeader className="bg-slate-50/50">
+                                <TableRow>
+                                    <TableHead className="w-[250px] font-semibold text-slate-700">Product</TableHead>
+                                    <TableHead className="font-semibold text-slate-700">Formula</TableHead>
+                                    <TableHead className="font-semibold text-slate-700">Dimensions</TableHead>
+                                    <TableHead className="text-right font-semibold text-slate-700">Qty</TableHead>
+                                    <TableHead className="text-right font-semibold text-slate-700">CFT</TableHead>
+                                    <TableHead className="text-right font-semibold text-slate-700">Rate</TableHead>
+                                    <TableHead className="text-right font-semibold text-slate-700">Total (₹)</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {estimation.products && estimation.products.length > 0 ? (
+                                    estimation.products.map((product) => (
+                                        <TableRow key={product.id} className="hover:bg-slate-50/80 transition-colors border-b">
+                                            <TableCell className="font-medium">
+                                                {product.product?.name || `Product #${product.product_id}`}
+                                                {product.product?.description && (
+                                                    <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{product.product.description}</div>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                                                {getCftTypeLabel(product.cft_calculation_type)}
+                                            </TableCell>
+                                            <TableCell className="font-mono text-xs text-slate-600 bg-slate-50 px-2 py-1 rounded inline-block mt-2 border border-slate-100">
+                                                {getDimensionsDisplay(product)}
+                                            </TableCell>
+                                            <TableCell className="text-right font-medium">{product.quantity}</TableCell>
+                                            <TableCell className="text-right font-semibold text-blue-600">{Number(product.cft || 0).toFixed(2)}</TableCell>
+                                            <TableCell className="text-right text-slate-600">₹{Number(product.cost_per_cft || 0).toFixed(2)}</TableCell>
+                                            <TableCell className="text-right font-semibold text-slate-900 bg-slate-50/50">
+                                                ₹{Number(product.total_amount || 0).toFixed(2)}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                                            <Package className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                                            <p>No products found in this estimation.</p>
                                         </TableCell>
                                     </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-                                        <Package className="h-8 w-8 mx-auto mb-2 opacity-20" />
-                                        <p>No products found in this estimation.</p>
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                    {/* Mobile View: Stacked Cards */}
+                    <div className="md:hidden flex flex-col divide-y divide-slate-100 bg-white">
+                        {estimation.products && estimation.products.length > 0 ? (
+                            estimation.products.map((product, index) => (
+                                <div key={`mobile-${product.id}`} className="p-4 space-y-3">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1 pr-3">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-xs bg-orange-50 text-orange-700 px-2 py-0.5 rounded font-bold">#{index + 1}</span>
+                                                <h4 className="font-semibold text-slate-800 text-sm">
+                                                    {product.product?.name || `Product #${product.product_id}`}
+                                                </h4>
+                                            </div>
+                                            {product.product?.description && (
+                                                <p className="text-[11px] text-muted-foreground line-clamp-1">{product.product.description}</p>
+                                            )}
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm font-black text-green-600">₹{Number(product.total_amount || 0).toFixed(2)}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-2 text-xs">
+                                        <div className="bg-slate-50 p-2 rounded border border-slate-100">
+                                            <p className="text-[9px] text-slate-400 uppercase font-bold mb-0.5">Formula</p>
+                                            <p className="font-medium text-slate-700 truncate" title={getCftTypeLabel(product.cft_calculation_type)}>
+                                                {getCftTypeLabel(product.cft_calculation_type).replace('Dimensions in', '').replace('Thickness in', '')}
+                                            </p>
+                                        </div>
+                                        <div className="bg-slate-50 p-2 rounded border border-slate-100">
+                                            <p className="text-[9px] text-slate-400 uppercase font-bold mb-0.5">Dimensions</p>
+                                            <p className="font-mono font-bold text-slate-700 truncate">{getDimensionsDisplay(product)}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between text-[11px] border-t border-slate-100 pt-3 mt-1">
+                                        <div className="flex gap-4">
+                                            <div className="bg-slate-50 px-2 py-1 rounded">
+                                                <span className="text-slate-500 uppercase font-bold text-[9px] block">Qty</span>
+                                                <span className="font-semibold text-slate-800">{product.quantity}</span>
+                                            </div>
+                                            <div className="bg-slate-50 px-2 py-1 rounded">
+                                                <span className="text-slate-500 uppercase font-bold text-[9px] block">Rate</span>
+                                                <span className="font-semibold text-slate-800">₹{Number(product.cost_per_cft || 0).toFixed(2)}</span>
+                                            </div>
+                                        </div>
+                                        <div className="bg-blue-50 px-3 py-1 rounded border border-blue-100 text-right">
+                                            <span className="text-blue-500 uppercase font-bold text-[9px] block">CFT</span>
+                                            <span className="font-black text-blue-700 text-[13px]">{Number(product.cft || 0).toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="h-32 flex flex-col items-center justify-center text-muted-foreground bg-slate-50/50">
+                                <Package className="h-8 w-8 mb-2 opacity-20" />
+                                <p className="text-sm">No products found.</p>
+                            </div>
+                        )}
+                    </div>
                 </CardContent>
             </Card>
 

@@ -306,7 +306,7 @@ export default function CustomerProjects() {
     }
 
     return (
-        <div className="min-h-screen bg-amber-50/30 p-6">
+        <div className="min-h-screen bg-amber-50/30 p-0" >
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-6">
@@ -512,7 +512,7 @@ export default function CustomerProjects() {
 
             {/* Project Modal */}
             <Dialog open={isProjectModalOpen} onOpenChange={setIsProjectModalOpen}>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[500px] w-[calc(100%-5rem)]">
                     <DialogHeader>
                         <DialogTitle>{isEditingProject ? 'Edit Project' : 'Add Project'}</DialogTitle>
                         <DialogDescription className="sr-only">

@@ -91,17 +91,17 @@ const ActionButton = ({
 }) => {
   const styles: Record<string, string> = {
     approve:
-      "bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 text-xs font-semibold rounded-md shadow-sm",
+      "bg-green-600 hover:bg-green-700 text-white px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs font-semibold rounded-md shadow-sm",
     reject:
-      "bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 text-xs font-semibold rounded-md shadow-sm",
+      "bg-rose-500 hover:bg-rose-600 text-white px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs font-semibold rounded-md shadow-sm",
     collect:
-      "bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 text-xs font-semibold rounded-md shadow-sm",
+      "bg-amber-500 hover:bg-amber-600 text-white px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs font-semibold rounded-md shadow-sm",
     edit:
-      "bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 text-xs font-semibold rounded-md shadow-sm",
+      "bg-blue-500 hover:bg-blue-600 text-white px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs font-semibold rounded-md shadow-sm",
     view:
-      "bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 text-xs font-semibold rounded-md shadow-sm",
+      "bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs font-semibold rounded-md shadow-sm",
     secondary:
-      "bg-white hover:bg-gray-50 text-gray-700 px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-200 shadow-sm",
+      "bg-white hover:bg-gray-50 text-gray-700 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs font-semibold rounded-md border border-gray-200 shadow-sm",
   };
 
   return (
@@ -109,7 +109,7 @@ const ActionButton = ({
       onClick={onClick}
       disabled={disabled || isLoading}
       title={title}
-      className={`${styles[variant]} flex items-center justify-center gap-2 transition-colors whitespace-nowrap ${disabled || isLoading ? "opacity-60 cursor-not-allowed" : ""}`}
+      className={`${styles[variant]} flex items-center justify-center gap-1 sm:gap-2 transition-colors whitespace-nowrap ${disabled || isLoading ? "opacity-60 cursor-not-allowed" : ""}`}
     >
       {isLoading ? (
         <>
@@ -145,7 +145,7 @@ const ActionsCell = ({
   const realStatus = row.status || "draft";
 
   return (
-    <div className="flex items-center justify-end gap-2">
+    <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
       {status === "draft" && (
         <>
           <ActionButton
@@ -560,30 +560,30 @@ export default function EstimationsList() {
               </div> */}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-4">
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Estimations</p>
-                <p className="mt-2 text-3xl font-bold text-slate-900">{statusCounts.total || 0}</p>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4">
+              <div className="rounded-xl border border-slate-200 bg-white p-3 sm:p-5 shadow-sm overflow-hidden">
+                <p className="text-[9px] sm:text-xs font-medium text-slate-500 uppercase tracking-wider truncate">Total Estimations</p>
+                <p className="mt-1 sm:mt-2 text-2xl sm:text-3xl font-bold text-slate-900">{statusCounts.total || 0}</p>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Draft</p>
-                <p className="mt-2 text-3xl font-bold text-slate-900">{statusCounts.draft || 0}</p>
+              <div className="rounded-xl border border-slate-200 bg-white p-3 sm:p-5 shadow-sm overflow-hidden">
+                <p className="text-[9px] sm:text-xs font-medium text-slate-500 uppercase tracking-wider truncate">Draft</p>
+                <p className="mt-1 sm:mt-2 text-2xl sm:text-3xl font-bold text-slate-900">{statusCounts.draft || 0}</p>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm border-t-4 border-t-emerald-500">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Approved / Collected</p>
-                <p className="mt-2 text-3xl font-bold text-emerald-600">{(statusCounts.approved || 0) + (statusCounts.collected || 0)}</p>
+              <div className="rounded-xl border border-slate-200 bg-white p-3 sm:p-5 shadow-sm border-t-4 border-t-emerald-500 overflow-hidden">
+                <p className="text-[9px] sm:text-xs font-medium text-slate-500 uppercase tracking-wider truncate">Approved / Collected</p>
+                <p className="mt-1 sm:mt-2 text-2xl sm:text-3xl font-bold text-emerald-600">{(statusCounts.approved || 0) + (statusCounts.collected || 0)}</p>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm border-t-4 border-t-rose-500">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Rejected</p>
-                <p className="mt-2 text-3xl font-bold text-rose-600">{statusCounts.rejected || 0}</p>
+              <div className="rounded-xl border border-slate-200 bg-white p-3 sm:p-5 shadow-sm border-t-4 border-t-rose-500 overflow-hidden">
+                <p className="text-[9px] sm:text-xs font-medium text-slate-500 uppercase tracking-wider truncate">Rejected</p>
+                <p className="mt-1 sm:mt-2 text-2xl sm:text-3xl font-bold text-rose-600">{statusCounts.rejected || 0}</p>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Data Table */}
-      <Card>
+      {/* Desktop Data Table */}
+      <Card className="hidden md:block shadow-sm">
         <CardContent className="p-0">
           <DataTable
             columns={columns}
@@ -608,6 +608,65 @@ export default function EstimationsList() {
           />
         </CardContent>
       </Card>
+
+      {/* Mobile view */}
+      <div className="md:hidden flex flex-col gap-3">
+        {isLoading ? (
+          <div className="p-8 flex justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-amber-600" />
+          </div>
+        ) : filteredData.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground bg-white rounded-xl border border-slate-200">
+            <FileSignature className="mx-auto h-12 w-12 mb-3 opacity-20" />
+            <p className="text-base font-medium">No estimations found</p>
+          </div>
+        ) : (
+          filteredData.map((row, index) => (
+            <Card key={row.id || index} className="overflow-hidden shadow-sm border-slate-200">
+              <div className="p-4 space-y-3 bg-white">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-slate-900 text-sm">{row.customer?.name || "Unknown Customer"}</span>
+                      <StatusBadge status={row.status} />
+                    </div>
+                    <p className="text-xs text-slate-500 font-medium">
+                      {row.project?.name || "No Project"} • <span className="text-amber-600">{row.product?.name || "Misc Product"}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between bg-zinc-50 rounded-lg p-3 border border-slate-100">
+                  <div>
+                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Type</p>
+                    <p className="text-xs font-semibold text-slate-700">{getEstimationTypeLabel(row.estimation_type)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Amount</p>
+                    <p className="text-sm font-black text-slate-900">
+                      {row.total_amount
+                        ? `₹${Number(row.total_amount).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        : "-"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex justify-end w-full border-t border-slate-100">
+                  <ActionsCell
+                    row={row}
+                    onApprove={handleApprove}
+                    onCollect={openCollectModal}
+                    onView={handleView}
+                    onCancel={handleReject}
+                    onEdit={handleEdit}
+                    isProcessing={processingIds.has(row.id)}
+                  />
+                </div>
+              </div>
+            </Card>
+          ))
+        )}
+      </div>
 
       {/* Collect Material Modal */}
       {collectModal.open && collectModal.estimation && (

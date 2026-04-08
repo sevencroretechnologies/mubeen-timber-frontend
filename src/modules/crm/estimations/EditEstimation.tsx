@@ -544,7 +544,7 @@ export default function EditEstimation() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50/30 to-orange-50/30 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50/30 to-orange-50/30 py-4 sm:py-8 px-0">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center gap-4 mb-6">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full bg-white shadow-sm">
@@ -567,7 +567,7 @@ export default function EditEstimation() {
               </CardTitle>
             </CardHeader>
 
-            <CardContent className="space-y-6 pt-6">
+            <CardContent className="space-y-4 sm:space-y-6 pt-4 sm:pt-6 p-3 sm:p-6">
               <div className="space-y-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
                 <h3 className="text-amber-800 font-bold text-sm uppercase tracking-tight flex items-center gap-2">
                   <div className="h-1 w-6 bg-amber-600 rounded-full"></div>
@@ -600,7 +600,7 @@ export default function EditEstimation() {
               </div>
 
               <div className="space-y-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <h3 className="text-amber-800 font-bold text-sm uppercase tracking-tight flex items-center gap-2">
                     <Hammer className="h-4 w-4 text-amber-600" />
                     Products ({estimationProducts.length})
@@ -618,8 +618,8 @@ export default function EditEstimation() {
                   ) : (
                     estimationProducts.map((product, index) => (
                       <div key={product.tempId} className="bg-white p-3 rounded-lg border border-slate-200 hover:border-amber-300">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
+                        <div className="flex flex-col sm:flex-row justify-between items-start gap-3 w-full">
+                          <div className="flex-1 w-full">
                             <div className="flex items-center gap-2">
                               <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-medium">#{index + 1}</span>
                               <h4 className="font-semibold text-slate-800 text-sm">
@@ -638,14 +638,16 @@ export default function EditEstimation() {
                               <span className="bg-purple-50 text-purple-700 px-2 py-0.5 rounded">₹{Number(product.rate).toFixed(2)}/CFT</span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-3 sm:pt-0 mt-2 sm:mt-0 border-t sm:border-0 border-slate-100">
                             <span className="text-sm font-bold text-green-600">₹{Number(product.total).toFixed(2)}</span>
+                            <div className="flex items-center gap-1">
                             <Button type="button" variant="ghost" size="icon" onClick={() => handleEditProduct(product.tempId!)} className="h-8 w-8 text-slate-400 hover:text-amber-600">
                               <Edit2 className="h-4 w-4" />
                             </Button>
                             <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveProduct(product.tempId!)} className="h-8 w-8 text-slate-400 hover:text-red-600">
                               <Trash2 className="h-4 w-4" />
                             </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -676,7 +678,7 @@ export default function EditEstimation() {
 
               <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-lg border border-amber-200">
                 <h3 className="text-amber-900 font-bold text-sm uppercase mb-4 tracking-tight">Summary</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 text-sm">
                   {[
                     { label: 'Total CFT', value: Number(productsSummary.totalCft).toFixed(2), color: 'text-amber-700' },
                     { label: 'Products Amount', value: `₹${Number(productsSummary.totalAmount).toFixed(2)}`, color: 'text-green-600' },
@@ -695,9 +697,9 @@ export default function EditEstimation() {
               </div>
             </CardContent>
 
-            <CardFooter className="flex justify-end gap-3 pt-4 border-t bg-slate-50">
-              <Button type="button" variant="outline" onClick={() => navigate(-1)} className="px-6 h-9">Cancel</Button>
-              <Button type="submit" disabled={isSaving || estimationProducts.length === 0} className="px-8 h-9 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold shadow-sm transition-all text-xs disabled:opacity-50">
+            <CardFooter className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t bg-slate-50 p-4 sm:p-6">
+              <Button type="button" variant="outline" onClick={() => navigate(-1)} className="w-full sm:w-auto px-6 h-9">Cancel</Button>
+              <Button type="submit" disabled={isSaving || estimationProducts.length === 0} className="w-full sm:w-auto px-8 h-9 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold shadow-sm transition-all text-xs disabled:opacity-50">
                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Edit2 className="mr-2 h-4 w-4" />}
                 Update Estimation
               </Button>
@@ -707,7 +709,7 @@ export default function EditEstimation() {
       </div>
 
       <Dialog open={isProductModalOpen} onOpenChange={(open) => { setIsProductModalOpen(open); if (!open) resetCurrentProduct(); }}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px] w-[calc(100%-3rem)] sm:w-full min-h-[85vh] sm:min-h-[650px] max-h-[90vh] overflow-y-auto rounded-lg top-[5%] translate-y-0 sm:top-[50%] sm:translate-y-[-50%]">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
               <Hammer className="h-5 w-5 text-amber-600" /> {currentProduct.tempId ? "Edit Product" : "Add Product"}
@@ -807,9 +809,15 @@ export default function EditEstimation() {
             <div className="space-y-3">
               <Label className="text-xs font-semibold">Calculation Type</Label>
               <select value={currentProduct.cft_calculation_type} onChange={(e) => setCurrentProduct(p => ({ ...p, cft_calculation_type: e.target.value }))} className="w-full h-10 border rounded-md px-3 bg-white text-sm">
-                {CFT_CALCULATION_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
+                {CFT_CALCULATION_TYPES.map(type => {
+                  const shortDesc = type.description
+                    .replace("Dimensions in ", "")
+                    .replace("Thickness in ", "")
+                    .replace("Enter CFT manually", "Manual Entry");
+                  return <option key={type.value} value={type.value}>{type.label} ({shortDesc})</option>
+                })}
               </select>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-4">
                 {currentProduct.cft_calculation_type !== "5" && (
                   <>
                     <div>

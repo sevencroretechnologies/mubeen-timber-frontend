@@ -125,7 +125,7 @@ export default function CreateEstimation() {
     breadth: "",
     height: "",
     thickness: "",
-    cft_calculation_type: "",
+    cft_calculation_type: "1",
     quantity: 1,
     cft: 0,
     rate: 0,
@@ -417,7 +417,7 @@ export default function CreateEstimation() {
       breadth: "",
       height: "",
       thickness: "",
-      cft_calculation_type: "",
+      cft_calculation_type: "1",
       quantity: 1,
       cft: 0,
       rate: 0,
@@ -627,7 +627,7 @@ export default function CreateEstimation() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50/30 to-orange-50/30 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50/30 to-orange-50/30 py-4 sm:py-8 px-0">
       <div className="max-w-5xl mx-auto">
         {/* Header with Back Button */}
         <div className="flex items-center gap-4 mb-6">
@@ -658,7 +658,7 @@ export default function CreateEstimation() {
               </CardTitle>
             </CardHeader>
 
-            <CardContent className="space-y-6 pt-6">
+            <CardContent className="space-y-4 sm:space-y-6 pt-4 sm:pt-6 p-3 sm:p-6">
               {/* Basic Information */}
               <div className="space-y-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
                 <h3 className="text-amber-800 font-bold text-sm uppercase tracking-tight flex items-center gap-2">
@@ -701,7 +701,7 @@ export default function CreateEstimation() {
 
               {/* Products Section */}
               <div className="space-y-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <h3 className="text-amber-800 font-bold text-sm uppercase tracking-tight flex items-center gap-2">
                     <Hammer className="h-4 w-4 text-amber-600" />
                     Products
@@ -736,8 +736,8 @@ export default function CreateEstimation() {
                         key={product.tempId}
                         className="bg-white p-3 rounded-lg border border-slate-200 hover:border-amber-300 transition-all"
                       >
-                        <div className="flex justify-between items-start gap-3">
-                          <div className="flex-1">
+                        <div className="flex flex-col sm:flex-row justify-between items-start gap-3 w-full">
+                          <div className="flex-1 w-full">
                             <div className="flex items-center gap-2">
                               <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-medium">
                                 #{index + 1}
@@ -772,10 +772,11 @@ export default function CreateEstimation() {
                               </span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-3 sm:pt-0 mt-2 sm:mt-0 border-t sm:border-0 border-slate-100">
                             <span className="text-sm font-bold text-green-600">
                               ₹{Number(product.total).toFixed(2)}
                             </span>
+                            <div className="flex items-center gap-1">
                             <Button
                               type="button"
                               variant="ghost"
@@ -796,6 +797,7 @@ export default function CreateEstimation() {
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -885,7 +887,7 @@ export default function CreateEstimation() {
                 </h3>
 
                 {/* File Input */}
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                   <label className="flex items-center gap-2 px-4 py-2 bg-white border border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-colors">
                     <Paperclip className="h-4 w-4 text-slate-500" />
                     <span className="text-sm text-slate-600">
@@ -937,7 +939,7 @@ export default function CreateEstimation() {
                 <h3 className="text-amber-900 font-bold text-sm uppercase tracking-tight mb-4">
                   Estimation Summary
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 text-sm">
                   <div className="bg-white p-3 rounded-lg border border-amber-200">
                     <p className="text-[10px] text-slate-500 uppercase font-semibold">
                       Total CFT
@@ -974,19 +976,19 @@ export default function CreateEstimation() {
               </div>
             </CardContent>
 
-            <CardFooter className="flex justify-end gap-3 pt-4 border-t bg-slate-50">
+            <CardFooter className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t bg-slate-50 p-4 sm:p-6">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => navigate(-1)}
-                className="px-6 h-9"
+                className="w-full sm:w-auto px-6 h-9"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={isSaving || estimationProducts.length === 0}
-                className="px-8 h-9 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-sm transition-all text-xs disabled:opacity-50"
+                className="w-full sm:w-auto px-8 h-9 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-sm transition-all text-xs disabled:opacity-50"
               >
                 {isSaving ? (
                   <>
@@ -1013,7 +1015,7 @@ export default function CreateEstimation() {
           if (!open) resetCurrentProduct();
         }}
       >
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px] w-[calc(100%-3rem)] sm:w-full min-h-[85vh] sm:min-h-[650px] max-h-[90vh] overflow-y-auto rounded-lg top-[5%] translate-y-0 sm:top-[50%] sm:translate-y-[-50%]">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
               <Hammer className="h-5 w-5 text-amber-600" />
@@ -1187,14 +1189,20 @@ export default function CreateEstimation() {
                   }
                   className="w-full h-10 border rounded-md px-3 py-2 bg-white text-sm"
                 >
-                  {CFT_CALCULATION_TYPES.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label} - {type.description}
-                    </option>
-                  ))}
+                  {CFT_CALCULATION_TYPES.map((type) => {
+                    const shortDesc = type.description
+                      .replace("Dimensions in ", "")
+                      .replace("Thickness in ", "")
+                      .replace("Enter CFT manually", "Manual Entry");
+                    return (
+                      <option key={type.value} value={type.value}>
+                        {type.label} ({shortDesc})
+                      </option>
+                    )
+                  })}
                 </select>
               </div>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-4">
                 {currentProduct.cft_calculation_type !== "5" && (
                   <>
                     <div>
