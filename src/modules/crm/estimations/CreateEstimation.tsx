@@ -29,6 +29,8 @@ import {
   Edit2,
   IndianRupee,
   ChevronDown,
+  Paperclip,
+  X,
 } from "lucide-react";
 import {
   Command,
@@ -107,6 +109,14 @@ export default function CreateEstimation() {
     name: "",
     description: "",
   });
+
+  // Attachments state
+  const [attachments, setAttachments] = useState<Array<{
+    file: File;
+    preview: string;
+    base64: string;
+  }>>([]);
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
 
   // Current product being edited/added
   const [currentProduct, setCurrentProduct] = useState<EstimationProduct>({
@@ -407,6 +417,67 @@ export default function CreateEstimation() {
     }
   };
 
+  // Attachment handlers
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    setIsUploadingAttachment(true);
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          showAlert('error', 'Invalid File', 'Only image files are allowed');
+          continue;
+        }
+
+        // Validate file size (max 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+          showAlert('error', 'File Too Large', 'Maximum file size is 2MB');
+          continue;
+        }
+
+        // Create preview
+        const preview = URL.createObjectURL(file);
+
+        // Convert to base64
+        const base64 = await fileToBase64(file);
+
+        setAttachments(prev => [...prev, { file, preview, base64 }]);
+      }
+    } catch (error) {
+      showAlert('error', 'Error', 'Failed to process file');
+    } finally {
+      setIsUploadingAttachment(false);
+      // Reset input
+      e.target.value = '';
+    }
+  };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result);
+      };
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setAttachments(prev => {
+      const newAttachments = [...prev];
+      // Revoke object URL to free memory
+      URL.revokeObjectURL(newAttachments[index].preview);
+      newAttachments.splice(index, 1);
+      return newAttachments;
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -447,12 +518,26 @@ export default function CreateEstimation() {
         tax: parseFloat(charges.tax) || 0,
         labour_charges: parseFloat(charges.labour_charges) || 0,
         total_cft: productsSummary.totalCft,
+        attachments: attachments.map(a => a.base64),
       };
+
+      console.log('Creating estimation with payload:', {
+        ...payload,
+        attachments: `[${payload.attachments.length} base64 images]`,
+      });
 
       await estimationsApi.create(payload);
       showAlert("success", "Created!", "Estimation created successfully");
       navigate(`/crm/customers/${project.customer_id}/projects`);
     } catch (error) {
+      console.error('Estimation creation error:', error);
+
+      // Log detailed error for debugging
+      if (error && typeof error === 'object' && 'response' in error) {
+        console.error('Response data:', (error as any).response?.data);
+        console.error('Response status:', (error as any).response?.status);
+      }
+
       showAlert(
         "error",
         "Error",
@@ -715,6 +800,66 @@ export default function CreateEstimation() {
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Attachments Section */}
+              <div className="space-y-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                <h3 className="text-amber-800 font-bold text-sm uppercase tracking-tight flex items-center gap-2">
+                  <Paperclip className="h-4 w-4 text-amber-600" />
+                  Attachments
+                  {attachments.length > 0 && (
+                    <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                      {attachments.length} file(s)
+                    </span>
+                  )}
+                </h3>
+
+                {/* File Input */}
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 px-4 py-2 bg-white border border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-colors">
+                    <Paperclip className="h-4 w-4 text-slate-500" />
+                    <span className="text-sm text-slate-600">
+                      {isUploadingAttachment ? "Processing..." : "Click to upload images"}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleFileChange}
+                      disabled={isUploadingAttachment}
+                      className="hidden"
+                    />
+                  </label>
+                  <span className="text-xs text-slate-400">Max 2MB per file</span>
+                </div>
+
+                {/* Attachments Preview */}
+                {attachments.length > 0 && (
+                  <div className="flex flex-wrap gap-3">
+                    {attachments.map((attachment, index) => (
+                      <div
+                        key={index}
+                        className="relative group bg-white p-2 rounded-lg border border-slate-200 hover:border-amber-300 transition-colors"
+                      >
+                        <img
+                          src={attachment.preview}
+                          alt={`Attachment ${index + 1}`}
+                          className="h-20 w-20 object-cover rounded"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAttachment(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                        <p className="text-xs text-slate-500 mt-1 max-w-[80px] truncate">
+                          {attachment.file.name}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Summary Section */}
