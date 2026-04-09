@@ -4,35 +4,38 @@ import { estimationsApi } from '@/services/api';
 import { showAlert, getErrorMessage } from '@/lib/sweetalert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, FileSignature, Package, User, Building2, DollarSign, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, FileSignature, Package, User, Building2, DollarSign, Image as ImageIcon, ChevronDown, ChevronUp, Layers } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-// Interfaces based on API
-interface Product {
+// ─── Interfaces ──────────────────────────────────────────────────────────────
+
+interface EstimationProductItem {
     id: number;
-    name: string;
-    description?: string;
+    name?: string;
+    length?: number;
+    breadth?: number;
+    height?: number;
+    thickness?: number;
+    unit_type: string | number;
+    quantity: number;
+    rate: number;
+    item_cft: number;
+    total_amount: number;
 }
 
 interface EstimationProduct {
     id: number;
     estimation_id: number;
     product_id: number;
-    cft_calculation_type: string | number;
-    length?: number;
-    breadth?: number;
-    height?: number;
-    thickness?: number;
-    quantity: number;
-    cft: number;
-    cost_per_cft?: number;
+    total_cft: number;
     total_amount: number;
-    product?: Product | null;
+    product?: { id: number; name: string; description?: string } | null;
+    items?: EstimationProductItem[];
 }
 
 interface EstimationSummary {
     total_products: number;
+    total_items: number;
     total_cft: number;
     products_total: number;
     charges_total: number;
@@ -53,7 +56,9 @@ interface EstimationOtherCharges {
 
 interface EstimationAttachment {
     id: number;
-    image_url: string;
+    image_url?: string;
+    url?: string;
+    name?: string;
     description?: string;
     created_at: string;
 }
@@ -69,8 +74,6 @@ interface Estimation {
     customer?: { id: number; name: string } | null;
     project?: { id: number; name: string; description?: string } | null;
     products?: EstimationProduct[];
-    otherCharge?: any;
-    attachments?: any[];
 }
 
 interface EstimationResponse {
@@ -80,11 +83,40 @@ interface EstimationResponse {
     attachments: EstimationAttachment[];
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const getCftTypeLabel = (type: string | number) => {
+    const types: Record<string, string> = {
+        '1': '(L×B×H)/144 [Inches]',
+        '2': '(L×B×H) [Feet]',
+        '3': '(L×B×Thk)/12 [Thk Inches]',
+        '4': '(L×B×Thk) [Thk Feet]',
+        '5': 'Manual',
+    };
+    return types[String(type)] || 'Unknown';
+};
+
+const getDimensionsDisplay = (item: EstimationProductItem) => {
+    const l = item.length || 0;
+    const b = item.breadth || 0;
+    const type = String(item.unit_type);
+
+    if (type === '1' || type === '2') {
+        return `${l} × ${b} × ${item.height || 0}`;
+    } else if (type === '3' || type === '4') {
+        return `${l} × ${b} × ${item.thickness || 0}`;
+    }
+    return '-';
+};
+
+// ─── Component ───────────────────────────────────────────────────────────────
+
 export default function EstimationView() {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const [response, setResponse] = useState<EstimationResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [expandedProducts, setExpandedProducts] = useState<Set<number>>(new Set());
 
     useEffect(() => {
         const fetchEstimation = async () => {
@@ -92,7 +124,13 @@ export default function EstimationView() {
             setIsLoading(true);
             try {
                 const res = await estimationsApi.get(id);
-                setResponse(res.data);
+                const data = res.data;
+                setResponse(data);
+
+                // Expand all products by default
+                if (data?.data?.products) {
+                    setExpandedProducts(new Set(data.data.products.map((p: EstimationProduct) => p.id)));
+                }
             } catch (error) {
                 showAlert('error', 'Error', getErrorMessage(error, 'Failed to load estimation'));
             } finally {
@@ -102,30 +140,12 @@ export default function EstimationView() {
         fetchEstimation();
     }, [id]);
 
-    const getCftTypeLabel = (type: string | number) => {
-        const types = {
-            '1': '(L×B×H)/144 [Inches]',
-            '2': '(L×B×H) [Feet]',
-            '3': '(L×B×Thk)/12 [Thk Inches]',
-            '4': '(L×B×Thk) [Thk Feet]',
-            '5': 'Manual'
-        };
-        return types[String(type) as keyof typeof types] || 'Unknown';
-    };
-
-    const getDimensionsDisplay = (p: EstimationProduct) => {
-        const l = p.length || 0;
-        const b = p.breadth || 0;
-        const type = String(p.cft_calculation_type);
-
-        if (type === '1' || type === '2') {
-            const h = p.height || 0;
-            return `${l} × ${b} × ${h}`;
-        } else if (type === '3' || type === '4') {
-            const t = p.thickness || 0;
-            return `${l} × ${b} × ${t}`;
-        }
-        return '-';
+    const toggleProduct = (productId: number) => {
+        setExpandedProducts((prev) => {
+            const next = new Set(prev);
+            if (next.has(productId)) next.delete(productId); else next.add(productId);
+            return next;
+        });
     };
 
     if (isLoading) {
@@ -207,132 +227,145 @@ export default function EstimationView() {
                 </CardContent>
             </Card>
 
-            {/* 2. Products Table */}
+            {/* 2. Products & Items (Collapsible) */}
             <Card className="shadow-sm border-slate-200">
                 <CardHeader className="pb-3 border-b bg-slate-50/50">
                     <div className="flex items-center justify-between">
                         <CardTitle className="text-lg flex items-center gap-2">
                             <Package className="h-5 w-5 text-orange-600" />
                             Products ({estimation.products?.length || 0})
+                            <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-normal ml-2">
+                                {summary?.total_items || 0} items
+                            </span>
                         </CardTitle>
                     </div>
                 </CardHeader>
-                <CardContent className="p-0">
-                    {/* Desktop View: Table */}
-                    <div className="hidden md:block overflow-x-auto">
-                        <Table>
-                            <TableHeader className="bg-slate-50/50">
-                                <TableRow>
-                                    <TableHead className="w-[250px] font-semibold text-slate-700">Product</TableHead>
-                                    <TableHead className="font-semibold text-slate-700">Formula</TableHead>
-                                    <TableHead className="font-semibold text-slate-700">Dimensions</TableHead>
-                                    <TableHead className="text-right font-semibold text-slate-700">Qty</TableHead>
-                                    <TableHead className="text-right font-semibold text-slate-700">CFT</TableHead>
-                                    <TableHead className="text-right font-semibold text-slate-700">Rate</TableHead>
-                                    <TableHead className="text-right font-semibold text-slate-700">Total (₹)</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {estimation.products && estimation.products.length > 0 ? (
-                                    estimation.products.map((product) => (
-                                        <TableRow key={product.id} className="hover:bg-slate-50/80 transition-colors border-b">
-                                            <TableCell className="font-medium">
+                <CardContent className="p-3 space-y-3">
+                    {estimation.products && estimation.products.length > 0 ? (
+                        estimation.products.map((product, index) => {
+                            const isExpanded = expandedProducts.has(product.id);
+                            const items = product.items || [];
+
+                            return (
+                                <div key={product.id} className="border border-slate-200 rounded-lg overflow-hidden hover:border-amber-300 transition-colors">
+                                    {/* Product Header */}
+                                    <div
+                                        className="p-3 bg-white flex items-center justify-between cursor-pointer hover:bg-slate-50/50 transition-colors"
+                                        onClick={() => toggleProduct(product.id)}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xs bg-orange-50 text-orange-700 px-2 py-0.5 rounded font-bold">#{index + 1}</span>
+                                            <h4 className="font-semibold text-slate-800 text-sm">
                                                 {product.product?.name || `Product #${product.product_id}`}
-                                                {product.product?.description && (
-                                                    <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{product.product.description}</div>
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                                                {getCftTypeLabel(product.cft_calculation_type)}
-                                            </TableCell>
-                                            <TableCell className="font-mono text-xs text-slate-600 bg-slate-50 px-2 py-1 rounded inline-block mt-2 border border-slate-100">
-                                                {getDimensionsDisplay(product)}
-                                            </TableCell>
-                                            <TableCell className="text-right font-medium">{product.quantity}</TableCell>
-                                            <TableCell className="text-right font-semibold text-blue-600">{Number(product.cft || 0).toFixed(2)}</TableCell>
-                                            <TableCell className="text-right text-slate-600">₹{Number(product.cost_per_cft || 0).toFixed(2)}</TableCell>
-                                            <TableCell className="text-right font-semibold text-slate-900 bg-slate-50/50">
-                                                ₹{Number(product.total_amount || 0).toFixed(2)}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-                                            <Package className="h-8 w-8 mx-auto mb-2 opacity-20" />
-                                            <p>No products found in this estimation.</p>
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
-                    {/* Mobile View: Stacked Cards */}
-                    <div className="md:hidden flex flex-col divide-y divide-slate-100 bg-white">
-                        {estimation.products && estimation.products.length > 0 ? (
-                            estimation.products.map((product, index) => (
-                                <div key={`mobile-${product.id}`} className="p-4 space-y-3">
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex-1 pr-3">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-xs bg-orange-50 text-orange-700 px-2 py-0.5 rounded font-bold">#{index + 1}</span>
-                                                <h4 className="font-semibold text-slate-800 text-sm">
-                                                    {product.product?.name || `Product #${product.product_id}`}
-                                                </h4>
-                                            </div>
-                                            {product.product?.description && (
-                                                <p className="text-[11px] text-muted-foreground line-clamp-1">{product.product.description}</p>
-                                            )}
+                                            </h4>
+                                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">{items.length} items</span>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-sm font-black text-green-600">₹{Number(product.total_amount || 0).toFixed(2)}</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="grid grid-cols-2 gap-2 text-xs">
-                                        <div className="bg-slate-50 p-2 rounded border border-slate-100">
-                                            <p className="text-[9px] text-slate-400 uppercase font-bold mb-0.5">Formula</p>
-                                            <p className="font-medium text-slate-700 truncate" title={getCftTypeLabel(product.cft_calculation_type)}>
-                                                {getCftTypeLabel(product.cft_calculation_type).replace('Dimensions in', '').replace('Thickness in', '')}
-                                            </p>
-                                        </div>
-                                        <div className="bg-slate-50 p-2 rounded border border-slate-100">
-                                            <p className="text-[9px] text-slate-400 uppercase font-bold mb-0.5">Dimensions</p>
-                                            <p className="font-mono font-bold text-slate-700 truncate">{getDimensionsDisplay(product)}</p>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-sm font-bold text-blue-600">{Number(product.total_cft || 0).toFixed(2)} CFT</span>
+                                            <span className="text-sm font-bold text-green-600">₹{Number(product.total_amount || 0).toFixed(2)}</span>
+                                            {isExpanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center justify-between text-[11px] border-t border-slate-100 pt-3 mt-1">
-                                        <div className="flex gap-4">
-                                            <div className="bg-slate-50 px-2 py-1 rounded">
-                                                <span className="text-slate-500 uppercase font-bold text-[9px] block">Qty</span>
-                                                <span className="font-semibold text-slate-800">{product.quantity}</span>
+                                    {/* Items Table (expanded) */}
+                                    {isExpanded && (
+                                        <div className="border-t border-slate-100 bg-slate-50/30">
+                                            {/* Desktop Table */}
+                                            <div className="hidden md:block overflow-x-auto">
+                                                <table className="w-full text-sm">
+                                                    <thead className="bg-slate-50">
+                                                        <tr className="text-left text-xs text-slate-500 uppercase border-b border-slate-200">
+                                                            <th className="px-3 py-2 font-semibold">#</th>
+                                                            <th className="px-3 py-2 font-semibold">Name</th>
+                                                            <th className="px-3 py-2 font-semibold">Formula</th>
+                                                            <th className="px-3 py-2 font-semibold">Dimensions</th>
+                                                            <th className="px-3 py-2 text-right font-semibold">Qty</th>
+                                                            <th className="px-3 py-2 text-right font-semibold">CFT</th>
+                                                            <th className="px-3 py-2 text-right font-semibold">Rate</th>
+                                                            <th className="px-3 py-2 text-right font-semibold">Total (₹)</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {items.map((item, itemIdx) => (
+                                                            <tr key={item.id} className="border-b border-slate-100 hover:bg-white transition-colors">
+                                                                <td className="px-3 py-2 text-xs text-slate-400">{itemIdx + 1}</td>
+                                                                <td className="px-3 py-2 font-medium text-slate-700">{item.name || '-'}</td>
+                                                                <td className="px-3 py-2 text-xs text-muted-foreground whitespace-nowrap">{getCftTypeLabel(item.unit_type)}</td>
+                                                                <td className="px-3 py-2">
+                                                                    <span className="font-mono text-xs text-slate-600 bg-slate-100 px-2 py-0.5 rounded">{getDimensionsDisplay(item)}</span>
+                                                                </td>
+                                                                <td className="px-3 py-2 text-right font-medium">{item.quantity}</td>
+                                                                <td className="px-3 py-2 text-right font-semibold text-blue-600">{Number(item.item_cft || 0).toFixed(2)}</td>
+                                                                <td className="px-3 py-2 text-right text-slate-600">₹{Number(item.rate || 0).toFixed(2)}</td>
+                                                                <td className="px-3 py-2 text-right font-semibold text-slate-900">₹{Number(item.total_amount || 0).toFixed(2)}</td>
+                                                            </tr>
+                                                        ))}
+                                                        {/* Product subtotal row */}
+                                                        <tr className="bg-amber-50/50 font-semibold">
+                                                            <td colSpan={7} className="px-3 py-2 text-right text-xs text-amber-800 uppercase">Product Subtotal</td>
+                                                            <td className="px-3 py-2 text-right text-amber-800">₹{Number(product.total_amount || 0).toFixed(2)}</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
                                             </div>
-                                            <div className="bg-slate-50 px-2 py-1 rounded">
-                                                <span className="text-slate-500 uppercase font-bold text-[9px] block">Rate</span>
-                                                <span className="font-semibold text-slate-800">₹{Number(product.cost_per_cft || 0).toFixed(2)}</span>
+
+                                            {/* Mobile Cards */}
+                                            <div className="md:hidden divide-y divide-slate-100">
+                                                {items.map((item, itemIdx) => (
+                                                    <div key={item.id} className="p-3 space-y-2">
+                                                        <div className="flex justify-between items-start">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">{itemIdx + 1}</span>
+                                                                <span className="font-medium text-sm text-slate-700">{item.name || 'Item'}</span>
+                                                            </div>
+                                                            <span className="font-bold text-sm text-green-600">₹{Number(item.total_amount || 0).toFixed(2)}</span>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                                            <div className="bg-white p-2 rounded border border-slate-100">
+                                                                <p className="text-[9px] text-slate-400 uppercase font-bold mb-0.5">Formula</p>
+                                                                <p className="font-medium text-slate-700 truncate">{getCftTypeLabel(item.unit_type)}</p>
+                                                            </div>
+                                                            <div className="bg-white p-2 rounded border border-slate-100">
+                                                                <p className="text-[9px] text-slate-400 uppercase font-bold mb-0.5">Dimensions</p>
+                                                                <p className="font-mono font-bold text-slate-700">{getDimensionsDisplay(item)}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center justify-between text-[11px] pt-1">
+                                                            <div className="flex gap-3">
+                                                                <div className="bg-white px-2 py-1 rounded border border-slate-100">
+                                                                    <span className="text-slate-500 uppercase font-bold text-[9px] block">Qty</span>
+                                                                    <span className="font-semibold text-slate-800">{item.quantity}</span>
+                                                                </div>
+                                                                <div className="bg-white px-2 py-1 rounded border border-slate-100">
+                                                                    <span className="text-slate-500 uppercase font-bold text-[9px] block">Rate</span>
+                                                                    <span className="font-semibold text-slate-800">₹{Number(item.rate || 0).toFixed(2)}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="bg-blue-50 px-3 py-1 rounded border border-blue-100 text-right">
+                                                                <span className="text-blue-500 uppercase font-bold text-[9px] block">CFT</span>
+                                                                <span className="font-black text-blue-700 text-[13px]">{Number(item.item_cft || 0).toFixed(2)}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
-                                        <div className="bg-blue-50 px-3 py-1 rounded border border-blue-100 text-right">
-                                            <span className="text-blue-500 uppercase font-bold text-[9px] block">CFT</span>
-                                            <span className="font-black text-blue-700 text-[13px]">{Number(product.cft || 0).toFixed(2)}</span>
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
-                            ))
-                        ) : (
-                            <div className="h-32 flex flex-col items-center justify-center text-muted-foreground bg-slate-50/50">
-                                <Package className="h-8 w-8 mb-2 opacity-20" />
-                                <p className="text-sm">No products found.</p>
-                            </div>
-                        )}
-                    </div>
+                            );
+                        })
+                    ) : (
+                        <div className="h-32 flex flex-col items-center justify-center text-muted-foreground bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
+                            <Package className="h-8 w-8 mb-2 opacity-20" />
+                            <p className="text-sm">No products found in this estimation.</p>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 
-            {/* 3. Breakdown & Summary Block */}
+            {/* 3. Breakdown & Summary */}
             <div className="grid gap-6 md:grid-cols-2">
-                {/* Other Charges (Left Side) */}
+                {/* Other Charges */}
                 <Card className="shadow-sm border-slate-200 h-fit">
                     <CardHeader className="pb-3 border-b bg-slate-50/50">
                         <CardTitle className="text-lg">Other Charges Breakdown</CardTitle>
@@ -377,7 +410,7 @@ export default function EstimationView() {
                     </CardContent>
                 </Card>
 
-                {/* Financial Summary (Right Side) */}
+                {/* Financial Summary */}
                 <Card className="bg-gradient-to-b from-slate-50 to-white border-slate-200 shadow-sm h-fit">
                     <CardHeader className="pb-3 border-b border-slate-200 bg-white">
                         <CardTitle className="text-lg flex items-center gap-2">
@@ -389,6 +422,10 @@ export default function EstimationView() {
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-muted-foreground">Total Products</span>
                             <span className="font-semibold text-base">{summary?.total_products || 0}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Total Items</span>
+                            <span className="font-semibold text-base">{summary?.total_items || 0}</span>
                         </div>
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-muted-foreground">Total CFT</span>
@@ -421,29 +458,32 @@ export default function EstimationView() {
                 <CardContent className="pt-5">
                     {attachments && attachments.length > 0 ? (
                         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                            {attachments.map((attachment) => (
-                                <div key={attachment.id} className="group relative rounded-md overflow-hidden border border-slate-200 bg-white shadow-sm hover:shadow-md transition-all">
-                                    <a href={attachment.image_url} target="_blank" rel="noopener noreferrer" className="block focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                                        <div className="aspect-square bg-slate-100 flex items-center justify-center overflow-hidden">
-                                            <img 
-                                                src={attachment.image_url} 
-                                                alt={attachment.description || "Attachment"} 
-                                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                                onError={(e) => {
-                                                    const target = e.target as HTMLImageElement;
-                                                    target.src = 'https://placehold.co/400x400/f8fafc/94a3b8?text=Image+Error';
-                                                }}
-                                            />
-                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                                        </div>
-                                    </a>
-                                    {attachment.description && (
-                                        <div className="p-2.5 text-xs text-slate-700 bg-white border-t border-slate-100 line-clamp-2" title={attachment.description}>
-                                            {attachment.description}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
+                            {attachments.map((attachment) => {
+                                const imageUrl = attachment.url || attachment.image_url || '';
+                                return (
+                                    <div key={attachment.id} className="group relative rounded-md overflow-hidden border border-slate-200 bg-white shadow-sm hover:shadow-md transition-all">
+                                        <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="block focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                            <div className="aspect-square bg-slate-100 flex items-center justify-center overflow-hidden">
+                                                <img
+                                                    src={imageUrl}
+                                                    alt={attachment.name || attachment.description || "Attachment"}
+                                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                    onError={(e) => {
+                                                        const target = e.target as HTMLImageElement;
+                                                        target.src = 'https://placehold.co/400x400/f8fafc/94a3b8?text=Image+Error';
+                                                    }}
+                                                />
+                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                                            </div>
+                                        </a>
+                                        {(attachment.name || attachment.description) && (
+                                            <div className="p-2.5 text-xs text-slate-700 bg-white border-t border-slate-100 line-clamp-2" title={attachment.name || attachment.description}>
+                                                {attachment.name || attachment.description}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="text-center py-10 bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
