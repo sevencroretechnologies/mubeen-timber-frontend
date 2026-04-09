@@ -107,9 +107,11 @@ export interface TimberPurchaseOrder {
   warehouse_id: number;
   status: PurchaseOrderStatus;
   order_date: string | null;
+  expected_delivery_date: string | null;
   expected_date: string | null;
   received_date: string | null;
   subtotal: number;
+  tax_percentage: number;
   tax_amount: number;
   discount_amount: number;
   total_amount: number;

@@ -209,6 +209,14 @@ export default function PurchaseOrderView() {
                       {order.order_date ? new Date(order.order_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                     </div>
                   </div>
+                  <div className="space-y-1">
+                    <Label className="text-muted-foreground md:text-slate-500 font-medium">Expected Delivery</Label>
+                    <div className="flex items-center gap-2 text-sm font-bold text-indigo-600">
+                      <Truck className="h-3.5 w-3.5 text-indigo-300 md:hidden" />
+                      {order.expected_delivery_date ? new Date(order.expected_delivery_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 
+                       order.expected_date ? new Date(order.expected_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                    </div>
+                  </div>
                   {order.received_date && (
                     <div className="space-y-1">
                       <Label className="text-muted-foreground md:text-emerald-600 font-medium">Final Receipt</Label>
@@ -241,6 +249,23 @@ export default function PurchaseOrderView() {
                    <span className="text-muted-foreground font-bold uppercase text-[10px]">Subtotal</span>
                    <span className="font-bold text-slate-700">₹{Number(order.subtotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                  </div>
+
+                 {Number(order.discount_amount) > 0 && (
+                   <div className="flex justify-between items-center text-sm">
+                     <span className="text-muted-foreground font-bold uppercase text-[10px]">Discount</span>
+                     <span className="font-bold text-red-600">- ₹{Number(order.discount_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                   </div>
+                 )}
+
+                 {Number(order.tax_amount) > 0 && (
+                   <>
+                     <div className="flex justify-between items-center text-sm">
+                       <span className="text-muted-foreground font-bold uppercase text-[10px]">Tax ({order.tax_percentage}%)</span>
+                       <span className="font-bold text-slate-700">+ ₹{Number(order.tax_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                     </div>
+                   </>
+                 )}
+
                  <Separator className="bg-slate-100" />
                  <div className="pt-2">
                    <p className="text-[10px] font-bold text-muted-foreground uppercase mb-2">Total Amount</p>
@@ -292,6 +317,16 @@ export default function PurchaseOrderView() {
                       </tr>
                     ))}
                   </tbody>
+                  <tfoot>
+                    <tr className="bg-slate-50 border-t-2 border-slate-200">
+                      <td colSpan={5} className="p-4 text-right font-bold text-solarized-base02 uppercase text-xs tracking-widest">
+                        Items Subtotal
+                      </td>
+                      <td className="p-4 text-right font-black text-solarized-blue text-base">
+                        ₹{Number(order.subtotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
 
@@ -304,6 +339,11 @@ export default function PurchaseOrderView() {
                 {order.items.map((item, index) => (
                   <POViewItemCard key={item.id} index={index} item={item} />
                 ))}
+                
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 mt-2 flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Items Subtotal</span>
+                  <span className="text-lg font-bold text-indigo-700">₹{Number(order.subtotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                </div>
               </div>
             </>
           ) : (
