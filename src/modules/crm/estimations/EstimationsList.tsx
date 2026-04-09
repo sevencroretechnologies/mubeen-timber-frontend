@@ -356,24 +356,16 @@ export default function EstimationsList() {
     navigate(`/crm/estimations/${id}/edit`);
   };
 
-  const getEstimationTypeLabel = (type: number) => {
-    const types = {
-      1: "Inches",
-      2: "Feet",
-      3: "Thk (In)",
-      4: "Thk (Ft)",
-      5: "Direct Entry",
-    };
-    return types[type as keyof typeof types] || "Unknown";
-  };
+ 
 
   // Filter estimations by search and status
   const filteredData = estimations.filter((est: any) => {
     const value = debouncedSearch || search;
     const matchesSearch =
       (est.customer?.name || "").toLowerCase().includes(value.toLowerCase()) ||
-      (est.product?.name || "").toLowerCase().includes(value.toLowerCase()) ||
-      (est.project?.name || "").toLowerCase().includes(value.toLowerCase());
+      (est.project?.name || "").toLowerCase().includes(value.toLowerCase()) ||
+      (est.products?.some((p: any) => p.product?.name?.toLowerCase().includes(value.toLowerCase()))) ||
+      (est.description || "").toLowerCase().includes(value.toLowerCase());
 
     const matchesStatus = true; // No status filter in 3-state system yet or always true if "all"
 
@@ -391,11 +383,15 @@ export default function EstimationsList() {
       name: "Customer",
       selector: (row) => row.customer?.name || "Unknown",
       sortable: true,
-      minWidth: "160px",
+      minWidth: "220px",
       cell: (row) => (
         <div className="space-y-0.5">
           <div className="font-semibold text-slate-900">{row.customer?.name || "Unknown"}</div>
-          <div className="text-xs text-slate-500">{row.product?.name || ""}</div>
+          {/* <div className="text-xs text-slate-500 truncate max-w-[150px]">
+            {row.products && row.products.length > 0 
+                ? (row.products.length === 1 ? row.products[0].product?.name || "Custom Product" : `${row.products.length} Products`)
+                : ""}
+          </div> */}
         </div>
       ),
     },
@@ -403,40 +399,33 @@ export default function EstimationsList() {
       name: "Project",
       selector: (row) => row.project?.name || "-",
       sortable: true,
-      minWidth: "140px",
+      minWidth: "190px",
       cell: (row) => <div className="text-sm text-slate-700">{row.project?.name || "-"}</div>,
     },
     {
       name: "Product",
-      selector: (row) => row.product?.name || "Unknown",
-      sortable: true,
-      minWidth: "140px",
-      cell: (row) => <div className="text-sm text-slate-700">{row.product?.name || "Unknown"}</div>,
+      selector: (row) => row.products?.[0]?.product?.name || "Unknown",
+      sortable: false,
+      minWidth: "150px",
+      cell: (row) => (
+        <div className="text-sm text-slate-700 truncate max-w-[170px]">
+             {row.products && row.products.length > 0 
+                ? (row.products.length === 1 ? row.products[0].product?.name || "Custom" : `${row.products.length} Products`)
+                : "Unknown"}
+        </div>
+      ),
     },
-    {
-      name: "Type",
-      selector: (row) => getEstimationTypeLabel(row.estimation_type),
-      sortable: true,
-      width: "90px",
-      center: true,
-    },
-    // {
-    //   name: "CFT",
-    //   selector: (row) => `${Number(row.cft || 0).toFixed(2)} CFT`,
-    //   sortable: true,
-    //   width: "90px",
-    //   right: true,
-    // },
+   
     {
       name: "Amount (₹)",
-      selector: (row) => row.total_amount || 0,
+      selector: (row) => row.grand_total || 0,
       sortable: true,
       width: "140px",
       right: true,
       cell: (row) => (
         <div className="text-right font-semibold text-slate-900">
-          {row.total_amount
-            ? `₹${Number(row.total_amount).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          {row.grand_total
+            ? `₹${Number(row.grand_total).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
             : "-"}
         </div>
       ),
@@ -445,7 +434,7 @@ export default function EstimationsList() {
       name: "Status",
       cell: (row) => <StatusBadge status={row.status} />,
       sortable: true,
-      width: "120px",
+      width: "180px",
       center: true,
     },
     // {
@@ -635,7 +624,11 @@ export default function EstimationsList() {
                       <StatusBadge status={row.status} />
                     </div>
                     <p className="text-xs text-slate-500 font-medium">
-                      {row.project?.name || "No Project"} • <span className="text-amber-600">{row.product?.name || "Misc Product"}</span>
+                      {row.project?.name || "No Project"} • <span className="text-amber-600">
+                        {row.products && row.products.length > 0 
+                            ? (row.products.length === 1 ? row.products[0].product?.name || "Custom" : `${row.products.length} Products`)
+                            : "Misc Product"}
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -643,13 +636,13 @@ export default function EstimationsList() {
                 <div className="flex items-center justify-between bg-zinc-50 rounded-lg p-3 border border-slate-100">
                   <div>
                     <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Type</p>
-                    <p className="text-xs font-semibold text-slate-700">{getEstimationTypeLabel(row.estimation_type)}</p>
+                    <p className="text-xs font-semibold text-slate-700">Multi-Items</p>
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Amount</p>
                     <p className="text-sm font-black text-slate-900">
-                      {row.total_amount
-                        ? `₹${Number(row.total_amount).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      {row.grand_total
+                        ? `₹${Number(row.grand_total).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                         : "-"}
                     </p>
                   </div>
