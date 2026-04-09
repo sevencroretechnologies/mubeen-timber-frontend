@@ -7,15 +7,121 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import DataTable, { TableColumn } from 'react-data-table-component';
-import { Plus, Search, ShoppingCart, Eye, Edit, Trash2, Send, PackageCheck } from 'lucide-react';
+import { Plus, Search, ShoppingCart, Eye, Edit, Trash2, Send, PackageCheck, Calendar, Building2, CreditCard } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const statusConfig: Record<PurchaseOrderStatus, { label: string; color: string }> = {
-  draft: { label: 'Draft', color: 'bg-gray-100 text-gray-800' },
-  ordered: { label: 'Ordered', color: 'bg-blue-100 text-blue-800' },
-  partial: { label: 'Partial', color: 'bg-yellow-100 text-yellow-800' },
-  received: { label: 'Received', color: 'bg-green-100 text-green-800' },
-  cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800' },
+const statusConfig: Record<PurchaseOrderStatus, { label: string; color: string; classes: string }> = {
+  draft: { label: 'Draft', color: 'bg-gray-100 text-gray-800', classes: 'bg-gray-100 text-gray-800' },
+  ordered: { label: 'Ordered', color: 'bg-blue-100 text-blue-800', classes: 'bg-blue-100 text-blue-800' },
+  partial: { label: 'Partial', color: 'bg-yellow-100 text-yellow-800', classes: 'bg-yellow-100 text-yellow-800' },
+  received: { label: 'Received', color: 'bg-green-100 text-green-800', classes: 'bg-green-100 text-green-800' },
+  cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800', classes: 'bg-red-100 text-red-800' },
 };
+
+function PurchaseOrderSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[1, 2, 3].map((i) => (
+        <Card key={i} className="rounded-xl shadow-sm border-none bg-white p-4">
+          <div className="flex justify-between items-start mb-4">
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+            <Skeleton className="h-6 w-20 rounded-full" />
+          </div>
+          <div className="flex justify-between items-end mt-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-5 w-28" />
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="h-8 w-8 rounded-md" />
+              <Skeleton className="h-8 w-8 rounded-md" />
+            </div>
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+interface PurchaseOrderCardProps {
+  order: TimberPurchaseOrder;
+  onView: (id: number) => void;
+  onEdit: (id: number) => void;
+  onDelete: (id: number) => void;
+  onSend: (id: number) => void;
+  onReceive: (id: number) => void;
+  getStatusBadge: (status: PurchaseOrderStatus) => React.ReactNode;
+}
+
+function PurchaseOrderCard({ order, onView, onEdit, onDelete, onSend, onReceive, getStatusBadge }: PurchaseOrderCardProps) {
+  return (
+    <Card className="rounded-xl shadow-sm border border-slate-100 bg-white p-4 transition-all hover:shadow-md">
+      <div className="flex justify-between items-start mb-3">
+        <div className="space-y-1">
+          <h3 className="font-bold text-slate-900 text-lg uppercase tracking-tight">{order.po_code}</h3>
+          <div className="flex items-center gap-1.5 text-slate-500 text-sm">
+            <Building2 className="h-3.5 w-3.5" />
+            <span className="truncate max-w-[180px]">{order.supplier?.name || 'Unknown Supplier'}</span>
+          </div>
+        </div>
+        {getStatusBadge(order.status)}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 py-3 border-y border-slate-50">
+        <div className="space-y-1">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Order Date</span>
+          <div className="flex items-center gap-1.5 text-slate-600 text-xs font-medium">
+            <Calendar className="h-3.5 w-3.5 text-slate-400" />
+            {order.order_date ? new Date(order.order_date).toLocaleDateString('en-IN') : '-'}
+          </div>
+        </div>
+        <div className="space-y-1 text-right">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Amount</span>
+          <div className="flex items-center justify-end gap-1 text-indigo-600 font-bold text-sm">
+            <CreditCard className="h-3.5 w-3.5" />
+            ₹{Number(order.total_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-between items-center mt-4">
+        <div className="flex items-center gap-1.5 text-slate-500 text-xs">
+          <span className="text-[10px] font-black uppercase text-slate-300">W/H:</span>
+          <span className="font-medium text-slate-600">{order.warehouse?.name || '-'}</span>
+        </div>
+        
+        <div className="flex gap-1.5">
+          <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg hover:bg-slate-50 border-slate-200" onClick={() => onView(order.id)}>
+            <Eye className="h-4 w-4 text-slate-600" />
+          </Button>
+          
+          {order.status === 'draft' && (
+            <>
+              <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-blue-100 hover:bg-blue-50" onClick={() => onEdit(order.id)}>
+                <Edit className="h-4 w-4 text-blue-600" />
+              </Button>
+              <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-green-100 hover:bg-green-50" onClick={() => onSend(order.id)}>
+                <Send className="h-4 w-4 text-green-600" />
+              </Button>
+              <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-red-100 hover:bg-red-50" onClick={() => onDelete(order.id)}>
+                <Trash2 className="h-4 w-4 text-red-600" />
+              </Button>
+            </>
+          )}
+
+          {(order.status === 'ordered' || order.status === 'partial') && (
+            <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-green-100 hover:bg-green-50" onClick={() => onReceive(order.id)}>
+              <PackageCheck className="h-4 w-4 text-green-600" />
+            </Button>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
 
 export default function PurchaseOrderList() {
   const navigate = useNavigate();
@@ -175,12 +281,12 @@ export default function PurchaseOrderList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-solarized-base02">Purchase Orders</h1>
-          <p className="text-muted-foreground">Manage purchase orders for timber procurement</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Purchase Orders</h1>
+          <p className="text-sm text-slate-500">Manage purchase orders for timber procurement</p>
         </div>
-        <Button onClick={() => navigate('/purchases/orders/create')} className="bg-solarized-blue hover:bg-solarized-blue/90">
+        <Button onClick={() => navigate('/purchases/orders/create')} className="bg-solarized-blue hover:bg-solarized-blue/90 w-full sm:w-auto shadow-sm shadow-solarized-blue/20">
           <Plus className="mr-2 h-4 w-4" /> New Purchase Order
         </Button>
       </div>
@@ -207,28 +313,83 @@ export default function PurchaseOrderList() {
             <Button type="submit" variant="outline">Search</Button>
           </form>
         </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={orders}
-            progressPending={isLoading}
-            pagination
-            paginationServer
-            paginationTotalRows={totalRows}
-            paginationPerPage={perPage}
-            paginationDefaultPage={page}
-            onChangePage={(newPage) => setPage(newPage)}
-            onChangeRowsPerPage={(newPerPage) => { setPerPage(newPerPage); setPage(1); }}
-            customStyles={customStyles}
-            highlightOnHover
-            responsive
-            noDataComponent={
-              <div className="text-center py-12 text-muted-foreground">
+        <CardContent className="p-0 md:p-6">
+          {/* Desktop Table View */}
+          <div className="hidden md:block">
+            <DataTable
+              columns={columns}
+              data={orders}
+              progressPending={isLoading}
+              pagination
+              paginationServer
+              paginationTotalRows={totalRows}
+              paginationPerPage={perPage}
+              paginationDefaultPage={page}
+              onChangePage={(newPage) => setPage(newPage)}
+              onChangeRowsPerPage={(newPerPage) => { setPerPage(newPerPage); setPage(1); }}
+              customStyles={customStyles}
+              highlightOnHover
+              responsive
+              noDataComponent={
+                <div className="text-center py-12 text-muted-foreground">
+                  <ShoppingCart className="mx-auto h-12 w-12 mb-4 opacity-20" />
+                  <p>No purchase orders found</p>
+                </div>
+              }
+            />
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden p-4 space-y-4">
+            {isLoading ? (
+              <PurchaseOrderSkeleton />
+            ) : orders.length > 0 ? (
+              <>
+                {orders.map((order) => (
+                  <PurchaseOrderCard
+                    key={order.id}
+                    order={order}
+                    onView={(id) => navigate(`/purchases/orders/${id}`)}
+                    onEdit={(id) => navigate(`/purchases/orders/${id}/edit`)}
+                    onDelete={handleDelete}
+                    onSend={handleSend}
+                    onReceive={(id) => navigate(`/purchases/orders/${id}/receive`)}
+                    getStatusBadge={getStatusBadge}
+                  />
+                ))}
+                
+                {/* Mobile Pagination (Simple) */}
+                {totalRows > perPage && (
+                  <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page === 1}
+                      onClick={() => setPage((p) => p - 1)}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-xs font-medium text-slate-500">
+                      Page {page} of {Math.ceil(totalRows / perPage)}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= Math.ceil(totalRows / perPage)}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                 <ShoppingCart className="mx-auto h-12 w-12 mb-4 opacity-20" />
-                <p>No purchase orders found</p>
+                <p className="text-sm font-medium">No purchase orders found</p>
               </div>
-            }
-          />
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
