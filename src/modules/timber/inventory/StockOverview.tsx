@@ -261,8 +261,9 @@ export default function StockOverview() {
           {selectedItem && (
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
-                <div><Label className="text-xs text-muted-foreground uppercase">Wood Type</Label><p className="text-base font-semibold">{selectedItem.wood_type?.name}</p></div>
                 <div><Label className="text-xs text-muted-foreground uppercase">Warehouse</Label><p className="text-sm font-medium">{selectedItem.warehouse?.name}</p></div>
+                <div><Label className="text-xs text-muted-foreground uppercase">Wood Type</Label><p className="text-base font-semibold">{selectedItem.wood_type?.name}</p></div>
+                {/* <div><Label className="text-xs text-muted-foreground uppercase">Warehouse</Label><p className="text-sm font-medium">{selectedItem.warehouse?.name}</p></div> */}
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div><Label className="text-xs text-muted-foreground uppercase">Current Qty</Label><p className="text-lg font-bold">{Number(selectedItem.current_quantity).toFixed(2)}</p></div>

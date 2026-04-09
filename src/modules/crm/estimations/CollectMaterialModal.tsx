@@ -12,10 +12,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Package, Warehouse, Trees } from 'lucide-react';
-import api from '@/services/api';
+import api, { estimationsApi } from '@/services/api';
+import { Loader2 } from 'lucide-react';
 
 interface CollectMaterialModalProps {
     estimation: any;
+    products?: any[];
     onClose: () => void;
     onCollected: () => void;
 }
@@ -40,6 +42,7 @@ interface StockAvailability {
 
 export default function CollectMaterialModal({
     estimation,
+    products,
     onClose,
     onCollected
 }: CollectMaterialModalProps) {
@@ -51,11 +54,52 @@ export default function CollectMaterialModal({
     const [quantity, setQuantity] = useState<string>('');
     const [notes, setNotes] = useState<string>('');
     const [isLoadingStock, setIsLoadingStock] = useState(false);
+    const [detailedData, setDetailedData] = useState<any>(null);
+    const [isLoadingDetails, setIsLoadingDetails] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const cft = parseFloat(String(estimation.cft || 0));
+    useEffect(() => {
+        const fetchDetails = async () => {
+            if (!estimation?.id) return;
+            setIsLoadingDetails(true);
+            try {
+                const response = await estimationsApi.get(estimation.id);
+                setDetailedData(response.data);
+            } catch (error) {
+                console.error("Failed to fetch estimation details:", error);
+            } finally {
+                setIsLoadingDetails(false);
+            }
+        };
+
+        const hasProducts = products && products.length > 0;
+        const hasEstimationProducts = estimation.products && estimation.products.length > 0;
+        const hasSummary = !!estimation.summary;
+
+        if (!hasProducts && !hasEstimationProducts && !hasSummary) {
+            fetchDetails();
+        }
+    }, [estimation.id, products, estimation.products, estimation.summary]);
+
+    const activeEstimation = detailedData?.data || estimation;
+    const activeSummary = detailedData?.summary || estimation.summary;
+    const activeProducts = products || activeEstimation?.products || [];
+
+    const totalCft = activeSummary?.total_cft != null 
+        ? parseFloat(String(activeSummary.total_cft)) 
+        : (activeProducts && activeProducts.length > 0)
+            ? (activeProducts || []).reduce((sum: number, item: any) => {
+                return sum + (parseFloat(String(item.cft || 0)) * Number(item.quantity || 0));
+            }, 0)
+            : parseFloat(String(activeEstimation?.cft || activeEstimation?.total_cft || activeEstimation?.other_charge?.overall_total_cft || 0));
+
+    const totalAmount = activeSummary?.grand_total != null
+        ? parseFloat(String(activeSummary.grand_total))
+        : parseFloat(String(activeEstimation?.grand_total || activeEstimation?.total_amount || 0));
+
+    const cft = totalCft;
     const collectedCft = parseFloat(String(estimation.total_collected_cft || 0));
-    const remainingCft = cft - collectedCft;
+    const remainingCft = Math.max(0, cft - collectedCft);
 
     useEffect(() => {
         fetchWoodTypes();
@@ -166,9 +210,19 @@ export default function CollectMaterialModal({
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Estimation Info */}
                     <div className="bg-gray-50 p-3 rounded-lg space-y-2">
-                        <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Estimated CFT:</span>
-                            <span className="font-medium">{cft.toFixed(2)} CFT</span>
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-600">Total CFT:</span>
+                            <div className="flex items-center gap-2">
+                                <span className="font-bold text-slate-900">{totalCft.toFixed(2)} CFT</span>
+                            </div>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-600">Total Amount:</span>
+                            <div className="flex items-center gap-2">
+                                <span className="font-bold text-slate-900">
+                                    ₹{totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                </span>
+                            </div>
                         </div>
                         {/* <div className="flex justify-between text-sm">
                             <span className="text-gray-600">Already Collected:</span>

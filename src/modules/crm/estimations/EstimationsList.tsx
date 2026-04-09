@@ -676,6 +676,7 @@ export default function EstimationsList() {
       {collectModal.open && collectModal.estimation && (
         <CollectMaterialModal
           estimation={collectModal.estimation}
+          products={collectModal.estimation.products}
           onClose={closeCollectModal}
           onCollected={handleCollected}
         />

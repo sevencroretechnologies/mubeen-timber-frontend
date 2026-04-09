@@ -86,21 +86,6 @@ export default function StockAdjustmentForm() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="wood_type_id">Wood Type <span className="text-red-500">*</span></Label>
-                <select
-                  id="wood_type_id"
-                  value={formData.wood_type_id}
-                  onChange={(e) => setFormData({ ...formData, wood_type_id: e.target.value })}
-                  className="w-full border rounded-md px-3 py-2 text-sm"
-                  required
-                >
-                  <option value="">Select wood type</option>
-                  {woodTypes.map((wt) => (
-                    <option key={wt.id} value={wt.id}>{wt.name}</option>
-                  ))}
-                </select>
-              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="warehouse_id">Warehouse <span className="text-red-500">*</span></Label>
@@ -117,6 +102,23 @@ export default function StockAdjustmentForm() {
                   ))}
                 </select>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="wood_type_id">Wood Type <span className="text-red-500">*</span></Label>
+                <select
+                  id="wood_type_id"
+                  value={formData.wood_type_id}
+                  onChange={(e) => setFormData({ ...formData, wood_type_id: e.target.value })}
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  required
+                >
+                  <option value="">Select wood type</option>
+                  {woodTypes.map((wt) => (
+                    <option key={wt.id} value={wt.id}>{wt.name}</option>
+                  ))}
+                </select>
+              </div>
+
+
 
               <div className="space-y-2">
                 <Label htmlFor="quantity">Quantity <span className="text-red-500">*</span></Label>

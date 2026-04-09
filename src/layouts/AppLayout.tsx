@@ -59,7 +59,7 @@ const navigation: NavItem[] = [
       { name: "Leads", href: "/crm/leads" },
       // { name: "Customers", href: "/crm/customers" },
       { name: "Opportunities", href: "/crm/opportunities" },
-      { name: "Estimations", href: "/crm/estimations" },
+      // { name: "Estimations", href: "/crm/estimations" },
       { name: "Campaigns", href: "/crm/campaigns" },
       { name: "Sources", href: "/crm/sources" },
       { name: "Territories", href: "/crm/territories" },
