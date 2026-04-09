@@ -145,9 +145,9 @@ export default function StockMovements() {
           <h1 className="text-2xl font-bold text-solarized-base02">Stock Movements</h1>
           <p className="text-muted-foreground">Track all stock in/out movements and adjustments</p>
         </div>
-        <Button variant="outline" onClick={() => fetchMovements(page)}>
+        {/* <Button variant="outline" onClick={() => fetchMovements(page)}>
           <RefreshCw className="mr-2 h-4 w-4" /> Refresh
-        </Button>
+        </Button> */}
       </div>
 
       <Card>

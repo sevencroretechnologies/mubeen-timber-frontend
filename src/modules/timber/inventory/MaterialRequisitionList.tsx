@@ -150,13 +150,15 @@ export default function MaterialRequisitionList() {
     },
     {
       name: 'Required Date',
-      selector: (row) => row.required_date || '-',
-      cell: (row) => row.required_date ? new Date(row.required_date).toLocaleDateString('en-IN') : '-',
+      selector: (row) => row.requisition_date || '-',
+      cell: (row) => row.requisition_date
+        ? new Date(row.requisition_date).toLocaleDateString('en-IN')
+        : '-',
       width: '120px',
     },
     {
       name: 'Requested By',
-      selector: (row) => row.requester?.name || '-',
+      selector: (row) => row.requested_by_user?.name || '-',
     },
     {
       name: 'Date',
@@ -256,11 +258,11 @@ export default function MaterialRequisitionList() {
               <div className="grid grid-cols-3 gap-4">
                 <div><Label className="text-xs text-muted-foreground uppercase">Status</Label><div className="mt-1">{getStatusBadge(selectedItem.status)}</div></div>
                 <div><Label className="text-xs text-muted-foreground uppercase">Priority</Label><div className="mt-1">{getPriorityBadge(selectedItem.priority)}</div></div>
-                <div><Label className="text-xs text-muted-foreground uppercase">Required Date</Label><p className="text-sm">{selectedItem.required_date ? new Date(selectedItem.required_date).toLocaleDateString('en-IN') : '-'}</p></div>
+                <div><Label className="text-xs text-muted-foreground uppercase">Required Date</Label><p className="text-sm">{selectedItem.requisition_date ? new Date(selectedItem.requisition_date).toLocaleDateString('en-IN') : '-'}</p></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div><Label className="text-xs text-muted-foreground uppercase">Requested By</Label><p className="text-sm">{selectedItem.requester?.name || '-'}</p></div>
-                <div><Label className="text-xs text-muted-foreground uppercase">Approved By</Label><p className="text-sm">{selectedItem.approver?.name || '-'}</p></div>
+                <div><Label className="text-xs text-muted-foreground uppercase">Requested By</Label><p className="text-sm">{selectedItem.requested_by_user?.name || '-'}</p></div>
+                <div><Label className="text-xs text-muted-foreground uppercase">Approved By</Label><p className="text-sm">{selectedItem.approved_by_user?.name || '-'}</p></div>
               </div>
               {selectedItem.notes && (
                 <div><Label className="text-xs text-muted-foreground uppercase">Notes</Label><p className="text-sm">{selectedItem.notes}</p></div>

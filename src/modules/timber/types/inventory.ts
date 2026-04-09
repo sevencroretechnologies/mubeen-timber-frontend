@@ -148,14 +148,14 @@ export interface TimberMaterialRequisition {
   approved_by: number | null;
   status: RequisitionStatus;
   priority: 'low' | 'medium' | 'high' | 'urgent';
-  required_date: string | null;
+  requisition_date : string | null;
   notes: string | null;
   rejection_reason: string | null;
   company_id: number;
   org_id: number;
   items?: TimberMaterialRequisitionItem[];
-  requester?: { id: number; name: string };
-  approver?: { id: number; name: string };
+  requested_by_user?: { id: number; name: string };
+  approved_by_user?: { id: number; name: string };
   created_at: string;
   updated_at: string;
 }

@@ -38,7 +38,7 @@ export const showAlert = (
 export const showConfirmDialog = async (
   title: string,
   text: string,
-  confirmButtonText: string = "Yes, delete it!",
+  confirmButtonText: string = "Yes, Approve it!",
   confirmButtonColor: string = "#dc322f",
   iconType: "warning" | "question" | "info" = "warning"
 ) => {
