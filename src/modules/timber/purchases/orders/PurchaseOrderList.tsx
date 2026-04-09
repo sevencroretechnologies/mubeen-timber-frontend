@@ -294,24 +294,31 @@ export default function PurchaseOrderList() {
 
       <Card>
         <CardHeader>
-          <form onSubmit={handleSearchSubmit} className="flex gap-4">
+          <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search by PO number or supplier..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+              <Input 
+                placeholder="Search by PO number or supplier..." 
+                value={search} 
+                onChange={(e) => setSearch(e.target.value)} 
+                className="pl-10 h-11 sm:h-auto" 
+              />
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="border rounded-md px-3 py-2 text-sm"
-            >
-              <option value="">All Status</option>
-              <option value="draft">Draft</option>
-              <option value="ordered">Ordered</option>
-              <option value="partial">Partial</option>
-              <option value="received">Received</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-            <Button type="submit" variant="outline">Search</Button>
+            <div className="flex gap-3">
+              <select
+                value={statusFilter}
+                onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+                className="flex-1 sm:flex-none border rounded-md px-3 py-2 text-sm bg-white"
+              >
+                <option value="">All Status</option>
+                <option value="draft">Draft</option>
+                <option value="ordered">Ordered</option>
+                <option value="partial">Partial</option>
+                <option value="received">Received</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <Button type="submit" variant="outline" className="flex-1 sm:flex-none">Search</Button>
+            </div>
           </form>
         </CardHeader>
         <CardContent className="p-0 md:p-6">
