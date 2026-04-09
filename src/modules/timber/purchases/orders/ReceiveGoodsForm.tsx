@@ -127,6 +127,36 @@ export default function ReceiveGoodsForm() {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-3">
+          <Card className="border-none md:border md:border-slate-200 shadow-none md:shadow-sm">
+            <CardHeader className="hidden md:block">
+              <CardTitle className="text-xl font-bold text-solarized-base02">Order Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6 md:pt-0">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground md:text-slate-500 font-medium">Supplier</Label>
+                  <p className="text-sm font-bold text-slate-800">{order.supplier?.name || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground md:text-slate-500 font-medium">Warehouse</Label>
+                  <p className="text-sm font-bold text-slate-800">{order.warehouse?.name || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground md:text-slate-500 font-medium">PO Code</Label>
+                  <p className="text-sm font-bold text-slate-800">{order.po_code}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground md:text-slate-500 font-medium">Expected Date</Label>
+                  <p className="text-sm font-bold text-indigo-600">{order.expected_delivery_date ? new Date(order.expected_delivery_date).toLocaleDateString('en-IN') : order.expected_date ? new Date(order.expected_date).toLocaleDateString('en-IN') : '-'}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card className="border-none md:border md:border-slate-200 shadow-none md:shadow-sm">
           <CardHeader className="hidden md:block">
