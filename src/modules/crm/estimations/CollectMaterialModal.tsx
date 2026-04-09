@@ -88,8 +88,8 @@ export default function CollectMaterialModal({
     const totalCft = activeSummary?.total_cft != null 
         ? parseFloat(String(activeSummary.total_cft)) 
         : (activeProducts && activeProducts.length > 0)
-            ? (activeProducts || []).reduce((sum: number, item: any) => {
-                return sum + (parseFloat(String(item.cft || 0)) * Number(item.quantity || 0));
+            ? activeProducts.reduce((sum: number, item: any) => {
+                return sum + parseFloat(String(item.total_cft || item.cft || 0));
             }, 0)
             : parseFloat(String(activeEstimation?.cft || activeEstimation?.total_cft || activeEstimation?.other_charge?.overall_total_cft || 0));
 
