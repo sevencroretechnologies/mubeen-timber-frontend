@@ -239,8 +239,9 @@ export const paymentTermApi = {
 };
 
 export const dashboardService = {
-  getStats: (params?: Record<string, unknown>) => api.get('/dashboard/stats', { params }),
-  getSalesOverview: (params?: Record<string, unknown>) => api.get('/dashboard/sales-overview', { params }),
+  // Timber Dashboard - SINGLE UNIFIED API
+  getTimberDashboard: (params?: { stock_movements_days?: number; recent_pos_limit?: number }) =>
+    api.get('/dashboard/timber', { params }),
 };
 
 // Admin & RBAC

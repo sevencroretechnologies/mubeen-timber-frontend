@@ -12,6 +12,7 @@ import ForgotPassword from './pages/auth/ForgotPassword';
 
 // Dashboard
 import Dashboard from './pages/dashboard/Dashboard';
+import TimberDashboard from './pages/dashboard/TimberDashboard';
 
 // Profile
 import Profile from './pages/profile/Profile';
@@ -49,6 +50,7 @@ import CustomerForm from '@/modules/crm/customers/customerForm';
 import ContactForm from '@/modules/crm/contacts/contactForm';
 import ContactList from '@/modules/crm/contacts/contactList';
 import CustomerProjects from '@/modules/crm/customers/CustomerProjects';
+import ProjectsList from '@/modules/crm/projects/ProjectsList';
 import CrmSettings from '@/modules/crm/settings/CrmSettings';
 
 // Estimations
@@ -98,8 +100,9 @@ function App() {
             }
           >
             {/* Dashboard */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<Navigate to="/dashboard/timber" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard/timber" element={<TimberDashboard />} />
 
             {/* Profile */}
             <Route path="/profile" element={<Profile />} />
@@ -126,7 +129,8 @@ function App() {
             <Route path="/crm/sources" element={<SourceList />} />
             <Route path="/crm/territories" element={<TerritoryList />} />
             <Route path="/crm/products" element={<ProductList />} />
-            <Route path="/crm/projects" element={<ProductCategoryList />} />
+            <Route path="/crm/product-categories" element={<ProductCategoryList />} />
+            <Route path="/crm/projects" element={<ProjectsList />} />
             <Route path="/crm/appointments" element={<AppointmentsList />} />
             <Route path="/crm/prospects" element={<ProspectsList />} />
             <Route path="/crm/prospects/create" element={<ProspectForm />} />
