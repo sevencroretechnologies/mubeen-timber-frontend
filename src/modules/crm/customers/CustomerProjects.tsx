@@ -51,14 +51,22 @@ interface Estimation {
     products?: Array<{
         id: number;
         product_id: number | null;
-        length: number;
-        breadth: number;
-        height: number;
-        thickness: number;
-        cft: number;
-        quantity: number;
-        cost_per_cft: number;
+        total_cft: number;
         total_amount: number;
+        product?: { name: string };
+        items?: Array<{
+            id: number;
+            name: string;
+            length: number;
+            breadth: number;
+            height: number;
+            thickness: number;
+            unit_type: string;
+            quantity: number;
+            rate: number;
+            item_cft: number;
+            total_amount: number;
+        }>;
     }>;
     otherCharge?: {
         labour_charges: number;
@@ -79,6 +87,7 @@ export default function CustomerProjects() {
     const [expandedProjectId, setExpandedProjectId] = useState<number | null>(null);
     const [estimations, setEstimations] = useState<Record<number, Estimation[]>>({});
     const [isLoadingEstimations, setIsLoadingEstimations] = useState<Record<number, boolean>>({});
+    const [expandedEstimations, setExpandedEstimations] = useState<Set<number>>(new Set());
 
     const [isLoadingCustomer, setIsLoadingCustomer] = useState(true);
     const [isLoadingProjects, setIsLoadingProjects] = useState(true);
@@ -283,6 +292,15 @@ export default function CustomerProjects() {
         }
     };
 
+    const toggleEstimation = (estimationId: number) => {
+        setExpandedEstimations(prev => {
+            const next = new Set(prev);
+            if (next.has(estimationId)) next.delete(estimationId);
+            else next.add(estimationId);
+            return next;
+        });
+    };
+
     const handleDeleteEstimation = async (estimationId: number, projectId: number) => {
         const result = await showConfirmDialog('Delete Estimation', 'Are you sure you want to delete this estimation?');
         if (!result.isConfirmed) return;
@@ -461,7 +479,7 @@ export default function CustomerProjects() {
                                                                 )}
                                                                 {estimation.products && estimation.products.length > 0 && (
                                                                     <p className="text-xs text-gray-500">
-                                                                        {estimation.products.length} product(s) • {estimation.products.reduce((sum, p) => sum + (p.cft || 0) * (p.quantity || 1), 0).toFixed(2)} CFT
+                                                                        {estimation.products.length} product(s) • {estimation.products.reduce((sum, p) => sum + (Number(p.total_cft) || 0), 0).toFixed(2)} CFT
                                                                     </p>
                                                                 )}
                                                             </div>
@@ -493,9 +511,71 @@ export default function CustomerProjects() {
                                                                 >
                                                                     <Trash2 className="h-4 w-4" />
                                                                 </button>
+                                                                <button
+                                                                    onClick={() => toggleEstimation(estimation.id)}
+                                                                    className="p-1.5 hover:bg-amber-100 rounded text-amber-700 ml-2"
+                                                                    title="Expand Details"
+                                                                >
+                                                                    {expandedEstimations.has(estimation.id) ? (
+                                                                        <ChevronDown className="h-4 w-4" />
+                                                                    ) : (
+                                                                        <ChevronRight className="h-4 w-4" />
+                                                                    )}
+                                                                </button>
                                                             </div>
 
                                                         </div>
+                                                        
+                                                        {/* Expanded Estimation Details (Nested Items) */}
+                                                        {expandedEstimations.has(estimation.id) && estimation.products && estimation.products.length > 0 && (
+                                                            <div className="mt-3 pl-4 border-l-2 border-amber-200 space-y-3">
+                                                                {estimation.products.map(product => (
+                                                                    <div key={product.id} className="bg-amber-50/50 rounded-lg p-3 border border-amber-100">
+                                                                        <div className="flex justify-between items-center mb-2">
+                                                                            <h5 className="font-semibold text-amber-900 text-sm">
+                                                                                {product.product?.name || 'Custom Product'}
+                                                                            </h5>
+                                                                            <div className="text-sm font-bold text-green-600">
+                                                                                ₹{Number(product.total_amount || 0).toFixed(2)}
+                                                                            </div>
+                                                                        </div>
+                                                                        
+                                                                        {product.items && product.items.length > 0 ? (
+                                                                            <div className="overflow-x-auto">
+                                                                                <table className="w-full text-xs text-left">
+                                                                                    <thead className="text-gray-500 uppercase bg-amber-100/50">
+                                                                                        <tr>
+                                                                                            <th className="px-2 py-1.5 rounded-l-md font-medium">Item Name</th>
+                                                                                            <th className="px-2 py-1.5 font-medium">Dimensions</th>
+                                                                                            <th className="px-2 py-1.5 font-medium text-right">CFT</th>
+                                                                                            <th className="px-2 py-1.5 font-medium text-right">Qty</th>
+                                                                                            <th className="px-2 py-1.5 font-medium text-right">Rate</th>
+                                                                                            <th className="px-2 py-1.5 rounded-r-md font-medium text-right">Total</th>
+                                                                                        </tr>
+                                                                                    </thead>
+                                                                                    <tbody className="divide-y divide-amber-100/50">
+                                                                                        {product.items.map(item => (
+                                                                                            <tr key={item.id} className="hover:bg-amber-50/80">
+                                                                                                <td className="px-2 py-1.5 font-medium">{item.name || '-'}</td>
+                                                                                                <td className="px-2 py-1.5 text-gray-600">
+                                                                                                    {(item.unit_type === "5") ? "Manual" : `${item.length || 0} × ${item.breadth || 0} × ${['1','2'].includes(item.unit_type) ? (item.height || 0) : (item.thickness || 0)}`}
+                                                                                                </td>
+                                                                                                <td className="px-2 py-1.5 text-right font-medium text-blue-600">{Number(item.item_cft || 0).toFixed(2)}</td>
+                                                                                                <td className="px-2 py-1.5 text-right">{item.quantity}</td>
+                                                                                                <td className="px-2 py-1.5 text-right">₹{Number(item.rate || 0).toFixed(2)}</td>
+                                                                                                <td className="px-2 py-1.5 text-right font-medium text-green-600">₹{Number(item.total_amount || 0).toFixed(2)}</td>
+                                                                                            </tr>
+                                                                                        ))}
+                                                                                    </tbody>
+                                                                                </table>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <p className="text-xs text-gray-400 italic">No items found</p>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     );
                                                 })}
