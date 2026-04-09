@@ -88,11 +88,10 @@ function PurchaseOrderCard({ order, onView, onEdit, onDelete, onSend, onReceive,
       </div>
 
       <div className="flex justify-between items-center mt-4">
-        
-        {/* <div className="flex items-center gap-1.5 text-slate-500 text-xs">
+        <div className="flex items-center gap-1.5 text-slate-500 text-xs">
           <span className="text-[10px] font-black uppercase text-slate-300">W/H:</span>
           <span className="font-medium text-slate-600">{order.warehouse?.name || '-'}</span>
-        </div> */}
+        </div>
         
         <div className="flex gap-1.5">
           <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg hover:bg-slate-50 border-slate-200" onClick={() => onView(order.id)}>
