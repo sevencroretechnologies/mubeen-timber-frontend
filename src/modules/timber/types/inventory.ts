@@ -141,7 +141,7 @@ export type RequisitionStatus = 'pending' | 'approved' | 'rejected' | 'issued' |
 
 export interface TimberMaterialRequisition {
   id: number;
-  requisition_number: string;
+  requisition_code: string;
   job_card_id: number | null;
   project_id: number | null;
   requested_by: number | null;

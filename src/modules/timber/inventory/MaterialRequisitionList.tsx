@@ -75,7 +75,7 @@ export default function MaterialRequisitionList() {
   const handleView = async (item: TimberMaterialRequisition) => {
     try {
       const detail = await materialRequisitionApi.get(item.id);
-      setSelectedItem((detail as Record<string, unknown>).data as TimberMaterialRequisition || detail as TimberMaterialRequisition);
+      setSelectedItem((detail as any).data || detail);
       setIsViewOpen(true);
     } catch {
       setSelectedItem(item);
@@ -132,11 +132,11 @@ export default function MaterialRequisitionList() {
       width: '60px',
     },
     {
-      name: 'Requisition #',
-      selector: (row) => row.requisition_number,
+      name: 'Requisition',
+      selector: (row) => row.requisition_code,
       sortable: true,
       minWidth: '150px',
-      cell: (row) => <span className="font-medium text-solarized-blue">{row.requisition_number}</span>,
+      cell: (row) => <span className="font-medium text-solarized-blue">{row.requisition_code}</span>,
     },
     {
       name: 'Status',
@@ -248,7 +248,7 @@ export default function MaterialRequisitionList() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ClipboardList className="h-5 w-5 text-solarized-blue" />
-              Requisition: {selectedItem?.requisition_number}
+              Requisition: {selectedItem?.requisition_code}
             </DialogTitle>
           </DialogHeader>
           {selectedItem && (
