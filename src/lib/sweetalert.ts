@@ -38,14 +38,16 @@ export const showAlert = (
 export const showConfirmDialog = async (
   title: string,
   text: string,
-  confirmButtonText: string = "Yes, delete it!"
+  confirmButtonText: string = "Yes, delete it!",
+  confirmButtonColor: string = "#dc322f",
+  iconType: "warning" | "question" | "info" = "warning"
 ) => {
   return Swal.fire({
     title,
     text,
-    icon: "warning",
+    icon: iconType,
     showCancelButton: true,
-    confirmButtonColor: "#dc322f",
+    confirmButtonColor,
     cancelButtonColor: "#268bd2",
     confirmButtonText,
     cancelButtonText: "Cancel",

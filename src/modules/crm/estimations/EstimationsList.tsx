@@ -276,6 +276,7 @@ export default function EstimationsList() {
     const result = await showConfirmDialog(
       "Reject Estimation",
       "Are you sure you want to reject this estimation?",
+      "Yes, reject it!"
     );
 
     if (!result.isConfirmed) return;
@@ -305,6 +306,9 @@ export default function EstimationsList() {
     const result = await showConfirmDialog(
       "Approve Estimation",
       "Do you want to approve this estimation?",
+      "Yes, approve it!",
+      "#059669",
+      "question"
     );
     if (!result.isConfirmed) return;
 
