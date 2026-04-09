@@ -10,12 +10,22 @@ import DataTable, { TableColumn } from 'react-data-table-component';
 import { Plus, Search, ShoppingCart, Eye, Edit, Trash2, Send, PackageCheck, Calendar, Building2, CreditCard } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const statusConfig: Record<PurchaseOrderStatus, { label: string; color: string; classes: string }> = {
-  draft: { label: 'Draft', color: 'bg-gray-100 text-gray-800', classes: 'bg-gray-100 text-gray-800' },
-  ordered: { label: 'Ordered', color: 'bg-blue-100 text-blue-800', classes: 'bg-blue-100 text-blue-800' },
-  partial: { label: 'Partial', color: 'bg-yellow-100 text-yellow-800', classes: 'bg-yellow-100 text-yellow-800' },
-  received: { label: 'Received', color: 'bg-green-100 text-green-800', classes: 'bg-green-100 text-green-800' },
-  cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800', classes: 'bg-red-100 text-red-800' },
+// Dynamic status configuration with fallback
+const getStatusConfig = (status: string) => {
+  const configs: Record<string, { label: string; color: string; classes: string }> = {
+    draft: { label: 'Draft', color: 'bg-gray-100 text-gray-800', classes: 'bg-gray-100 text-gray-800' },
+    ordered: { label: 'Ordered', color: 'bg-blue-100 text-blue-800', classes: 'bg-blue-100 text-blue-800' },
+    partial: { label: 'Partial', color: 'bg-yellow-100 text-yellow-800', classes: 'bg-yellow-100 text-yellow-800' },
+    partial_received: { label: 'Partial Received', color: 'bg-indigo-100 text-indigo-800', classes: 'bg-indigo-100 text-indigo-800' },
+    received: { label: 'Received', color: 'bg-green-100 text-green-800', classes: 'bg-green-100 text-green-800' },
+    cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800', classes: 'bg-red-100 text-red-800' },
+  };
+  
+  return configs[status] || { 
+    label: status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), 
+    color: 'bg-slate-100 text-slate-600',
+    classes: 'bg-slate-100 text-slate-600'
+  };
 };
 
 function PurchaseOrderSkeleton() {
@@ -112,7 +122,7 @@ function PurchaseOrderCard({ order, onView, onEdit, onDelete, onSend, onReceive,
             </>
           )}
 
-          {(order.status === 'ordered' || order.status === 'partial') && (
+          {(order.status === 'ordered' || order.status === 'partial' || order.status === 'partial_received') && (
             <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-green-100 hover:bg-green-50" onClick={() => onReceive(order.id)}>
               <PackageCheck className="h-4 w-4 text-green-600" />
             </Button>
@@ -191,9 +201,8 @@ export default function PurchaseOrderList() {
     }
   };
 
-  const getStatusBadge = (status: PurchaseOrderStatus) => {
-    const config = statusConfig[status];
-    if (!config) return <span className="text-xs">{status}</span>;
+  const getStatusBadge = (status: string) => {
+    const config = getStatusConfig(status);
     return <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>{config.label}</span>;
   };
 
@@ -259,7 +268,7 @@ export default function PurchaseOrderList() {
               </Button>
             </>
           )}
-          {(row.status === 'ordered' || row.status === 'partial') && (
+          {(row.status === 'ordered' || row.status === 'partial' || row.status === 'partial_received') && (
             <Button variant="ghost" size="icon" onClick={() => navigate(`/purchases/orders/${row.id}/receive`)} title="Receive Goods">
               <PackageCheck className="h-4 w-4 text-green-600" />
             </Button>
@@ -313,6 +322,7 @@ export default function PurchaseOrderList() {
                 <option value="draft">Draft</option>
                 <option value="ordered">Ordered</option>
                 <option value="partial">Partial</option>
+                <option value="partial_received">Partial Received</option>
                 <option value="received">Received</option>
                 <option value="cancelled">Cancelled</option>
               </select>

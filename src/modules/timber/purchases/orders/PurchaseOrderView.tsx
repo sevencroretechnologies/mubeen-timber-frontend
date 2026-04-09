@@ -10,12 +10,21 @@ import { ArrowLeft, Send, PackageCheck, Edit, ChevronLeft, Calendar, Building2, 
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 
-const statusConfig: Record<PurchaseOrderStatus, { label: string; color: string }> = {
-  draft: { label: 'Draft', color: 'bg-gray-100 text-gray-800' },
-  ordered: { label: 'Ordered', color: 'bg-blue-100 text-blue-800' },
-  partial: { label: 'Partial', color: 'bg-yellow-100 text-yellow-800' },
-  received: { label: 'Received', color: 'bg-green-100 text-green-800' },
-  cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800' },
+// Dynamic status configuration with fallback
+const getStatusConfig = (status: string) => {
+  const configs: Record<string, { label: string; color: string }> = {
+    draft: { label: 'Draft', color: 'bg-gray-100 text-gray-800' },
+    ordered: { label: 'Ordered', color: 'bg-blue-100 text-blue-800' },
+    partial: { label: 'Partial', color: 'bg-yellow-100 text-yellow-800' },
+    partial_received: { label: 'Partial Received', color: 'bg-indigo-100 text-indigo-800' },
+    received: { label: 'Received', color: 'bg-green-100 text-green-800' },
+    cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800' },
+  };
+  
+  return configs[status] || { 
+    label: status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), 
+    color: 'bg-slate-100 text-slate-600' 
+  };
 };
 
 function POViewItemCard({ item, index }: { item: any; index: number }) {
@@ -105,7 +114,7 @@ export default function PurchaseOrderView() {
     );
   }
 
-  const statusBadge = statusConfig[order.status];
+  const statusInfo = getStatusConfig(order.status);
 
   return (
     <div className="w-full space-y-6">
@@ -131,11 +140,8 @@ export default function PurchaseOrderView() {
               </Button>
             </>
           )}
-          {(order.status === 'ordered' || order.status === 'partial') && (
-            <Button 
-              onClick={() => navigate(`/purchases/orders/${order.id}/receive`)} 
-              className="bg-solarized-blue hover:bg-solarized-blue/90 font-bold"
-            >
+          {(order.status === 'ordered' || order.status === 'partial' || order.status === 'partial_received') && (
+            <Button onClick={() => navigate(`/purchases/orders/${id}/receive`)} className="bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto">
               <PackageCheck className="mr-2 h-4 w-4" /> Receive Goods
             </Button>
           )}
@@ -197,8 +203,8 @@ export default function PurchaseOrderView() {
                   <div className="space-y-1">
                     <Label className="text-muted-foreground md:text-slate-500 font-medium">Status</Label>
                     <div className="pt-1">
-                      <span className={cn("px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider", statusBadge?.color)}>
-                        {statusBadge?.label}
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusInfo.color} border border-black/5 shadow-sm uppercase tracking-wider`}>
+                        {statusInfo.label}
                       </span>
                     </div>
                   </div>
