@@ -213,12 +213,12 @@ export default function LeadsList() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Source</Label>
-                  <p className="text-sm">{selectedLead.source?.name || '-'}</p>
+                  <p className="text-sm">{selectedLead.source_name || '-'}</p>
                 </div>
-                <div className="space-y-1">
+                {/* <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Territory</Label>
-                  <p className="text-sm">{selectedLead.territory || '-'}</p>
-                </div>
+                  <p className="text-sm">{selectedLead.territory_name || '-'}</p>
+                </div> */}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
