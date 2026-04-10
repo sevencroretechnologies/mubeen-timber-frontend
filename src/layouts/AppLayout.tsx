@@ -15,7 +15,8 @@ import {
   ShoppingCart,
   Hammer,
   BarChart3,
-  TreesIcon
+  Building2,
+  TreesIcon,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import {
@@ -67,9 +68,25 @@ const navigation: NavItem[] = [
       { name: "Projects", href: "/crm/projects" },
       { name: "Prospects", href: "/crm/prospects" },
       { name: "Contacts", href: "/crm/contacts" },
-      { name: "Opportunity Lost Reasons", href: "/crm/opportunity-lost-reasons" },
+      {
+        name: "Opportunity Lost Reasons",
+        href: "/crm/opportunity-lost-reasons",
+      },
       { name: "Sales Task", href: "/crm/sales-tasks" },
     ],
+  },
+
+  {
+    name: "Organizations",
+    href: "/organizations",
+    icon: Building2,
+    permission: "view_organizations",
+  },
+  {
+    name: "Companies",
+    href: "/companies",
+    icon: Building2,
+    permission: "view_companies",
   },
   {
     name: "Inventory",
@@ -102,7 +119,7 @@ const navigation: NavItem[] = [
     children: [
       { name: "Dashboard", href: "/dashboard/timber" },
       { name: "Estimations", href: "/crm/estimations" },
-       { name: "Customers", href: "/crm/customers" },
+      { name: "Customers", href: "/crm/customers" },
       { name: "Projects", href: "/crm/projects" },
     ],
   },
@@ -154,10 +171,11 @@ function NavItemComponent({
       <div className="space-y-1">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive
-            ? "bg-solarized-blue/10 text-solarized-blue"
-            : "text-solarized-base01 hover:bg-solarized-base2 hover:text-solarized-base02"
-            }`}
+          className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+            isActive
+              ? "bg-solarized-blue/10 text-solarized-blue"
+              : "text-solarized-base01 hover:bg-solarized-base2 hover:text-solarized-base02"
+          }`}
         >
           <div className="flex items-center gap-3">
             <Icon className="h-5 w-5" />
@@ -173,10 +191,11 @@ function NavItemComponent({
               <Link
                 key={child.href}
                 to={child.href}
-                className={`block px-3 py-2 text-sm rounded-lg transition-colors ${location.pathname === child.href
-                  ? "bg-solarized-blue/10 text-solarized-blue"
-                  : "text-solarized-base01 hover:bg-solarized-base2 hover:text-solarized-base02"
-                  }`}
+                className={`block px-3 py-2 text-sm rounded-lg transition-colors ${
+                  location.pathname === child.href
+                    ? "bg-solarized-blue/10 text-solarized-blue"
+                    : "text-solarized-base01 hover:bg-solarized-base2 hover:text-solarized-base02"
+                }`}
               >
                 {child.name}
               </Link>
@@ -190,10 +209,11 @@ function NavItemComponent({
   return (
     <Link
       to={item.href}
-      className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive
-        ? "bg-solarized-blue/10 text-solarized-blue"
-        : "text-solarized-base01 hover:bg-solarized-base2 hover:text-solarized-base02"
-        }`}
+      className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+        isActive
+          ? "bg-solarized-blue/10 text-solarized-blue"
+          : "text-solarized-base01 hover:bg-solarized-base2 hover:text-solarized-base02"
+      }`}
       title={isCollapsed ? item.name : undefined}
     >
       <Icon className="h-5 w-5 flex-shrink-0" />
@@ -215,7 +235,8 @@ export default function AppLayout() {
       try {
         const response = await authService.getProfile();
         const profileImagePath =
-          response.data.data?.user?.profile_image || response.data.data?.user?.staff_member?.profile_image;
+          response.data.data?.user?.profile_image ||
+          response.data.data?.user?.staff_member?.profile_image;
         if (profileImagePath) {
           // Convert to full URL if it's a relative path
           const imageUrl = profileImagePath.startsWith("http")
@@ -267,8 +288,9 @@ export default function AppLayout() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full bg-white border-r border-solarized-base2 transition-all duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } lg:translate-x-0 ${sidebarCollapsed ? "lg:w-16" : "lg:w-64"}`}
+        className={`fixed top-0 left-0 z-50 h-full bg-white border-r border-solarized-base2 transition-all duration-300 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } lg:translate-x-0 ${sidebarCollapsed ? "lg:w-16" : "lg:w-64"}`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -314,17 +336,17 @@ export default function AppLayout() {
                 // Also filter children based on permissions
                 const filteredItem = item.children
                   ? {
-                    ...item,
-                    children: item.children.filter((child) => {
-                      if (
-                        child.permission &&
-                        !hasPermission(child.permission)
-                      )
-                        return false;
-                      if (child.check && !child.check(user)) return false;
-                      return true;
-                    }),
-                  }
+                      ...item,
+                      children: item.children.filter((child) => {
+                        if (
+                          child.permission &&
+                          !hasPermission(child.permission)
+                        )
+                          return false;
+                        if (child.check && !child.check(user)) return false;
+                        return true;
+                      }),
+                    }
                   : item;
                 // Only show parent if it has visible children or no children
                 if (

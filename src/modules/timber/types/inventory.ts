@@ -98,6 +98,16 @@ export interface TimberStockMovement {
     updated_at: string;
 }
 
+// Purchase Order Status Constants
+export const PURCHASE_ORDER_STATUS = {
+  DRAFT: 'draft',
+  ORDERED: 'ordered',
+  PARTIAL_RECEIVED: 'partial_received',
+  RECEIVED: 'received',
+  CANCELLED: 'cancelled',
+} as const;
+
+export type PurchaseOrderStatus = typeof PURCHASE_ORDER_STATUS[keyof typeof PURCHASE_ORDER_STATUS] | (string & {});
 // Widened type allows any status from API while keeping autocomplete for known ones
 export type PurchaseOrderStatus =
     | "draft"
@@ -109,6 +119,27 @@ export type PurchaseOrderStatus =
     | (string & {});
 
 export interface TimberPurchaseOrder {
+  id: number;
+  po_code: string;
+  supplier_id: number;
+  warehouse_id: number;
+  status: PurchaseOrderStatus;
+  order_date: string | null;
+  expected_delivery_date: string | null;
+  expected_date: string | null;
+  subtotal: number;
+  tax_percentage: number;
+  tax_amount: number;
+  discount_amount: number;
+  total_amount: number;
+  notes: string | null;
+  company_id: number;
+  org_id: number;
+  supplier?: TimberSupplier;
+  warehouse?: TimberWarehouse;
+  items?: TimberPurchaseOrderItem[];
+  created_at: string;
+  updated_at: string;
     id: number;
     po_code: string;
     supplier_id: number;
@@ -156,6 +187,24 @@ export type RequisitionStatus =
     | "returned";
 
 export interface TimberMaterialRequisition {
+  id: number;
+  requisition_code: string;
+  job_card_id: number | null;
+  project_id: number | null;
+  requested_by: number | null;
+  approved_by: number | null;
+  status: RequisitionStatus;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  requisition_date: string | null;
+  notes: string | null;
+  rejection_reason: string | null;
+  company_id: number;
+  org_id: number;
+  items?: TimberMaterialRequisitionItem[];
+  requested_by_user?: { id: number; name: string };
+  approved_by_user?: { id: number; name: string };
+  created_at: string;
+  updated_at: string;
     id: number;
     requisition_code: string;
     job_card_id: number | null;
@@ -265,6 +314,11 @@ export interface PurchaseOrderItemFormData {
 }
 
 export interface ReceiveGoodsFormData {
+  items: {
+    item_id: number;
+    quantity: number;
+  }[];
+  notes?: string;
     items: {
         item_id: number;
         quantity: number;
