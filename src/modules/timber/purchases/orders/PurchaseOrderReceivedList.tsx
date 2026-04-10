@@ -190,7 +190,7 @@ export default function PurchaseOrderReceivedList() {
               />
             </div>
             <div className="flex gap-3">
-              <select
+              {/* <select
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
                 className="flex-1 sm:flex-none border rounded-md px-3 py-2 text-sm bg-white"
@@ -200,7 +200,7 @@ export default function PurchaseOrderReceivedList() {
                 <option value={PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED}>Partial Received</option>
                 <option value={PURCHASE_ORDER_STATUS.RECEIVED}>Received</option>
                 <option value={PURCHASE_ORDER_STATUS.CANCELLED}>Cancelled</option>
-              </select>
+              </select> */}
               <Button type="submit" variant="outline" className="flex-1 sm:flex-none">Search</Button>
             </div>
           </form>
