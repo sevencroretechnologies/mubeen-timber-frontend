@@ -98,7 +98,8 @@ export interface TimberStockMovement {
   updated_at: string;
 }
 
-export type PurchaseOrderStatus = 'draft' | 'ordered' | 'partial' | 'received' | 'cancelled';
+// Widened type allows any status from API while keeping autocomplete for known ones
+export type PurchaseOrderStatus = 'draft' | 'ordered' | 'partial' | 'partial_received' | 'received' | 'cancelled' | (string & {});
 
 export interface TimberPurchaseOrder {
   id: number;
