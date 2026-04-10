@@ -105,37 +105,37 @@ function PurchaseOrderCard({ order, onView, onEdit, onDelete, onSend, onReceive,
           <span className="font-medium text-slate-600">{order.warehouse?.name || '-'}</span>
         </div>
         
-        <div className="flex gap-1.5">
-          <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg hover:bg-slate-50 border-slate-200" onClick={() => onView(order.id)}>
-            <Eye className="h-4 w-4 text-slate-600" />
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 rounded-lg hover:bg-slate-50 border-slate-200" onClick={() => onView(order.id)}>
+            <Eye className="h-3.5 w-3.5 text-slate-600" />
+            <span className="text-xs font-bold">View</span>
           </Button>
           
           {order.status === PURCHASE_ORDER_STATUS.DRAFT && (
-            <>
-              <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-green-100 hover:bg-green-50" onClick={() => onSend(order.id)}>
-                <Send className="h-4 w-4 text-green-600" />
-              </Button>
-              {/* <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-red-100 hover:bg-red-50" onClick={() => onDelete(order.id)}>
-                <Trash2 className="h-4 w-4 text-red-600" />
-              </Button> */}
-            </>
-          )}
-
-          {(order.status === PURCHASE_ORDER_STATUS.ORDERED || order.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED) && (
-            <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-green-100 hover:bg-green-50" onClick={() => onReceive(order.id)}>
-              <PackageCheck className="h-4 w-4 text-green-600" />
+            <Button variant="outline" size="sm" className="h-8 gap-1.5 rounded-lg border-green-100 hover:bg-green-50" onClick={() => onSend(order.id)}>
+              <Send className="h-3.5 w-3.5 text-green-600" />
+              <span className="text-xs font-bold text-green-700">Send</span>
             </Button>
           )}
 
+          {/* {(order.status === PURCHASE_ORDER_STATUS.ORDERED || order.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED) && (
+            <Button variant="outline" size="sm" className="h-8 gap-1.5 rounded-lg border-emerald-100 hover:bg-emerald-50" onClick={() => onReceive(order.id)}>
+              <PackageCheck className="h-3.5 w-3.5 text-emerald-600" />
+              <span className="text-xs font-bold text-emerald-700">Receive</span>
+            </Button>
+          )} */}
+
           {order.status !== PURCHASE_ORDER_STATUS.RECEIVED && order.status !== PURCHASE_ORDER_STATUS.CANCELLED && (
-            <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-red-100 hover:bg-red-50" onClick={() => onCancel(order.id)}>
-              <XCircle className="h-4 w-4 text-red-600" />
+            <Button variant="outline" size="sm" className="h-8 gap-1.5 rounded-lg border-red-100 hover:bg-red-50" onClick={() => onCancel(order.id)}>
+              <XCircle className="h-3.5 w-3.5 text-red-600" />
+              <span className="text-xs font-bold text-red-700">Cancel</span>
             </Button>
           )}
 
           {order.status !== PURCHASE_ORDER_STATUS.DRAFT && order.status !== PURCHASE_ORDER_STATUS.CANCELLED && (
-            <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-indigo-100 hover:bg-indigo-50" onClick={() => onDownloadInvoice(order.id, order.po_code)}>
-              <FileText className="h-4 w-4 text-indigo-600" />
+            <Button variant="outline" size="sm" className="h-8 gap-1.5 rounded-lg border-indigo-100 hover:bg-indigo-50" onClick={() => onDownloadInvoice(order.id, order.po_code)}>
+              <FileText className="h-3.5 w-3.5 text-indigo-600" />
+              <span className="text-xs font-bold text-indigo-700">Invoice</span>
             </Button>
           )}
         </div>
@@ -289,38 +289,67 @@ export default function PurchaseOrderList() {
     {
       name: 'Actions',
       cell: (row) => (
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={() => navigate(`/purchases/orders/${row.id}`)} title="View">
-            <Eye className="h-4 w-4" />
+        <div className="flex items-center flex-wrap gap-1.5 py-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-8 px-2 gap-1.5 hover:bg-blue-50 hover:text-blue-700" 
+            onClick={() => navigate(`/purchases/orders/${row.id}`)}
+          >
+            <Eye className="h-3.5 w-3.5" />
+            <span className="text-[10px] font-bold uppercase tracking-wider">View</span>
           </Button>
+
           {row.status === PURCHASE_ORDER_STATUS.DRAFT && (
-            <>
-              <Button variant="ghost" size="icon" onClick={() => handleSend(row.id)} title="Send">
-                <Send className="h-4 w-4 text-green-600" />
-              </Button>
-              {/* <Button variant="ghost" size="icon" onClick={() => handleDelete(row.id)} title="Delete">
-                <Trash2 className="h-4 w-4 text-red-600" />
-              </Button> */}
-            </>
-          )}
-          {(row.status === PURCHASE_ORDER_STATUS.ORDERED || row.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED) && (
-            <Button variant="ghost" size="icon" onClick={() => navigate(`/purchases/orders/${row.id}/receive`)} title="Receive Goods">
-              <PackageCheck className="h-4 w-4 text-green-600" />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 px-2 gap-1.5 hover:bg-green-50 text-green-600" 
+              onClick={() => handleSend(row.id)}
+            >
+              <Send className="h-3.5 w-3.5" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">Send</span>
             </Button>
           )}
+
+          {/* {(row.status === PURCHASE_ORDER_STATUS.ORDERED || row.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED) && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 px-2 gap-1.5 hover:bg-emerald-50 text-emerald-600" 
+              onClick={() => navigate(`/purchases/orders/${row.id}/receive`)}
+            >
+              <PackageCheck className="h-3.5 w-3.5" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">Receive</span>
+            </Button>
+          )} */}
+
           {row.status !== PURCHASE_ORDER_STATUS.RECEIVED && row.status !== PURCHASE_ORDER_STATUS.CANCELLED && (
-            <Button variant="ghost" size="icon" onClick={() => handleCancel(row.id)} title="Cancel Order">
-              <XCircle className="h-4 w-4 text-red-600" />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 px-2 gap-1.5 hover:bg-red-50 text-red-600" 
+              onClick={() => handleCancel(row.id)}
+            >
+              <XCircle className="h-3.5 w-3.5" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">Cancel</span>
             </Button>
           )}
+
           {row.status !== PURCHASE_ORDER_STATUS.DRAFT && row.status !== PURCHASE_ORDER_STATUS.CANCELLED && (
-            <Button variant="ghost" size="icon" onClick={() => handleDownloadInvoice(row.id, row.po_code)} title="Generate Invoice">
-              <FileText className="h-4 w-4 text-indigo-600" />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 px-2 gap-1.5 hover:bg-indigo-50 text-indigo-600" 
+              onClick={() => handleDownloadInvoice(row.id, row.po_code)}
+            >
+              <FileText className="h-3.5 w-3.5" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">Invoice</span>
             </Button>
           )}
         </div>
       ),
-      minWidth: '200px',
+      minWidth: '320px',
     },
   ];
 

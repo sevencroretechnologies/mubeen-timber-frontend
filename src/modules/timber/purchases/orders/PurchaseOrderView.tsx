@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { purchaseOrderApi } from '../../services/inventoryApi';
-import type { TimberPurchaseOrder, PurchaseOrderStatus } from '../../types/inventory';
+import { purchaseOrderApi, poItemReceivedApi } from '../../services/inventoryApi';
+import type { TimberPurchaseOrder, } from '../../types/inventory';
 import { PURCHASE_ORDER_STATUS } from '../../types/inventory';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { showAlert, showConfirmDialog, getErrorMessage } from '@/lib/sweetalert';
-import { ArrowLeft, Send, PackageCheck, Edit, ChevronLeft, Calendar, Building2, Package, Clock, CreditCard, Truck, LayoutGrid, IndianRupee, XCircle, FileText } from 'lucide-react';
+import { ArrowLeft, Send, PackageCheck, Edit, ChevronLeft, Calendar, Building2, Package, Warehouse, CreditCard, Truck, LayoutGrid, IndianRupee, XCircle, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 
@@ -20,10 +20,10 @@ const getStatusConfig = (status: string) => {
     [PURCHASE_ORDER_STATUS.RECEIVED]: { label: 'Received', color: 'bg-green-100 text-green-800' },
     [PURCHASE_ORDER_STATUS.CANCELLED]: { label: 'Cancelled', color: 'bg-red-100 text-red-800' },
   };
-  
-  return configs[status] || { 
-    label: status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), 
-    color: 'bg-slate-100 text-slate-600' 
+
+  return configs[status] || {
+    label: status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+    color: 'bg-slate-100 text-slate-600'
   };
 };
 
@@ -34,7 +34,7 @@ function POViewItemCard({ item, index }: { item: any; index: number }) {
         <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Item #{index + 1}</span>
         <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">{item.wood_type?.name || '-'}</span>
       </div>
-      
+
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-0.5">
           <p className="text-[10px] uppercase font-bold text-slate-400">Quantity</p>
@@ -61,18 +61,26 @@ export default function PurchaseOrderView() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [order, setOrder] = useState<TimberPurchaseOrder | null>(null);
+  const [receivedData, setReceivedData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (id) {
       setIsLoading(true);
-      purchaseOrderApi.get(Number(id))
-        .then((data) => {
-          setOrder((data as any).data as TimberPurchaseOrder || data as TimberPurchaseOrder);
+      Promise.all([
+        purchaseOrderApi.get(Number(id)),
+        poItemReceivedApi.list({ purchase_order_id: Number(id) })
+      ])
+        .then(([poResponse, receivedResponse]) => {
+          const po = (poResponse as any).data as TimberPurchaseOrder || poResponse as TimberPurchaseOrder;
+          setOrder(po);
+
+          const rData = (receivedResponse as any).data?.data?.[0] || (receivedResponse as any).data?.[0];
+          if (rData) setReceivedData(rData);
         })
         .catch((error) => {
-          console.error('Failed to fetch order:', error);
-          showAlert('error', 'Error', 'Failed to load purchase order');
+          console.error('Failed to fetch order details:', error);
+          showAlert('error', 'Error', 'Failed to load purchase order information');
         })
         .finally(() => setIsLoading(false));
     }
@@ -188,8 +196,8 @@ export default function PurchaseOrderView() {
           )}
 
           {(order.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED || order.status === PURCHASE_ORDER_STATUS.ORDERED) && (
-            <Button 
-              onClick={handleConfirmReceived} 
+            <Button
+              onClick={handleConfirmReceived}
               disabled={!areAllItemsReceived}
               title={!areAllItemsReceived ? "All items must be fully received before confirming" : ""}
               className={cn(
@@ -227,7 +235,7 @@ export default function PurchaseOrderView() {
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">{order.po_code}</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             {order.status === PURCHASE_ORDER_STATUS.DRAFT && (
               <div className="w-9" /> // Placeholder to maintain layout balance if needed, or just remove
@@ -239,9 +247,9 @@ export default function PurchaseOrderView() {
             )}
 
             {(order.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED || order.status === PURCHASE_ORDER_STATUS.ORDERED) && (
-              <Button 
-                size="sm" 
-                onClick={handleConfirmReceived} 
+              <Button
+                size="sm"
+                onClick={handleConfirmReceived}
                 disabled={!areAllItemsReceived}
                 className={cn(
                   "rounded-xl font-bold h-9 shadow-lg",
@@ -270,7 +278,7 @@ export default function PurchaseOrderView() {
       <div className="space-y-6">
         {/* Main Info Blocks */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 space-y-6">
             <Card className="border-none md:border md:border-slate-200 shadow-none md:shadow-sm">
               <CardHeader className="hidden md:block">
                 <CardTitle className="text-xl font-bold text-solarized-base02">Supplier & Order Info</CardTitle>
@@ -310,61 +318,103 @@ export default function PurchaseOrderView() {
                     <Label className="text-muted-foreground md:text-slate-500 font-medium">Expected Delivery</Label>
                     <div className="flex items-center gap-2 text-sm font-bold text-indigo-600">
                       <Truck className="h-3.5 w-3.5 text-indigo-300 md:hidden" />
-                      {order.expected_delivery_date ? new Date(order.expected_delivery_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 
-                       order.expected_date ? new Date(order.expected_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                      {order.expected_delivery_date ? new Date(order.expected_delivery_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) :
+                        order.expected_date ? new Date(order.expected_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                     </div>
                   </div>
                   {order.notes && (
                     <div className="col-span-2 pt-2">
-                       <Label className="text-muted-foreground md:text-slate-500 font-medium">Notes</Label>
-                       <div className="mt-2 text-sm text-slate-600">
-                         {order.notes}
-                       </div>
+                      <Label className="text-muted-foreground md:text-slate-500 font-medium">Notes</Label>
+                      <div className="mt-2 text-sm text-slate-600">
+                        {order.notes}
+                      </div>
                     </div>
                   )}
                 </div>
               </CardContent>
             </Card>
+
+            {/* NEW Receipt Summary Section */}
+            {/* {receivedData && (
+              <Card className="border-none md:border md:border-emerald-100 bg-emerald-50/20 shadow-none md:shadow-sm">
+                <CardHeader className="py-4 border-b border-emerald-50 bg-emerald-50/50">
+                  <div className="flex items-center gap-2">
+                    <PackageCheck className="h-5 w-5 text-emerald-600" />
+                    <CardTitle className="text-sm font-black uppercase tracking-widest text-emerald-800">Actual Receipt Summary</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    <div className="space-y-1">
+                      <Label className="text-[10px] font-bold uppercase text-emerald-600/60 tracking-wider">Received At Warehouse</Label>
+                      <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <Warehouse className="h-4 w-4 text-emerald-400" />
+                        {receivedData.warehouse?.name || 'Main Warehouse'}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] font-bold uppercase text-emerald-600/60 tracking-wider">Final Receipt Date</Label>
+                      <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-emerald-400" />
+                        {new Date(receivedData.received_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] font-bold uppercase text-emerald-600/60 tracking-wider">Total Quantity Logged</Label>
+                      <p className="text-sm font-black text-emerald-700">
+                        {Number(receivedData.received_quantity).toFixed(2)} Unit(s)
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] font-bold uppercase text-emerald-600/60 tracking-wider">Receipt Valuation</Label>
+                      <p className="text-sm font-black text-indigo-700">
+                        ₹ {Number(receivedData.total_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )} */}
           </div>
 
           <div className="space-y-6">
             <Card className="border-none md:border md:border-slate-200 shadow-none md:shadow-sm">
-               <CardHeader className="hidden md:block">
-                  <CardTitle className="text-xl font-bold text-solarized-base02">Financial Summary</CardTitle>
-               </CardHeader>
-               <CardContent className="pt-6 space-y-4">
-                 <div className="flex justify-between items-center text-sm">
-                   <span className="text-muted-foreground font-bold uppercase text-[10px]">Subtotal</span>
-                   <span className="font-bold text-slate-700">₹{Number(order.subtotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                 </div>
+              <CardHeader className="hidden md:block">
+                <CardTitle className="text-xl font-bold text-solarized-base02">Financial Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-4">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground font-bold uppercase text-[10px]">Subtotal</span>
+                  <span className="font-bold text-slate-700">₹{Number(order.subtotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                </div>
 
-                 {Number(order.discount_amount) > 0 && (
-                   <div className="flex justify-between items-center text-sm">
-                     <span className="text-muted-foreground font-bold uppercase text-[10px]">Discount</span>
-                     <span className="font-bold text-red-600">- ₹{Number(order.discount_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                   </div>
-                 )}
+                {Number(order.discount_amount) > 0 && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground font-bold uppercase text-[10px]">Discount</span>
+                    <span className="font-bold text-red-600">- ₹{Number(order.discount_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                )}
 
-                 {Number(order.tax_amount) > 0 && (
-                   <>
-                     <div className="flex justify-between items-center text-sm">
-                       <span className="text-muted-foreground font-bold uppercase text-[10px]">Tax ({order.tax_percentage}%)</span>
-                       <span className="font-bold text-slate-700">+ ₹{Number(order.tax_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                     </div>
-                   </>
-                 )}
+                {Number(order.tax_amount) > 0 && (
+                  <>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground font-bold uppercase text-[10px]">Tax ({order.tax_percentage}%)</span>
+                      <span className="font-bold text-slate-700">+ ₹{Number(order.tax_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  </>
+                )}
 
-                 <Separator className="bg-slate-100" />
-                 <div className="pt-2">
-                   <p className="text-[10px] font-bold text-muted-foreground uppercase mb-2">Total Amount</p>
-                   <div className="bg-gray-50 rounded-xl p-4 flex justify-between items-center border">
-                     <span className="text-xl md:text-2xl font-black tabular-nums text-solarized-base02">
-                       ₹{Number(order.total_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                     </span>
-                     <IndianRupee className="h-5 w-5 text-gray-400" />
-                   </div>
-                 </div>
-               </CardContent>
+                <Separator className="bg-slate-100" />
+                <div className="pt-2">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase mb-2">Total Amount</p>
+                  <div className="bg-gray-50 rounded-xl p-4 flex justify-between items-center border">
+                    <span className="text-xl md:text-2xl font-black tabular-nums text-solarized-base02">
+                      ₹{Number(order.total_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </span>
+                    <IndianRupee className="h-5 w-5 text-gray-400" />
+                  </div>
+                </div>
+              </CardContent>
             </Card>
           </div>
         </div>
@@ -427,7 +477,7 @@ export default function PurchaseOrderView() {
                 {order.items.map((item, index) => (
                   <POViewItemCard key={item.id} index={index} item={item} />
                 ))}
-                
+
                 <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 mt-2 flex justify-between items-center">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Items Subtotal</span>
                   <span className="text-lg font-bold text-indigo-700">₹{Number(order.subtotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
@@ -436,8 +486,8 @@ export default function PurchaseOrderView() {
             </>
           ) : (
             <div className="bg-slate-50 rounded-2xl p-12 text-center border-2 border-dashed border-slate-200">
-               <Package className="h-10 w-10 text-slate-200 mx-auto mb-3" />
-               <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No items found in this order</p>
+              <Package className="h-10 w-10 text-slate-200 mx-auto mb-3" />
+              <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No items found in this order</p>
             </div>
           )}
         </div>
