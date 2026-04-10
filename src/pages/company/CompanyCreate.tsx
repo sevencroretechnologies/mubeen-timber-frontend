@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { companyService, organizationService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -15,7 +15,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '../../components/ui/select';
-import { ArrowLeft, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, Eye, EyeOff, Upload, X, Building2, ImageIcon } from 'lucide-react';
 import { Alert, AlertDescription } from '../../components/ui/alert';
 
 interface Organization {
@@ -35,11 +35,18 @@ export default function CompanyCreate() {
         org_id: '',
         company_name: '',
         address: '',
+        shipping_address: '',
+        company_phone: '',
+        company_email: '',
+        website: '',
         user_name: '',
         email: '',
         password: '',
     });
     const [showPassword, setShowPassword] = useState(false);
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
     const [formError, setFormError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -120,10 +127,20 @@ export default function CompanyCreate() {
 
         setIsSubmitting(true);
         try {
-            await companyService.create({
-                ...formData,
-                org_id: formData.org_id || user?.org_id,
-            });
+            const payload = new FormData();
+            payload.append('org_id', formData.org_id || String(user?.org_id ?? ''));
+            payload.append('company_name', formData.company_name);
+            payload.append('address', formData.address);
+            payload.append('shipping_address', formData.shipping_address);
+            payload.append('company_phone', formData.company_phone);
+            payload.append('company_email', formData.company_email);
+            payload.append('website', formData.website);
+            payload.append('user_name', formData.user_name);
+            payload.append('email', formData.email);
+            if (formData.password) payload.append('password', formData.password);
+            if (logoFile) payload.append('company_logo', logoFile);
+
+            await companyService.createWithFile(payload);
             showAlert('success', 'Success', 'Company created successfully', 2000);
             navigate('/companies');
         } catch (error: any) {
@@ -157,6 +174,29 @@ export default function CompanyCreate() {
         if (fieldErrors[id]) {
             setFieldErrors(prev => ({ ...prev, [id]: undefined }));
         }
+    };
+
+    const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            showAlert('error', 'Invalid File', 'Please select an image file.');
+            return;
+        }
+        if (file.size > 2 * 1024 * 1024) {
+            showAlert('error', 'File Too Large', 'Logo must be under 2 MB.');
+            return;
+        }
+        setLogoFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => setLogoPreview(reader.result as string);
+        reader.readAsDataURL(file);
+    };
+
+    const handleRemoveLogo = () => {
+        setLogoFile(null);
+        setLogoPreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
     return (
@@ -212,6 +252,57 @@ export default function CompanyCreate() {
                                 </div>
                             )}
 
+                            {/* Logo Upload — full width */}
+                            <div className="space-y-2 sm:col-span-2">
+                                <Label>Company Logo</Label>
+                                <div className="flex items-start gap-4">
+                                    {/* Preview */}
+                                    <div className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden bg-gray-50 shrink-0 relative group">
+                                        {logoPreview ? (
+                                            <>
+                                                <img src={logoPreview} alt="Logo preview" className="w-full h-full object-contain p-1" />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleRemoveLogo}
+                                                    className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <X className="h-3 w-3" />
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <div className="flex flex-col items-center gap-1 text-gray-400">
+                                                <Building2 className="h-8 w-8" />
+                                                <span className="text-[10px]">No logo</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    {/* Controls */}
+                                    <div className="flex flex-col gap-2 justify-center">
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            id="company_logo"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={handleLogoChange}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => fileInputRef.current?.click()}
+                                        >
+                                            <Upload className="h-4 w-4 mr-2" />
+                                            {logoPreview ? 'Change Logo' : 'Upload Logo'}
+                                        </Button>
+                                        {logoFile && (
+                                            <p className="text-xs text-muted-foreground truncate max-w-[180px]">{logoFile.name}</p>
+                                        )}
+                                        <p className="text-xs text-muted-foreground">PNG, JPG, SVG — max 2 MB</p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="space-y-2 sm:col-span-2">
                                 <Label htmlFor="company_name" className={fieldErrors.company_name ? 'text-red-500' : ''}>Company Name *</Label>
                                 <Input
@@ -224,8 +315,40 @@ export default function CompanyCreate() {
                                 {renderError('company_name')}
                             </div>
 
+                            <div className="space-y-2">
+                                <Label htmlFor="company_phone">Phone</Label>
+                                <Input
+                                    id="company_phone"
+                                    value={formData.company_phone}
+                                    onChange={handleInputChange}
+                                    placeholder="+91 9876543210"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="company_email">Company Email</Label>
+                                <Input
+                                    id="company_email"
+                                    type="email"
+                                    value={formData.company_email}
+                                    onChange={handleInputChange}
+                                    placeholder="info@company.com"
+                                />
+                            </div>
+
                             <div className="space-y-2 sm:col-span-2">
-                                <Label htmlFor="address" className={fieldErrors.address ? 'text-red-500' : ''}>Address *</Label>
+                                <Label htmlFor="website">Website</Label>
+                                <Input
+                                    id="website"
+                                    type="url"
+                                    value={formData.website}
+                                    onChange={handleInputChange}
+                                    placeholder="https://www.company.com"
+                                />
+                            </div>
+
+                            <div className="space-y-2 sm:col-span-2">
+                                <Label htmlFor="address" className={fieldErrors.address ? 'text-red-500' : ''}>Billing Address *</Label>
                                 <Textarea
                                     id="address"
                                     value={formData.address}
@@ -235,6 +358,17 @@ export default function CompanyCreate() {
                                     className={fieldErrors.address ? 'border-red-500' : ''}
                                 />
                                 {renderError('address')}
+                            </div>
+
+                            <div className="space-y-2 sm:col-span-2">
+                                <Label htmlFor="shipping_address">Shipping Address</Label>
+                                <Textarea
+                                    id="shipping_address"
+                                    value={formData.shipping_address}
+                                    onChange={handleInputChange}
+                                    placeholder="Warehouse / Delivery address (if different)"
+                                    rows={2}
+                                />
                             </div>
                         </div>
 
