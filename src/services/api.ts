@@ -294,7 +294,17 @@ export const companyService = {
   getAll: (params?: { page?: number; per_page?: number; search?: string; org_id?: number }) => api.get('/companies', { params }),
   getById: (id: number) => api.get(`/companies/${id}`),
   create: (data: Record<string, unknown>) => api.post('/companies', data),
+  // Send multipart/form-data for logo upload on create
+  createWithFile: (data: FormData) =>
+    api.post('/companies', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
   update: (id: number, data: Record<string, unknown>) => api.put(`/companies/${id}`, data),
+  // Send multipart/form-data with _method=PUT for logo upload on edit
+  updateWithFile: (id: number, data: FormData) =>
+    api.post(`/companies/${id}`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
   delete: (id: number) => api.delete(`/companies/${id}`),
 };
 

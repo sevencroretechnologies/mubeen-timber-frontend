@@ -175,9 +175,6 @@ export default function PurchaseOrderView() {
         <div className="flex gap-2">
           {order.status === PURCHASE_ORDER_STATUS.DRAFT && (
             <>
-              <Button variant="outline" onClick={() => navigate(`/purchases/orders/${order.id}/edit`)} className="font-bold border-slate-200">
-                <Edit className="mr-2 h-4 w-4" /> Edit
-              </Button>
               <Button onClick={handleSend} className="bg-solarized-blue hover:bg-solarized-blue/90 font-bold">
                 <Send className="mr-2 h-4 w-4" /> Send Order
               </Button>
@@ -224,9 +221,7 @@ export default function PurchaseOrderView() {
           
           <div className="flex items-center gap-2">
             {order.status === PURCHASE_ORDER_STATUS.DRAFT && (
-              <Button size="sm" variant="outline" onClick={() => navigate(`/purchases/orders/${order.id}/edit`)} className="rounded-xl border-slate-200 font-bold h-9">
-                <Edit className="h-4 w-4" />
-              </Button>
+              <div className="w-9" /> // Placeholder to maintain layout balance if needed, or just remove
             )}
             {(order.status === PURCHASE_ORDER_STATUS.ORDERED || order.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED) && (
               <Button size="sm" onClick={() => navigate(`/purchases/orders/${order.id}/receive`)} className="bg-emerald-600 rounded-xl font-bold h-9 shadow-lg shadow-emerald-100">

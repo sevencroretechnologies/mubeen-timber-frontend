@@ -112,15 +112,12 @@ function PurchaseOrderCard({ order, onView, onEdit, onDelete, onSend, onReceive,
           
           {order.status === PURCHASE_ORDER_STATUS.DRAFT && (
             <>
-              <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-blue-100 hover:bg-blue-50" onClick={() => onEdit(order.id)}>
-                <Edit className="h-4 w-4 text-blue-600" />
-              </Button>
               <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-green-100 hover:bg-green-50" onClick={() => onSend(order.id)}>
                 <Send className="h-4 w-4 text-green-600" />
               </Button>
-              <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-red-100 hover:bg-red-50" onClick={() => onDelete(order.id)}>
+              {/* <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-red-100 hover:bg-red-50" onClick={() => onDelete(order.id)}>
                 <Trash2 className="h-4 w-4 text-red-600" />
-              </Button>
+              </Button> */}
             </>
           )}
 
@@ -298,15 +295,12 @@ export default function PurchaseOrderList() {
           </Button>
           {row.status === PURCHASE_ORDER_STATUS.DRAFT && (
             <>
-              <Button variant="ghost" size="icon" onClick={() => navigate(`/purchases/orders/${row.id}/edit`)} title="Edit">
-                <Edit className="h-4 w-4 text-blue-600" />
-              </Button>
               <Button variant="ghost" size="icon" onClick={() => handleSend(row.id)} title="Send">
                 <Send className="h-4 w-4 text-green-600" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => handleDelete(row.id)} title="Delete">
+              {/* <Button variant="ghost" size="icon" onClick={() => handleDelete(row.id)} title="Delete">
                 <Trash2 className="h-4 w-4 text-red-600" />
-              </Button>
+              </Button> */}
             </>
           )}
           {(row.status === PURCHASE_ORDER_STATUS.ORDERED || row.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED) && (
