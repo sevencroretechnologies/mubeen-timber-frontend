@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { showAlert, showConfirmDialog, getErrorMessage } from '@/lib/sweetalert';
-import { ArrowLeft, Send, PackageCheck, Edit, ChevronLeft, Calendar, Building2, Package, Clock, CreditCard, Truck, LayoutGrid, IndianRupee, XCircle } from 'lucide-react';
+import { ArrowLeft, Send, PackageCheck, Edit, ChevronLeft, Calendar, Building2, Package, Clock, CreditCard, Truck, LayoutGrid, IndianRupee, XCircle, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 
@@ -119,6 +119,22 @@ export default function PurchaseOrderView() {
     }
   };
 
+  const handleDownloadInvoice = async () => {
+    if (!order) return;
+    try {
+      const response = await purchaseOrderApi.generateInvoice(order.id);
+      const url = window.URL.createObjectURL(new Blob([response.data || response]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `invoice-${order.po_code}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+    } catch (error) {
+      showAlert('error', 'Error', getErrorMessage(error, 'Failed to download invoice'));
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
@@ -184,6 +200,12 @@ export default function PurchaseOrderView() {
               <XCircle className="mr-2 h-4 w-4" /> Cancel Order
             </Button>
           )}
+
+          {order.status !== PURCHASE_ORDER_STATUS.DRAFT && order.status !== PURCHASE_ORDER_STATUS.CANCELLED && (
+            <Button variant="outline" onClick={handleDownloadInvoice} className="text-indigo-600 border-indigo-100 hover:bg-indigo-50 font-bold">
+              <FileText className="mr-2 h-4 w-4" /> Generate Invoice
+            </Button>
+          )}
         </div>
       </div>
 
@@ -221,6 +243,12 @@ export default function PurchaseOrderView() {
             {order.status !== PURCHASE_ORDER_STATUS.RECEIVED && order.status !== PURCHASE_ORDER_STATUS.CANCELLED && (
               <Button size="sm" variant="outline" onClick={handleCancel} className="rounded-xl border-red-100 text-red-600 font-bold h-9">
                 <XCircle className="h-4 w-4" />
+              </Button>
+            )}
+
+            {order.status !== PURCHASE_ORDER_STATUS.DRAFT && order.status !== PURCHASE_ORDER_STATUS.CANCELLED && (
+              <Button size="sm" variant="outline" onClick={handleDownloadInvoice} className="rounded-xl border-indigo-100 text-indigo-600 font-bold h-9" title="Generate Invoice">
+                <FileText className="h-4 w-4" />
               </Button>
             )}
           </div>

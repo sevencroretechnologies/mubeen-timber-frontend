@@ -123,6 +123,8 @@ export const purchaseOrderApi = {
     api.post(`${PREFIX}/purchase-orders/${id}/confirm-received`).then((r) => r.data),
   cancel: (id: number) =>
     api.post(`${PREFIX}/purchase-orders/${id}/cancel`).then((r) => r.data),
+  generateInvoice: (id: number) =>
+    api.get(`${PREFIX}/purchase-orders/${id}/invoice`, { responseType: 'blob' }),
 };
 
 // Material Requisitions

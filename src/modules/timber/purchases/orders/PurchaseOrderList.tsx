@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import DataTable, { TableColumn } from 'react-data-table-component';
-import { Plus, Search, ShoppingCart, Eye, Edit, Trash2, Send, PackageCheck, Calendar, Building2, CreditCard, XCircle } from 'lucide-react';
+import { Plus, Search, ShoppingCart, Eye, Edit, Trash2, Send, PackageCheck, Calendar, Building2, CreditCard, XCircle, FileText } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Dynamic status configuration with fallback
@@ -64,10 +64,11 @@ interface PurchaseOrderCardProps {
   onSend: (id: number) => void;
   onReceive: (id: number) => void;
   onCancel: (id: number) => void;
+  onDownloadInvoice: (id: number, code: string) => void;
   getStatusBadge: (status: PurchaseOrderStatus) => React.ReactNode;
 }
 
-function PurchaseOrderCard({ order, onView, onEdit, onDelete, onSend, onReceive, onCancel, getStatusBadge }: PurchaseOrderCardProps) {
+function PurchaseOrderCard({ order, onView, onEdit, onDelete, onSend, onReceive, onCancel, onDownloadInvoice, getStatusBadge }: PurchaseOrderCardProps) {
   return (
     <Card className="rounded-xl shadow-sm border border-slate-100 bg-white p-4 transition-all hover:shadow-md">
       <div className="flex justify-between items-start mb-3">
@@ -132,6 +133,12 @@ function PurchaseOrderCard({ order, onView, onEdit, onDelete, onSend, onReceive,
           {order.status !== PURCHASE_ORDER_STATUS.RECEIVED && order.status !== PURCHASE_ORDER_STATUS.CANCELLED && (
             <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-red-100 hover:bg-red-50" onClick={() => onCancel(order.id)}>
               <XCircle className="h-4 w-4 text-red-600" />
+            </Button>
+          )}
+
+          {order.status !== PURCHASE_ORDER_STATUS.DRAFT && order.status !== PURCHASE_ORDER_STATUS.CANCELLED && (
+            <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-indigo-100 hover:bg-indigo-50" onClick={() => onDownloadInvoice(order.id, order.po_code)}>
+              <FileText className="h-4 w-4 text-indigo-600" />
             </Button>
           )}
         </div>
@@ -220,6 +227,21 @@ export default function PurchaseOrderList() {
     }
   };
 
+  const handleDownloadInvoice = async (id: number, code: string) => {
+    try {
+      const response = await purchaseOrderApi.generateInvoice(id);
+      const url = window.URL.createObjectURL(new Blob([response.data || response]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `invoice-${code}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+    } catch (error) {
+      showAlert('error', 'Error', getErrorMessage(error, 'Failed to download invoice'));
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const config = getStatusConfig(status);
     return <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>{config.label}</span>;
@@ -297,9 +319,14 @@ export default function PurchaseOrderList() {
               <XCircle className="h-4 w-4 text-red-600" />
             </Button>
           )}
+          {row.status !== PURCHASE_ORDER_STATUS.DRAFT && row.status !== PURCHASE_ORDER_STATUS.CANCELLED && (
+            <Button variant="ghost" size="icon" onClick={() => handleDownloadInvoice(row.id, row.po_code)} title="Generate Invoice">
+              <FileText className="h-4 w-4 text-indigo-600" />
+            </Button>
+          )}
         </div>
       ),
-      minWidth: '160px',
+      minWidth: '200px',
     },
   ];
 
@@ -395,6 +422,7 @@ export default function PurchaseOrderList() {
                     onSend={handleSend}
                     onReceive={(id) => navigate(`/purchases/orders/${id}/receive`)}
                     onCancel={handleCancel}
+                    onDownloadInvoice={handleDownloadInvoice}
                     getStatusBadge={getStatusBadge}
                   />
                 ))}
