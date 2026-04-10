@@ -25,6 +25,10 @@ export default function CompanyEdit() {
         org_id: '',
         company_name: '',
         address: '',
+        shipping_address: '',
+        company_phone: '',
+        company_email: '',
+        website: '',
     });
     const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
     const [formError, setFormError] = useState('');
@@ -40,8 +44,12 @@ export default function CompanyEdit() {
 
                 setFormData({
                     org_id: company.org_id?.toString() || '',
-                    company_name: company.company_name,
+                    company_name: company.company_name || '',
                     address: company.address || '',
+                    shipping_address: company.shipping_address || '',
+                    company_phone: company.company_phone || '',
+                    company_email: company.email || '',
+                    website: company.website || '',
                 });
 
             } catch (error) {
@@ -165,14 +173,58 @@ export default function CompanyEdit() {
                                 />
                                 {renderError('company_name')}
                             </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="company_phone">Phone</Label>
+                                <Input
+                                    id="company_phone"
+                                    value={formData.company_phone}
+                                    onChange={(e) => setFormData({ ...formData, company_phone: e.target.value })}
+                                    placeholder="+91 9876543210"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="company_email">Company Email</Label>
+                                <Input
+                                    id="company_email"
+                                    type="email"
+                                    value={formData.company_email}
+                                    onChange={(e) => setFormData({ ...formData, company_email: e.target.value })}
+                                    placeholder="info@company.com"
+                                />
+                            </div>
+
                             <div className="space-y-2 sm:col-span-2">
-                                <Label htmlFor="address">Address</Label>
+                                <Label htmlFor="website">Website</Label>
+                                <Input
+                                    id="website"
+                                    type="url"
+                                    value={formData.website}
+                                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                                    placeholder="https://www.company.com"
+                                />
+                            </div>
+
+                            <div className="space-y-2 sm:col-span-2">
+                                <Label htmlFor="address">Billing Address</Label>
                                 <Textarea
                                     id="address"
                                     value={formData.address}
                                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                                     placeholder="123 Main St, City, Country"
                                     rows={3}
+                                />
+                            </div>
+
+                            <div className="space-y-2 sm:col-span-2">
+                                <Label htmlFor="shipping_address">Shipping Address</Label>
+                                <Textarea
+                                    id="shipping_address"
+                                    value={formData.shipping_address}
+                                    onChange={(e) => setFormData({ ...formData, shipping_address: e.target.value })}
+                                    placeholder="Warehouse / Delivery address (if different)"
+                                    rows={2}
                                 />
                             </div>
                         </div>
