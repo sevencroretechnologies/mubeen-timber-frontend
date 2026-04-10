@@ -158,7 +158,7 @@ export interface TimberMaterialRequisition {
   approved_by: number | null;
   status: RequisitionStatus;
   priority: 'low' | 'medium' | 'high' | 'urgent';
-  requisition_date : string | null;
+  requisition_date: string | null;
   notes: string | null;
   rejection_reason: string | null;
   company_id: number;
@@ -260,8 +260,8 @@ export interface PurchaseOrderItemFormData {
 
 export interface ReceiveGoodsFormData {
   items: {
-    id: number;
-    received_quantity: number;
+    item_id: number;
+    quantity: number;
   }[];
   notes?: string;
 }
