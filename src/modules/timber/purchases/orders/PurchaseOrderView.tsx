@@ -2,23 +2,23 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { purchaseOrderApi } from '../../services/inventoryApi';
 import type { TimberPurchaseOrder, PurchaseOrderStatus } from '../../types/inventory';
+import { PURCHASE_ORDER_STATUS } from '../../types/inventory';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { showAlert, showConfirmDialog, getErrorMessage } from '@/lib/sweetalert';
-import { ArrowLeft, Send, PackageCheck, Edit, ChevronLeft, Calendar, Building2, Package, Clock, CreditCard, Truck, LayoutGrid, IndianRupee } from 'lucide-react';
+import { ArrowLeft, Send, PackageCheck, Edit, ChevronLeft, Calendar, Building2, Package, Clock, CreditCard, Truck, LayoutGrid, IndianRupee, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 
 // Dynamic status configuration with fallback
 const getStatusConfig = (status: string) => {
   const configs: Record<string, { label: string; color: string }> = {
-    draft: { label: 'Draft', color: 'bg-gray-100 text-gray-800' },
-    ordered: { label: 'Ordered', color: 'bg-blue-100 text-blue-800' },
-    partial: { label: 'Partial', color: 'bg-yellow-100 text-yellow-800' },
-    partial_received: { label: 'Partial Received', color: 'bg-indigo-100 text-indigo-800' },
-    received: { label: 'Received', color: 'bg-green-100 text-green-800' },
-    cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800' },
+    [PURCHASE_ORDER_STATUS.DRAFT]: { label: 'Draft', color: 'bg-gray-100 text-gray-800' },
+    [PURCHASE_ORDER_STATUS.ORDERED]: { label: 'Ordered', color: 'bg-blue-100 text-blue-800' },
+    [PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED]: { label: 'Partial Received', color: 'bg-yellow-100 text-yellow-800' },
+    [PURCHASE_ORDER_STATUS.RECEIVED]: { label: 'Received', color: 'bg-green-100 text-green-800' },
+    [PURCHASE_ORDER_STATUS.CANCELLED]: { label: 'Cancelled', color: 'bg-red-100 text-red-800' },
   };
   
   return configs[status] || { 
@@ -92,6 +92,33 @@ export default function PurchaseOrderView() {
     }
   };
 
+  const handleConfirmReceived = async () => {
+    if (!order) return;
+    const result = await showConfirmDialog('Confirm Completion', 'Mark this order as fully received? Use only after all physical goods are verified.');
+    if (!result.isConfirmed) return;
+    try {
+      await purchaseOrderApi.confirmReceived(order.id);
+      showAlert('success', 'Confirmed', 'Order marked as fully received', 2000);
+      const data = await purchaseOrderApi.get(order.id);
+      setOrder((data as any).data as TimberPurchaseOrder || data as TimberPurchaseOrder);
+    } catch (error) {
+      showAlert('error', 'Error', getErrorMessage(error, 'Failed to confirm completion'));
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!order) return;
+    const result = await showConfirmDialog('Cancel Order', 'Are you sure you want to cancel this purchase order? This will soft delete the record.');
+    if (!result.isConfirmed) return;
+    try {
+      await purchaseOrderApi.cancel(order.id);
+      showAlert('success', 'Cancelled', 'Purchase order cancelled successfully', 2000);
+      navigate('/purchases/orders');
+    } catch (error) {
+      showAlert('error', 'Error', getErrorMessage(error, 'Failed to cancel order'));
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
@@ -130,7 +157,7 @@ export default function PurchaseOrderView() {
           </div>
         </div>
         <div className="flex gap-2">
-          {order.status === 'draft' && (
+          {order.status === PURCHASE_ORDER_STATUS.DRAFT && (
             <>
               <Button variant="outline" onClick={() => navigate(`/purchases/orders/${order.id}/edit`)} className="font-bold border-slate-200">
                 <Edit className="mr-2 h-4 w-4" /> Edit
@@ -140,9 +167,21 @@ export default function PurchaseOrderView() {
               </Button>
             </>
           )}
-          {(order.status === 'ordered' || order.status === 'partial' || order.status === 'partial_received') && (
+          {(order.status === PURCHASE_ORDER_STATUS.ORDERED || order.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED) && (
             <Button onClick={() => navigate(`/purchases/orders/${id}/receive`)} className="bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto">
               <PackageCheck className="mr-2 h-4 w-4" /> Receive Goods
+            </Button>
+          )}
+
+          {order.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED && (
+            <Button onClick={handleConfirmReceived} className="bg-indigo-600 hover:bg-indigo-700 font-bold">
+              <PackageCheck className="mr-2 h-4 w-4" /> Confirm Completed
+            </Button>
+          )}
+
+          {order.status !== PURCHASE_ORDER_STATUS.RECEIVED && order.status !== PURCHASE_ORDER_STATUS.CANCELLED && (
+            <Button variant="outline" onClick={handleCancel} className="text-red-600 border-red-100 hover:bg-red-50 font-bold">
+              <XCircle className="mr-2 h-4 w-4" /> Cancel Order
             </Button>
           )}
         </div>
@@ -162,14 +201,26 @@ export default function PurchaseOrderView() {
           </div>
           
           <div className="flex items-center gap-2">
-            {order.status === 'draft' && (
+            {order.status === PURCHASE_ORDER_STATUS.DRAFT && (
               <Button size="sm" variant="outline" onClick={() => navigate(`/purchases/orders/${order.id}/edit`)} className="rounded-xl border-slate-200 font-bold h-9">
                 <Edit className="h-4 w-4" />
               </Button>
             )}
-            {(order.status === 'ordered' || order.status === 'partial') && (
-              <Button size="sm" onClick={() => navigate(`/purchases/orders/${order.id}/receive`)} className="bg-indigo-600 rounded-xl font-bold h-9 shadow-lg shadow-indigo-100">
+            {(order.status === PURCHASE_ORDER_STATUS.ORDERED || order.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED) && (
+              <Button size="sm" onClick={() => navigate(`/purchases/orders/${order.id}/receive`)} className="bg-emerald-600 rounded-xl font-bold h-9 shadow-lg shadow-emerald-100">
                 <PackageCheck className="h-4 w-4" />
+              </Button>
+            )}
+
+            {order.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED && (
+              <Button size="sm" onClick={handleConfirmReceived} className="bg-indigo-600 rounded-xl font-bold h-9 shadow-lg shadow-indigo-100">
+                <PackageCheck className="h-4 w-4" />
+              </Button>
+            )}
+
+            {order.status !== PURCHASE_ORDER_STATUS.RECEIVED && order.status !== PURCHASE_ORDER_STATUS.CANCELLED && (
+              <Button size="sm" variant="outline" onClick={handleCancel} className="rounded-xl border-red-100 text-red-600 font-bold h-9">
+                <XCircle className="h-4 w-4" />
               </Button>
             )}
           </div>
@@ -191,7 +242,7 @@ export default function PurchaseOrderView() {
                 </div>
               </CardHeader>
               <CardContent className="pt-6">
-                <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                   <div className="space-y-1">
                     <Label className="text-muted-foreground md:text-slate-500 font-medium">Supplier Name</Label>
                     <p className="text-sm font-bold text-slate-800">{order.supplier?.name || '-'}</p>
@@ -203,7 +254,7 @@ export default function PurchaseOrderView() {
                   <div className="space-y-1">
                     <Label className="text-muted-foreground md:text-slate-500 font-medium">Status</Label>
                     <div className="pt-1">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusInfo.color} border border-black/5 shadow-sm uppercase tracking-wider`}>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusInfo.color} border border-black/5 shadow-sm uppercase tracking-wider whitespace-nowrap`}>
                         {statusInfo.label}
                       </span>
                     </div>
@@ -223,15 +274,6 @@ export default function PurchaseOrderView() {
                        order.expected_date ? new Date(order.expected_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                     </div>
                   </div>
-                  {order.received_date && (
-                    <div className="space-y-1">
-                      <Label className="text-muted-foreground md:text-emerald-600 font-medium">Final Receipt</Label>
-                      <div className="flex items-center gap-2 text-sm font-bold text-emerald-600">
-                        <PackageCheck className="h-3.5 w-3.5 text-emerald-300 md:hidden" />
-                        {new Date(order.received_date).toLocaleDateString('en-IN')}
-                      </div>
-                    </div>
-                  )}
                   {order.notes && (
                     <div className="col-span-2 pt-2">
                        <Label className="text-muted-foreground md:text-slate-500 font-medium">Notes</Label>

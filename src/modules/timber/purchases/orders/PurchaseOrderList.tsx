@@ -2,23 +2,23 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { purchaseOrderApi } from '../../services/inventoryApi';
 import type { TimberPurchaseOrder, PurchaseOrderStatus } from '../../types/inventory';
+import { PURCHASE_ORDER_STATUS } from '../../types/inventory';
 import { showAlert, showConfirmDialog, getErrorMessage } from '@/lib/sweetalert';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import DataTable, { TableColumn } from 'react-data-table-component';
-import { Plus, Search, ShoppingCart, Eye, Edit, Trash2, Send, PackageCheck, Calendar, Building2, CreditCard } from 'lucide-react';
+import { Plus, Search, ShoppingCart, Eye, Edit, Trash2, Send, PackageCheck, Calendar, Building2, CreditCard, XCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Dynamic status configuration with fallback
 const getStatusConfig = (status: string) => {
   const configs: Record<string, { label: string; color: string; classes: string }> = {
-    draft: { label: 'Draft', color: 'bg-gray-100 text-gray-800', classes: 'bg-gray-100 text-gray-800' },
-    ordered: { label: 'Ordered', color: 'bg-blue-100 text-blue-800', classes: 'bg-blue-100 text-blue-800' },
-    partial: { label: 'Partial', color: 'bg-yellow-100 text-yellow-800', classes: 'bg-yellow-100 text-yellow-800' },
-    partial_received: { label: 'Partial Received', color: 'bg-indigo-100 text-indigo-800', classes: 'bg-indigo-100 text-indigo-800' },
-    received: { label: 'Received', color: 'bg-green-100 text-green-800', classes: 'bg-green-100 text-green-800' },
-    cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800', classes: 'bg-red-100 text-red-800' },
+    [PURCHASE_ORDER_STATUS.DRAFT]: { label: 'Draft', color: 'bg-gray-100 text-gray-800', classes: 'bg-gray-100 text-gray-800' },
+    [PURCHASE_ORDER_STATUS.ORDERED]: { label: 'Ordered', color: 'bg-blue-100 text-blue-800', classes: 'bg-blue-100 text-blue-800' },
+    [PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED]: { label: 'Partial Received', color: 'bg-yellow-100 text-yellow-800', classes: 'bg-yellow-100 text-yellow-800' },
+    [PURCHASE_ORDER_STATUS.RECEIVED]: { label: 'Received', color: 'bg-green-100 text-green-800', classes: 'bg-green-100 text-green-800' },
+    [PURCHASE_ORDER_STATUS.CANCELLED]: { label: 'Cancelled', color: 'bg-red-100 text-red-800', classes: 'bg-red-100 text-red-800' },
   };
   
   return configs[status] || { 
@@ -63,10 +63,11 @@ interface PurchaseOrderCardProps {
   onDelete: (id: number) => void;
   onSend: (id: number) => void;
   onReceive: (id: number) => void;
+  onCancel: (id: number) => void;
   getStatusBadge: (status: PurchaseOrderStatus) => React.ReactNode;
 }
 
-function PurchaseOrderCard({ order, onView, onEdit, onDelete, onSend, onReceive, getStatusBadge }: PurchaseOrderCardProps) {
+function PurchaseOrderCard({ order, onView, onEdit, onDelete, onSend, onReceive, onCancel, getStatusBadge }: PurchaseOrderCardProps) {
   return (
     <Card className="rounded-xl shadow-sm border border-slate-100 bg-white p-4 transition-all hover:shadow-md">
       <div className="flex justify-between items-start mb-3">
@@ -108,7 +109,7 @@ function PurchaseOrderCard({ order, onView, onEdit, onDelete, onSend, onReceive,
             <Eye className="h-4 w-4 text-slate-600" />
           </Button>
           
-          {order.status === 'draft' && (
+          {order.status === PURCHASE_ORDER_STATUS.DRAFT && (
             <>
               <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-blue-100 hover:bg-blue-50" onClick={() => onEdit(order.id)}>
                 <Edit className="h-4 w-4 text-blue-600" />
@@ -122,9 +123,15 @@ function PurchaseOrderCard({ order, onView, onEdit, onDelete, onSend, onReceive,
             </>
           )}
 
-          {(order.status === 'ordered' || order.status === 'partial' || order.status === 'partial_received') && (
+          {(order.status === PURCHASE_ORDER_STATUS.ORDERED || order.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED) && (
             <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-green-100 hover:bg-green-50" onClick={() => onReceive(order.id)}>
               <PackageCheck className="h-4 w-4 text-green-600" />
+            </Button>
+          )}
+
+          {order.status !== PURCHASE_ORDER_STATUS.RECEIVED && order.status !== PURCHASE_ORDER_STATUS.CANCELLED && (
+            <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-red-100 hover:bg-red-50" onClick={() => onCancel(order.id)}>
+              <XCircle className="h-4 w-4 text-red-600" />
             </Button>
           )}
         </div>
@@ -177,6 +184,18 @@ export default function PurchaseOrderList() {
     fetchOrders(1);
   };
 
+  const handleDelete = async (id: number) => {
+    const result = await showConfirmDialog('Delete Order', 'Are you sure you want to delete this purchase order?');
+    if (!result.isConfirmed) return;
+    try {
+      await purchaseOrderApi.delete(id);
+      showAlert('success', 'Deleted', 'Purchase order deleted successfully', 2000);
+      fetchOrders(page);
+    } catch (error) {
+      showAlert('error', 'Error', getErrorMessage(error, 'Failed to delete order'));
+    }
+  };
+
   const handleSend = async (id: number) => {
     const result = await showConfirmDialog('Send Order', 'Mark this purchase order as sent/ordered?');
     if (!result.isConfirmed) return;
@@ -189,15 +208,15 @@ export default function PurchaseOrderList() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    const result = await showConfirmDialog('Delete Order', 'Are you sure you want to delete this purchase order?');
+  const handleCancel = async (id: number) => {
+    const result = await showConfirmDialog('Cancel Order', 'Are you sure you want to cancel this purchase order? This will soft delete the record.');
     if (!result.isConfirmed) return;
     try {
-      await purchaseOrderApi.delete(id);
-      showAlert('success', 'Deleted', 'Purchase order deleted successfully', 2000);
+      await purchaseOrderApi.cancel(id);
+      showAlert('success', 'Cancelled', 'Purchase order cancelled successfully', 2000);
       fetchOrders(page);
     } catch (error) {
-      showAlert('error', 'Error', getErrorMessage(error, 'Failed to delete order'));
+      showAlert('error', 'Error', getErrorMessage(error, 'Failed to cancel order'));
     }
   };
 
@@ -255,7 +274,7 @@ export default function PurchaseOrderList() {
           <Button variant="ghost" size="icon" onClick={() => navigate(`/purchases/orders/${row.id}`)} title="View">
             <Eye className="h-4 w-4" />
           </Button>
-          {row.status === 'draft' && (
+          {row.status === PURCHASE_ORDER_STATUS.DRAFT && (
             <>
               <Button variant="ghost" size="icon" onClick={() => navigate(`/purchases/orders/${row.id}/edit`)} title="Edit">
                 <Edit className="h-4 w-4 text-blue-600" />
@@ -268,9 +287,14 @@ export default function PurchaseOrderList() {
               </Button>
             </>
           )}
-          {(row.status === 'ordered' || row.status === 'partial' || row.status === 'partial_received') && (
+          {(row.status === PURCHASE_ORDER_STATUS.ORDERED || row.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED) && (
             <Button variant="ghost" size="icon" onClick={() => navigate(`/purchases/orders/${row.id}/receive`)} title="Receive Goods">
               <PackageCheck className="h-4 w-4 text-green-600" />
+            </Button>
+          )}
+          {row.status !== PURCHASE_ORDER_STATUS.RECEIVED && row.status !== PURCHASE_ORDER_STATUS.CANCELLED && (
+            <Button variant="ghost" size="icon" onClick={() => handleCancel(row.id)} title="Cancel Order">
+              <XCircle className="h-4 w-4 text-red-600" />
             </Button>
           )}
         </div>
@@ -319,12 +343,11 @@ export default function PurchaseOrderList() {
                 className="flex-1 sm:flex-none border rounded-md px-3 py-2 text-sm bg-white"
               >
                 <option value="">All Status</option>
-                <option value="draft">Draft</option>
-                <option value="ordered">Ordered</option>
-                <option value="partial">Partial</option>
-                <option value="partial_received">Partial Received</option>
-                <option value="received">Received</option>
-                <option value="cancelled">Cancelled</option>
+                <option value={PURCHASE_ORDER_STATUS.DRAFT}>Draft</option>
+                <option value={PURCHASE_ORDER_STATUS.ORDERED}>Ordered</option>
+                <option value={PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED}>Partial Received</option>
+                <option value={PURCHASE_ORDER_STATUS.RECEIVED}>Received</option>
+                <option value={PURCHASE_ORDER_STATUS.CANCELLED}>Cancelled</option>
               </select>
               <Button type="submit" variant="outline" className="flex-1 sm:flex-none">Search</Button>
             </div>
@@ -371,6 +394,7 @@ export default function PurchaseOrderList() {
                     onDelete={handleDelete}
                     onSend={handleSend}
                     onReceive={(id) => navigate(`/purchases/orders/${id}/receive`)}
+                    onCancel={handleCancel}
                     getStatusBadge={getStatusBadge}
                   />
                 ))}

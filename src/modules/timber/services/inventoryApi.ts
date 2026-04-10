@@ -118,6 +118,10 @@ export const purchaseOrderApi = {
     api.post(`${PREFIX}/purchase-orders/${id}/send`).then((r) => r.data),
   receive: (id: number, data: ReceiveGoodsFormData) =>
     api.post(`${PREFIX}/purchase-orders/${id}/receive`, data).then((r) => r.data),
+  confirmReceived: (id: number) =>
+    api.post(`${PREFIX}/purchase-orders/${id}/confirm-received`).then((r) => r.data),
+  cancel: (id: number) =>
+    api.post(`${PREFIX}/purchase-orders/${id}/cancel`).then((r) => r.data),
 };
 
 // Material Requisitions

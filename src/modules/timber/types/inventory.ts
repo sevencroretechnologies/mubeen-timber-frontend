@@ -98,8 +98,16 @@ export interface TimberStockMovement {
   updated_at: string;
 }
 
-// Widened type allows any status from API while keeping autocomplete for known ones
-export type PurchaseOrderStatus = 'draft' | 'ordered' | 'partial' | 'partial_received' | 'received' | 'cancelled' | (string & {});
+// Purchase Order Status Constants
+export const PURCHASE_ORDER_STATUS = {
+  DRAFT: 'draft',
+  ORDERED: 'ordered',
+  PARTIAL_RECEIVED: 'partial_received',
+  RECEIVED: 'received',
+  CANCELLED: 'cancelled',
+} as const;
+
+export type PurchaseOrderStatus = typeof PURCHASE_ORDER_STATUS[keyof typeof PURCHASE_ORDER_STATUS] | (string & {});
 
 export interface TimberPurchaseOrder {
   id: number;
@@ -110,7 +118,6 @@ export interface TimberPurchaseOrder {
   order_date: string | null;
   expected_delivery_date: string | null;
   expected_date: string | null;
-  received_date: string | null;
   subtotal: number;
   tax_percentage: number;
   tax_amount: number;

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { purchaseOrderApi } from '../../services/inventoryApi';
 import type { TimberPurchaseOrder } from '../../types/inventory';
+import { PURCHASE_ORDER_STATUS } from '../../types/inventory';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
