@@ -14,6 +14,7 @@ import type {
   PurchaseOrderFormData,
   ReceiveGoodsFormData,
   MaterialRequisitionFormData,
+  PoItemReceivedFormData,
 } from '../types/inventory';
 
 const PREFIX = '/timber';
@@ -150,4 +151,16 @@ export const stockAlertApi = {
     }),
   resolve: (id: number) =>
     api.post(`${PREFIX}/stock-alerts/${id}/resolve`).then((r) => r.data),
+};
+
+// PO Items Received
+export const poItemReceivedApi = {
+  store: (data: PoItemReceivedFormData) =>
+    api.post(`${PREFIX}/po-items-received`, data).then((r) => r.data),
+  list: (params?: Record<string, unknown>) =>
+    api.get(`${PREFIX}/po-items-received`, { params }).then((res) => {
+      const data = res.data;
+      if (data && typeof data === 'object' && 'data' in data) return data;
+      return { data };
+    }),
 };
