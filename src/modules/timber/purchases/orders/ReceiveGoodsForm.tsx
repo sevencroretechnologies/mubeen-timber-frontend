@@ -163,7 +163,11 @@ export default function ReceiveGoodsForm() {
             }
         }
 
-        // Calculate total received amount
+        // Calculate totals across all items for the summary record
+        const totalReceivedQuantity = receivingItems.reduce(
+            (sum, item) => sum + Number(item.received_quantity),
+            0,
+        );
         const totalAmount = receivingItems.reduce(
             (sum, item) =>
                 sum + Number(item.received_quantity) * item.unit_price,
@@ -172,28 +176,23 @@ export default function ReceiveGoodsForm() {
 
         setIsSubmitting(true);
         try {
-            // For each item with a received quantity, store a record via the new endpoint
-            await Promise.all(
-                receivingItems.map((item) =>
-                    poItemReceivedApi.store({
-                        purchase_order_id: Number(id),
-                        warehouse_id: Number(selectedWarehouseId),
-                        received_quantity: Number(item.received_quantity),
-                        received_date: item.received_date,
-                        total_amount:
-                            Number(item.received_quantity) * item.unit_price,
-                    }),
-                ),
-            );
+            // Send a single request for the entire Purchase Order summary
+            await poItemReceivedApi.store({
+                purchase_order_id: Number(id),
+                warehouse_id: Number(selectedWarehouseId),
+                received_quantity: totalReceivedQuantity,
+                received_date: receivingItems[0]?.received_date || today,
+                total_amount: totalAmount,
+            });
 
             // Also call the existing receive endpoint to update PO status / stock ledger
-            await purchaseOrderApi.receive(Number(id), {
-                items: receivingItems.map((item) => ({
-                    item_id: item.id,
-                    quantity: Number(item.received_quantity),
-                })),
-                notes: notes || undefined,
-            });
+            // await purchaseOrderApi.receive(Number(id), {
+            //     items: receivingItems.map((item) => ({
+            //         item_id: item.id,
+            //         quantity: Number(item.received_quantity),
+            //     })),
+            //     notes: notes || undefined,
+            // });
 
             showAlert(
                 "success",

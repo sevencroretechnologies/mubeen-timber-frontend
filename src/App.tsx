@@ -86,6 +86,8 @@ import SupplierForm from "@/modules/timber/purchases/suppliers/SupplierForm";
 import PurchaseOrderList from "@/modules/timber/purchases/orders/PurchaseOrderList";
 import PurchaseOrderForm from "@/modules/timber/purchases/orders/PurchaseOrderForm";
 import PurchaseOrderView from "@/modules/timber/purchases/orders/PurchaseOrderView";
+import ReceivedOrderView from "./modules/timber/purchases/orders/ReceivedOrderView";
+import PurchaseOrderReceivedList from "./modules/timber/purchases/orders/PurchaseOrderReceivedList";
 import ReceiveGoodsForm from "@/modules/timber/purchases/orders/ReceiveGoodsForm";
 
 // Error Pages
@@ -218,12 +220,20 @@ function App() {
             {/* Timber Purchases */}
             <Route path="/purchases/orders" element={<PurchaseOrderList />} />
             <Route
+              path="/purchases/orders/received"
+              element={<PurchaseOrderReceivedList />}
+            />
+            <Route
               path="/purchases/orders/create"
               element={<PurchaseOrderForm />}
             />
             <Route
               path="/purchases/orders/:id"
               element={<PurchaseOrderView />}
+            />
+            <Route
+              path="/purchases/orders/:id/received"
+              element={<ReceivedOrderView />}
             />
             <Route
               path="/purchases/orders/:id/edit"

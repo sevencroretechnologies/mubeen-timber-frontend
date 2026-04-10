@@ -67,7 +67,7 @@ interface PurchaseOrderCardProps {
   getStatusBadge: (status: PurchaseOrderStatus) => React.ReactNode;
 }
 
-function PurchaseOrderCard({ order, onView, onEdit, onDelete, onSend, onReceive, onCancel, getStatusBadge }: PurchaseOrderCardProps) {
+function PurchaseOrderCard({ order, onView,onSend, onReceive, onCancel, getStatusBadge }: PurchaseOrderCardProps) {
   return (
     <Card className="rounded-xl shadow-sm border border-slate-100 bg-white p-4 transition-all hover:shadow-md">
       <div className="flex justify-between items-start mb-3">

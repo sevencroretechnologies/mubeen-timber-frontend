@@ -142,6 +142,7 @@ export default function PurchaseOrderView() {
   }
 
   const statusInfo = getStatusConfig(order.status);
+  const areAllItemsReceived = order.items?.every(item => Number(item.received_quantity) >= Number(item.quantity)) ?? false;
 
   return (
     <div className="w-full space-y-6">
@@ -170,8 +171,16 @@ export default function PurchaseOrderView() {
             </Button>
           )}
 
-          {order.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED && (
-            <Button onClick={handleConfirmReceived} className="bg-indigo-600 hover:bg-indigo-700 font-bold">
+          {(order.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED || order.status === PURCHASE_ORDER_STATUS.ORDERED) && (
+            <Button 
+              onClick={handleConfirmReceived} 
+              disabled={!areAllItemsReceived}
+              title={!areAllItemsReceived ? "All items must be fully received before confirming" : ""}
+              className={cn(
+                "font-bold",
+                areAllItemsReceived ? "bg-indigo-600 hover:bg-indigo-700" : "bg-slate-300 cursor-not-allowed"
+              )}
+            >
               <PackageCheck className="mr-2 h-4 w-4" /> Confirm Completed
             </Button>
           )}
@@ -207,8 +216,16 @@ export default function PurchaseOrderView() {
               </Button>
             )}
 
-            {order.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED && (
-              <Button size="sm" onClick={handleConfirmReceived} className="bg-indigo-600 rounded-xl font-bold h-9 shadow-lg shadow-indigo-100">
+            {(order.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED || order.status === PURCHASE_ORDER_STATUS.ORDERED) && (
+              <Button 
+                size="sm" 
+                onClick={handleConfirmReceived} 
+                disabled={!areAllItemsReceived}
+                className={cn(
+                  "rounded-xl font-bold h-9 shadow-lg",
+                  areAllItemsReceived ? "bg-indigo-600 shadow-indigo-100" : "bg-slate-300 shadow-none cursor-not-allowed"
+                )}
+              >
                 <PackageCheck className="h-4 w-4" />
               </Button>
             )}
