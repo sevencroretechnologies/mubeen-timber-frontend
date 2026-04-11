@@ -149,7 +149,7 @@ export default function PurchaseOrderForm() {
           setSupplierId(String(po.supplier_id));
           setWarehouseId(String(po.warehouse_id));
           setOrderDate(po.order_date || '');
-          setExpectedDate(po.expected_date || '');
+          setExpectedDate(po.expected_delivery_date || '');
           setNotes(po.notes || '');
           if (po.items && po.items.length > 0) {
             setItems(po.items.map((item) => ({
@@ -209,7 +209,7 @@ export default function PurchaseOrderForm() {
         supplier_id: Number(supplierId),
         warehouse_id: Number(warehouseId),
         order_date: orderDate || undefined,
-        expected_date: expectedDate || undefined,
+        expected_delivery_date: expectedDate || undefined,
         notes: notes || undefined,
         items: validItems.map((item) => ({
           wood_type_id: Number(item.wood_type_id),
