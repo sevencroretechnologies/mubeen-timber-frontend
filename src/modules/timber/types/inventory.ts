@@ -129,6 +129,10 @@ export interface TimberPurchaseOrder {
   supplier?: TimberSupplier;
   warehouse?: TimberWarehouse;
   items?: TimberPurchaseOrderItem[];
+  // Backend-computed fields (present in list responses)
+  total_ordered_qty?: number | null;
+  total_received_qty?: number | null;
+  is_fully_received?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -138,7 +142,8 @@ export interface TimberPurchaseOrderItem {
     purchase_order_id: number;
     wood_type_id: number;
     quantity: number;
-    received_quantity: number;
+    // Merged by backend from po_items_received (not a DB column on this table)
+    received_quantity?: number | null;
     unit_price: number;
     total_price: number;
     notes: string | null;
@@ -275,6 +280,7 @@ export interface ReceiveGoodsFormData {
 export interface PoItemReceivedFormData {
     purchase_order_id: number;
     warehouse_id: number;
+    wood_type_id: number;
     received_quantity: number;
     received_date: string;
     total_amount?: number;

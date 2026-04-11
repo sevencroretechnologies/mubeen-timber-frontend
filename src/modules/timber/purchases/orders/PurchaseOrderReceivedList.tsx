@@ -10,6 +10,28 @@ import DataTable, { TableColumn } from 'react-data-table-component';
 import { Search, Eye, Calendar, Building2, CreditCard, ShoppingCart, CheckCircle2, ArrowLeft, PackageCheck } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
+/**
+ * Returns true when all ordered quantities for this PO have been received.
+ * Priority:
+ *  1. is_fully_received — backend pre-computed boolean (most reliable)
+ *  2. total_ordered_qty vs total_received_qty — raw withSum values
+ *  3. status fallback — for single-record fetches without withSum fields
+ */
+function isFullyReceived(order: TimberPurchaseOrder): boolean {
+  // Priority 1: trust the backend-computed flag
+  if (order.is_fully_received != null) return order.is_fully_received;
+
+  // Priority 2: compare raw sums when flag is absent
+  if (order.total_ordered_qty != null) {
+    const ordered  = Number(order.total_ordered_qty);
+    const received = order.total_received_qty != null ? Number(order.total_received_qty) : 0;
+    return ordered > 0 && received >= ordered;
+  }
+
+  // Priority 3: status fallback
+  return order.status === PURCHASE_ORDER_STATUS.RECEIVED;
+}
+
 function ReceivedOrderSkeleton() {
   return (
     <div className="space-y-4">
@@ -74,7 +96,7 @@ function ReceivedOrderCard({ order, onView, onReceive }: { order: TimberPurchase
          </div>
         
         <div className="flex gap-2">
-          {(order.status === PURCHASE_ORDER_STATUS.ORDERED || order.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED) && (
+          {!isFullyReceived(order) && (
             <Button variant="outline" size="sm" className="h-9 px-4 rounded-xl hover:bg-green-50 border-green-100 text-green-600 font-bold gap-2" onClick={() => onReceive(order.id)}>
               <PackageCheck className="h-4 w-4" /> Receive Goods
             </Button>
@@ -154,7 +176,7 @@ export default function PurchaseOrderReceivedList() {
           <Button variant="ghost" size="sm" onClick={() => navigate(`/purchases/orders/${row.id}/received`)} className="text-slate-700 font-bold hover:bg-slate-50">
             <Eye className="h-4 w-4 mr-1.5" /> View
           </Button>
-          {(row.status === PURCHASE_ORDER_STATUS.ORDERED || row.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED) && (
+          {!isFullyReceived(row) && (
             <Button variant="ghost" size="sm" onClick={() => navigate(`/purchases/orders/${row.id}/receive`)} className="text-green-600 font-bold hover:bg-green-50">
               <PackageCheck className="h-4 w-4 mr-1.5" /> Receive
             </Button>

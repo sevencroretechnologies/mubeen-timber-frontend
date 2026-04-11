@@ -182,7 +182,7 @@ export default function PurchaseOrderView() {
           </div>
         </div>
         <div className="flex gap-2">
-          {order.status === PURCHASE_ORDER_STATUS.DRAFT && (
+          {/* {order.status === PURCHASE_ORDER_STATUS.DRAFT && (
             <>
               <Button onClick={handleSend} className="bg-solarized-blue hover:bg-solarized-blue/90 font-bold">
                 <Send className="mr-2 h-4 w-4" /> Send Order
@@ -193,9 +193,9 @@ export default function PurchaseOrderView() {
             <Button onClick={() => navigate(`/purchases/orders/${id}/receive`)} className="bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto">
               <PackageCheck className="mr-2 h-4 w-4" /> Receive Goods
             </Button>
-          )}
+          )} */}
 
-          {(order.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED || order.status === PURCHASE_ORDER_STATUS.ORDERED) && (
+          {/* {(order.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED || order.status === PURCHASE_ORDER_STATUS.ORDERED) && (
             <Button
               onClick={handleConfirmReceived}
               disabled={!areAllItemsReceived}
@@ -219,7 +219,14 @@ export default function PurchaseOrderView() {
             <Button variant="outline" onClick={handleDownloadInvoice} className="text-indigo-600 border-indigo-100 hover:bg-indigo-50 font-bold">
               <FileText className="mr-2 h-4 w-4" /> Generate Invoice
             </Button>
-          )}
+          )} */}
+
+          <Button
+            onClick={() => navigate('/purchases/orders/received')}
+            className="bg-emerald-600 hover:bg-emerald-700 font-bold"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Receive Order List
+          </Button>
         </div>
       </div>
 

@@ -108,7 +108,7 @@ const navigation: NavItem[] = [
     icon: ShoppingCart,
     children: [
       { name: "Purchase Orders", href: "/purchases/orders" },
-      { name: "Received Orders", href: "/purchases/orders/received" },
+      { name: "Receive Orders", href: "/purchases/orders/received" },
       { name: "Suppliers", href: "/purchases/suppliers" },
     ],
   },

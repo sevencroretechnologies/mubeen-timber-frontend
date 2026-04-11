@@ -26,6 +26,7 @@ import {
 
 interface ReceiveItemRow {
     id: number;
+    wood_type_id: number;
     wood_type_name: string;
     ordered_quantity: number;
     already_received: number;
@@ -77,14 +78,15 @@ export default function ReceiveGoodsForm() {
                         setItems(
                             po.items.map((item) => ({
                                 id: item.id,
+                                wood_type_id: item.wood_type_id,
                                 wood_type_name: item.wood_type?.name || "-",
                                 ordered_quantity: Number(item.quantity),
                                 already_received: Number(
-                                    item.received_quantity,
+                                    item.received_quantity ?? 0,
                                 ),
                                 remaining:
                                     Number(item.quantity) -
-                                    Number(item.received_quantity),
+                                    Number(item.received_quantity ?? 0),
                                 received_quantity: "",
                                 received_date: new Date()
                                     .toISOString()
@@ -176,23 +178,19 @@ export default function ReceiveGoodsForm() {
 
         setIsSubmitting(true);
         try {
-            // Send a single request for the entire Purchase Order summary
-            await poItemReceivedApi.store({
-                purchase_order_id: Number(id),
-                warehouse_id: Number(selectedWarehouseId),
-                received_quantity: totalReceivedQuantity,
-                received_date: receivingItems[0]?.received_date || today,
-                total_amount: totalAmount,
-            });
-
-            // Also call the existing receive endpoint to update PO status / stock ledger
-            // await purchaseOrderApi.receive(Number(id), {
-            //     items: receivingItems.map((item) => ({
-            //         item_id: item.id,
-            //         quantity: Number(item.received_quantity),
-            //     })),
-            //     notes: notes || undefined,
-            // });
+            // Send one request per item so the backend can match by purchase_order_id + wood_type_id
+            await Promise.all(
+                receivingItems.map((item) =>
+                    poItemReceivedApi.store({
+                        purchase_order_id: Number(id),
+                        warehouse_id: Number(selectedWarehouseId),
+                        wood_type_id: item.wood_type_id,
+                        received_quantity: Number(item.received_quantity),
+                        received_date: item.received_date || today,
+                        total_amount: Number(item.received_quantity) * item.unit_price,
+                    })
+                )
+            );
 
             showAlert(
                 "success",
