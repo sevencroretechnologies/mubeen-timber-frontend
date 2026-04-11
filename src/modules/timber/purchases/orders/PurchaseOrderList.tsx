@@ -8,8 +8,14 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import DataTable, { TableColumn } from 'react-data-table-component';
-import { Plus, Search, ShoppingCart, Eye, Edit, Trash2, Send, PackageCheck, Calendar, Building2, CreditCard, XCircle, FileText } from 'lucide-react';
+import { Plus, Search, ShoppingCart, Eye, Send, Calendar, Building2, CreditCard, XCircle, FileText, MoreVertical } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 // Dynamic status configuration with fallback
 const getStatusConfig = (status: string) => {
@@ -20,13 +26,179 @@ const getStatusConfig = (status: string) => {
     [PURCHASE_ORDER_STATUS.RECEIVED]: { label: 'Received', color: 'bg-green-100 text-green-800', classes: 'bg-green-100 text-green-800' },
     [PURCHASE_ORDER_STATUS.CANCELLED]: { label: 'Cancelled', color: 'bg-red-100 text-red-800', classes: 'bg-red-100 text-red-800' },
   };
-  
-  return configs[status] || { 
-    label: status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), 
+
+  return configs[status] || {
+    label: status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
     color: 'bg-slate-100 text-slate-600',
     classes: 'bg-slate-100 text-slate-600'
   };
 };
+
+// Action button types
+type ActionType = 'view' | 'confirm' | 'cancel' | 'invoice';
+
+interface ActionButton {
+  type: ActionType;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  tooltip: string;
+  variant: 'primary' | 'secondary' | 'destructive' | 'invoice';
+  priority: number;
+}
+
+// Get available actions based on status
+const getAvailableActions = (status: PurchaseOrderStatus): ActionButton[] => {
+  const baseActions: ActionButton[] = [
+    {
+      type: 'view',
+      label: 'View',
+      icon: Eye,
+      tooltip: 'View order details',
+      variant: 'secondary',
+      priority: 1,
+    },
+  ];
+
+  const statusActions: Record<PurchaseOrderStatus, ActionButton[]> = {
+    [PURCHASE_ORDER_STATUS.DRAFT]: [
+      {
+        type: 'confirm',
+        label: 'Confirm Order',
+        icon: Send,
+        tooltip: 'Confirm and send this order to supplier',
+        variant: 'primary',
+        priority: 2,
+      },
+      {
+        type: 'cancel',
+        label: 'Cancel',
+        icon: XCircle,
+        tooltip: 'Cancel this order',
+        variant: 'destructive',
+        priority: 3,
+      },
+    ],
+    [PURCHASE_ORDER_STATUS.ORDERED]: [
+      {
+        type: 'cancel',
+        label: 'Cancel',
+        icon: XCircle,
+        tooltip: 'Cancel this order',
+        variant: 'destructive',
+        priority: 2,
+      },
+      {
+        type: 'invoice',
+        label: 'Invoice',
+        icon: FileText,
+        tooltip: 'Download invoice',
+        variant: 'invoice',
+        priority: 3,
+      },
+    ],
+    [PURCHASE_ORDER_STATUS.RECEIVED]: [
+      {
+        type: 'invoice',
+        label: 'Invoice',
+        icon: FileText,
+        tooltip: 'Download invoice',
+        variant: 'invoice',
+        priority: 2,
+      },
+    ],
+    [PURCHASE_ORDER_STATUS.CANCELLED]: [],
+    [PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED]: [
+      {
+        type: 'invoice',
+        label: 'Invoice',
+        icon: FileText,
+        tooltip: 'Download invoice',
+        variant: 'invoice',
+        priority: 2,
+      },
+      {
+        type: 'cancel',
+        label: 'Cancel',
+        icon: XCircle,
+        tooltip: 'Cancel this order',
+        variant: 'destructive',
+        priority: 3,
+      },
+    ],
+  };
+
+  return [...baseActions, ...(statusActions[status] || [])].sort((a, b) => a.priority - b.priority);
+};
+
+// Button style variants
+const getButtonStyles = (variant: ActionButton['variant']) => {
+  const variants = {
+    primary: 'bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600 shadow-sm shadow-emerald-200',
+    secondary: 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200',
+    destructive: 'bg-red-50 text-red-600 hover:bg-red-100 border-red-200 hover:border-red-300',
+    invoice: 'bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200 hover:border-blue-300',
+  };
+  return variants[variant];
+};
+
+// Get primary action (if any) and remaining actions
+const getActionGroups = (status: PurchaseOrderStatus) => {
+  const actions = getAvailableActions(status);
+  const primaryAction = actions.find(a => a.variant === 'primary');
+  const remainingActions = actions.filter(a => a.variant !== 'primary');
+  return { primaryAction, remainingActions };
+};
+
+// Action Menu Component
+interface ActionMenuProps {
+  actions: ActionButton[];
+  onAction: (action: ActionButton, id: number) => void;
+  id: number;
+}
+
+function ActionMenu({ actions, onAction, id }: ActionMenuProps) {
+  if (actions.length === 0) return null;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 px-2.5 gap-1.5 rounded-md border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600 font-medium whitespace-nowrap"
+        >
+          <span className="text-xs">Actions</span>
+          <MoreVertical className="h-3 w-3" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48 min-w-[180px] rounded-lg border-slate-200">
+        {actions.map((action) => {
+          const Icon = action.icon;
+          const variantClass = {
+            primary: 'text-emerald-600 focus:text-emerald-700 focus:bg-emerald-50',
+            secondary: 'text-slate-700 focus:text-slate-900 focus:bg-slate-50',
+            destructive: 'text-red-600 focus:text-red-700 focus:bg-red-50',
+            invoice: 'text-blue-600 focus:text-blue-700 focus:bg-blue-50',
+          }[action.variant];
+
+          return (
+            <DropdownMenuItem
+              key={action.type}
+              onClick={() => onAction(action, id)}
+              className={`gap-2.5 cursor-pointer py-2 px-3 rounded-md ${variantClass}`}
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+              <div className="flex flex-col items-start">
+                <span className="text-sm font-medium">{action.label}</span>
+                <span className="text-[10px] text-slate-400 font-normal">{action.tooltip}</span>
+              </div>
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 function PurchaseOrderSkeleton() {
   return (
@@ -66,9 +238,10 @@ interface PurchaseOrderCardProps {
   onCancel: (id: number) => void;
   onDownloadInvoice: (id: number, code: string) => void;
   getStatusBadge: (status: PurchaseOrderStatus) => React.ReactNode;
+  isMobile?: boolean;
 }
 
-function PurchaseOrderCard({ order, onView, onEdit, onDelete, onSend, onReceive, onCancel, onDownloadInvoice, getStatusBadge }: PurchaseOrderCardProps) {
+function PurchaseOrderCard({ order, onView, onEdit, onDelete, onSend, onReceive, onCancel, onDownloadInvoice, getStatusBadge, isMobile = false }: PurchaseOrderCardProps) {
   return (
     <Card className="rounded-xl shadow-sm border border-slate-100 bg-white p-4 transition-all hover:shadow-md">
       <div className="flex justify-between items-start mb-3">
@@ -99,45 +272,40 @@ function PurchaseOrderCard({ order, onView, onEdit, onDelete, onSend, onReceive,
         </div>
       </div>
 
-      <div className="flex justify-between items-center mt-4">
+      <div className="flex justify-between items-center mt-4 gap-3">
         <div className="flex items-center gap-1.5 text-slate-500 text-xs">
           <span className="text-[10px] font-black uppercase text-slate-300">W/H:</span>
           <span className="font-medium text-slate-600">{order.warehouse?.name || '-'}</span>
         </div>
-        
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" className="h-8 gap-1.5 rounded-lg hover:bg-slate-50 border-slate-200" onClick={() => onView(order.id)}>
-            <Eye className="h-3.5 w-3.5 text-slate-600" />
-            <span className="text-xs font-bold">View</span>
-          </Button>
-          
-          {order.status === PURCHASE_ORDER_STATUS.DRAFT && (
-            <Button variant="outline" size="sm" className="h-8 gap-1.5 rounded-lg border-green-100 hover:bg-green-50" onClick={() => onSend(order.id)}>
-              <Send className="h-3.5 w-3.5 text-green-600" />
-              <span className="text-xs font-bold text-green-700">Send</span>
+
+        <div className="flex items-center gap-2 flex-1 justify-end">
+          {getActionGroups(order.status).primaryAction && (
+            <Button
+              size="sm"
+              className="h-9 px-4 gap-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-semibold text-sm shadow-md shadow-emerald-200 whitespace-nowrap"
+              onClick={() => onSend(order.id)}
+            >
+              <Send className="h-4 w-4" />
+              Confirm Order
             </Button>
           )}
-
-          {/* {(order.status === PURCHASE_ORDER_STATUS.ORDERED || order.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED) && (
-            <Button variant="outline" size="sm" className="h-8 gap-1.5 rounded-lg border-emerald-100 hover:bg-emerald-50" onClick={() => onReceive(order.id)}>
-              <PackageCheck className="h-3.5 w-3.5 text-emerald-600" />
-              <span className="text-xs font-bold text-emerald-700">Receive</span>
-            </Button>
-          )} */}
-
-          {order.status !== PURCHASE_ORDER_STATUS.RECEIVED && order.status !== PURCHASE_ORDER_STATUS.CANCELLED && (
-            <Button variant="outline" size="sm" className="h-8 gap-1.5 rounded-lg border-red-100 hover:bg-red-50" onClick={() => onCancel(order.id)}>
-              <XCircle className="h-3.5 w-3.5 text-red-600" />
-              <span className="text-xs font-bold text-red-700">Cancel</span>
-            </Button>
-          )}
-
-          {order.status !== PURCHASE_ORDER_STATUS.DRAFT && order.status !== PURCHASE_ORDER_STATUS.CANCELLED && (
-            <Button variant="outline" size="sm" className="h-8 gap-1.5 rounded-lg border-indigo-100 hover:bg-indigo-50" onClick={() => onDownloadInvoice(order.id, order.po_code)}>
-              <FileText className="h-3.5 w-3.5 text-indigo-600" />
-              <span className="text-xs font-bold text-indigo-700">Invoice</span>
-            </Button>
-          )}
+          <ActionMenu
+            actions={getActionGroups(order.status).remainingActions}
+            onAction={(action) => {
+              switch (action.type) {
+                case 'view':
+                  onView(order.id);
+                  break;
+                case 'cancel':
+                  onCancel(order.id);
+                  break;
+                case 'invoice':
+                  onDownloadInvoice(order.id, order.po_code);
+                  break;
+              }
+            }}
+            id={order.id}
+          />
         </div>
       </div>
     </Card>
@@ -201,7 +369,7 @@ export default function PurchaseOrderList() {
   };
 
   const handleSend = async (id: number) => {
-    const result = await showConfirmDialog('Send Order', 'Mark this purchase order as sent/ordered?');
+    const result = await showConfirmDialog('Send Order', 'Mark this purchase order as ordered?');
     if (!result.isConfirmed) return;
     try {
       await purchaseOrderApi.send(id);
@@ -213,7 +381,7 @@ export default function PurchaseOrderList() {
   };
 
   const handleCancel = async (id: number) => {
-    const result = await showConfirmDialog('Cancel Order', 'Are you sure you want to cancel this purchase order? This will soft delete the record.');
+    const result = await showConfirmDialog('Cancel Order', 'Are you sure you want to cancel this purchase order? This will cancel the order.');
     if (!result.isConfirmed) return;
     try {
       await purchaseOrderApi.cancel(id);
@@ -254,19 +422,19 @@ export default function PurchaseOrderList() {
       name: 'PO Number',
       selector: (row) => row.po_code,
       sortable: true,
-      minWidth: '140px',
+      width: '140px',
       cell: (row) => <span className="font-medium text-solarized-blue">{row.po_code}</span>,
     },
     {
       name: 'Supplier',
       selector: (row) => row.supplier?.name || '-',
       sortable: true,
-      minWidth: '160px',
+      width: '180px',
     },
     {
       name: 'Status',
       cell: (row) => getStatusBadge(row.status),
-      width: '110px',
+      width: '120px',
     },
     {
       name: 'Order Date',
@@ -280,76 +448,69 @@ export default function PurchaseOrderList() {
       sortable: true,
       right: true,
       cell: (row) => <span className="font-semibold">{`₹${Number(row.total_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`}</span>,
-      minWidth: '130px',
+      width: '140px',
     },
     {
       name: 'Warehouse',
       selector: (row) => row.warehouse?.name || '-',
+      width: '150px',
+    },
+    {
+      name: 'Confirm',
+      cell: (row) => {
+        const { primaryAction } = getActionGroups(row.status);
+        if (!primaryAction) return null;
+
+        return (
+          <div className="flex items-center justify-center px-2">
+            <Button
+              size="sm"
+              className="h-8 px-3 gap-1.5 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 font-semibold text-xs shadow-md shadow-emerald-200 whitespace-nowrap"
+              onClick={() => handleSend(row.id)}
+            >
+              <Send className="h-3 w-3" />
+              <span>Confirm</span>
+            </Button>
+          </div>
+        );
+      },
+      width: '110px',
+      center: true,
     },
     {
       name: 'Actions',
-      cell: (row) => (
-        <div className="flex items-center flex-wrap gap-1.5 py-2">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-8 px-2 gap-1.5 hover:bg-blue-50 hover:text-blue-700" 
-            onClick={() => navigate(`/purchases/orders/${row.id}`)}
-          >
-            <Eye className="h-3.5 w-3.5" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">View</span>
-          </Button>
+      cell: (row) => {
+        const { remainingActions } = getActionGroups(row.status);
 
-          {row.status === PURCHASE_ORDER_STATUS.DRAFT && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8 px-2 gap-1.5 hover:bg-green-50 text-green-600" 
-              onClick={() => handleSend(row.id)}
-            >
-              <Send className="h-3.5 w-3.5" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Send</span>
-            </Button>
-          )}
+        const handleAction = (action: ActionButton) => {
+          switch (action.type) {
+            case 'view':
+              navigate(`/purchases/orders/${row.id}`);
+              break;
+            case 'confirm':
+              handleSend(row.id);
+              break;
+            case 'cancel':
+              handleCancel(row.id);
+              break;
+            case 'invoice':
+              handleDownloadInvoice(row.id, row.po_code);
+              break;
+          }
+        };
 
-          {/* {(row.status === PURCHASE_ORDER_STATUS.ORDERED || row.status === PURCHASE_ORDER_STATUS.PARTIAL_RECEIVED) && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8 px-2 gap-1.5 hover:bg-emerald-50 text-emerald-600" 
-              onClick={() => navigate(`/purchases/orders/${row.id}/receive`)}
-            >
-              <PackageCheck className="h-3.5 w-3.5" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Receive</span>
-            </Button>
-          )} */}
-
-          {row.status !== PURCHASE_ORDER_STATUS.RECEIVED && row.status !== PURCHASE_ORDER_STATUS.CANCELLED && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8 px-2 gap-1.5 hover:bg-red-50 text-red-600" 
-              onClick={() => handleCancel(row.id)}
-            >
-              <XCircle className="h-3.5 w-3.5" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Cancel</span>
-            </Button>
-          )}
-
-          {row.status !== PURCHASE_ORDER_STATUS.DRAFT && row.status !== PURCHASE_ORDER_STATUS.CANCELLED && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8 px-2 gap-1.5 hover:bg-indigo-50 text-indigo-600" 
-              onClick={() => handleDownloadInvoice(row.id, row.po_code)}
-            >
-              <FileText className="h-3.5 w-3.5" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Invoice</span>
-            </Button>
-          )}
-        </div>
-      ),
-      minWidth: '320px',
+        return (
+          <div className="flex items-center justify-center px-2">
+            <ActionMenu
+              actions={remainingActions}
+              onAction={handleAction}
+              id={row.id}
+            />
+          </div>
+        );
+      },
+      width: '120px',
+      center: true,
     },
   ];
 
@@ -358,7 +519,10 @@ export default function PurchaseOrderList() {
       style: { backgroundColor: '#f9fafb', borderBottomWidth: '1px', borderBottomColor: '#e5e7eb', borderBottomStyle: 'solid' as const, minHeight: '56px' },
     },
     headCells: {
-      style: { fontSize: '14px', fontWeight: '600', color: '#374151', paddingLeft: '16px', paddingRight: '16px' },
+      style: { fontSize: '13px', fontWeight: '600', color: '#374151', paddingLeft: '12px', paddingRight: '12px', '&:last-child': { paddingRight: '12px' } },
+    },
+    cells: {
+      style: { paddingLeft: '12px', paddingRight: '12px', '&:last-child': { paddingRight: '12px' } },
     },
   };
 

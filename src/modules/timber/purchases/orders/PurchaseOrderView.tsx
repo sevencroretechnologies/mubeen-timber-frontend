@@ -116,7 +116,7 @@ export default function PurchaseOrderView() {
 
   const handleCancel = async () => {
     if (!order) return;
-    const result = await showConfirmDialog('Cancel Order', 'Are you sure you want to cancel this purchase order? This will soft delete the record.');
+    const result = await showConfirmDialog('Cancel Order', 'Are you sure you want to cancel this purchase order? This will cancel the order.');
     if (!result.isConfirmed) return;
     try {
       await purchaseOrderApi.cancel(order.id);
