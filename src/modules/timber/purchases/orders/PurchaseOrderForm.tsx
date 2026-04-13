@@ -354,7 +354,7 @@ export default function PurchaseOrderForm() {
                       <p className="text-sm font-bold text-indigo-600 py-2">₹{((Number(item.quantity) || 0) * (Number(item.unit_price) || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
                     </div>
                     <div className="col-span-1 flex justify-center">
-                      <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(index)} disabled={items.length <= 1} className="text-slate-400 hover:text-red-500">
+                      <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(index)} disabled={items.length <= 1} className="text-slate-400 text-red-500">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
