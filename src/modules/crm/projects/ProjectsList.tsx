@@ -99,9 +99,9 @@ export default function ProjectsList() {
     setPage(1);
   };
 
-  const handleAddClick = () => {
-    navigate("/crm/projects/create");
-  };
+  // const handleAddClick = () => {
+  //   navigate("/crm/projects/create");
+  // };
 
   const handleView = (project: Project) => {
     setSelectedProject(project);
@@ -220,13 +220,13 @@ export default function ProjectsList() {
             Manage your CRM projects
           </p>
         </div>
-        <Button
+        {/* <Button
           onClick={handleAddClick}
           size="sm"
           className="bg-solarized-blue hover:bg-solarized-blue/90 shadow-sm transition-all active:scale-95 h-9 shrink-0 px-3"
         >
           <Plus className="mr-1 h-3.5 w-3.5" /> New Project
-        </Button>
+        </Button> */}
       </div>
 
       <Card>

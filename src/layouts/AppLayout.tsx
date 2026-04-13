@@ -46,11 +46,11 @@ interface NavItem {
 }
 
 const navigation: NavItem[] = [
-  {
-    name: "Dashboard",
-    href: "/dashboard/timber",
-    icon: LayoutDashboard,
-  },
+  // {
+  //   name: "Dashboard",
+  //   href: "/dashboard/timber",
+  //   icon: LayoutDashboard,
+  // },
   {
     name: "CRM",
     href: "/crm",

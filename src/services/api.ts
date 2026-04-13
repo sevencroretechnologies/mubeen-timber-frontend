@@ -242,6 +242,15 @@ export const dashboardService = {
   // Timber Dashboard - SINGLE UNIFIED API
   getTimberDashboard: (params?: { stock_movements_days?: number; recent_pos_limit?: number }) =>
     api.get('/dashboard/timber', { params }),
+
+  // CRM Dashboard - SINGLE UNIFIED API
+  getCrmDashboard: (params?: Record<string, unknown>) => api.get('/dashboard/crm', { params }),
+
+  // Legacy CRM endpoints (still available if needed)
+  getStats: (params?: Record<string, unknown>) => api.get('/dashboard/crm/stats', { params }),
+  getSalesOverview: (params?: Record<string, unknown>) => api.get('/dashboard/crm/sales-overview', { params }),
+  getLeadConversionFunnel: (params?: Record<string, unknown>) => api.get('/dashboard/crm/lead-conversion-funnel', { params }),
+  getOpportunityPipeline: (params?: Record<string, unknown>) => api.get('/dashboard/crm/opportunity-pipeline', { params }),
 };
 
 // Admin & RBAC
