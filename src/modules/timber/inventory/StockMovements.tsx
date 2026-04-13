@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import DataTable, { TableColumn } from 'react-data-table-component';
-import { Search, ArrowUpDown, ArrowDown, ArrowUp, RotateCcw, RefreshCw } from 'lucide-react';
+import { Search, ArrowUpDown, ArrowDown, ArrowUp, RotateCcw, RefreshCw, Eye } from 'lucide-react';
 
 const movementTypeConfig: Record<StockMovementType, { label: string; color: string; icon: React.ElementType }> = {
   IN: { label: 'Stock In', color: 'bg-green-100 text-green-800', icon: ArrowDown },
@@ -75,25 +75,25 @@ export default function StockMovements() {
     {
       name: '#',
       selector: (_row, index) => (page - 1) * perPage + (index !== undefined ? index + 1 : 0),
-      width: '60px',
+      width: '50px',
     },
     {
       name: 'Date',
       selector: (row) => row.created_at,
       sortable: true,
       cell: (row) => new Date(row.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-      width: '120px',
+      width: '100px',
     },
     {
       name: 'Type',
       cell: (row) => getMovementBadge(row.movement_type),
-      width: '130px',
+      width: '110px',
     },
     {
       name: 'Wood Type',
       selector: (row) => row.wood_type?.name || '-',
       sortable: true,
-      minWidth: '150px',
+      minWidth: '120px',
     },
     {
       name: 'Warehouse',
@@ -101,12 +101,14 @@ export default function StockMovements() {
       sortable: true,
     },
     {
-      name: 'Quantity',
+      name: 'Qty',
       selector: (row) => row.quantity,
       sortable: true,
       right: true,
+      width: '80px',
       cell: (row) => {
-        const isPositive = row.movement_type === 'IN' || row.movement_type === 'RETURN';
+        const type = row.movement_type?.toLowerCase() || '';
+        const isPositive = type === 'in' || type === 'return';
         return <span className={isPositive ? 'text-green-700 font-semibold' : 'text-red-700 font-semibold'}>{isPositive ? '+' : '-'}{Number(row.quantity).toFixed(2)}</span>;
       },
     },
@@ -114,27 +116,36 @@ export default function StockMovements() {
       name: 'Before',
       selector: (row) => row.before_quantity,
       right: true,
+      width: '70px',
       cell: (row) => Number(row.before_quantity).toFixed(2),
     },
     {
       name: 'After',
       selector: (row) => row.after_quantity,
       right: true,
+      width: '70px',
       cell: (row) => <span className="font-semibold">{Number(row.after_quantity).toFixed(2)}</span>,
     },
     {
-      name: 'Notes',
-      selector: (row) => row.notes || '-',
-      minWidth: '150px',
+      name: 'Actions',
+      cell: () => (
+        <Button variant="ghost" size="icon" className="h-7 w-7" title="View">
+          <Eye className="h-4 w-4" />
+        </Button>
+      ),
+      width: '60px',
     },
   ];
 
   const customStyles = {
     headRow: {
-      style: { backgroundColor: '#f9fafb', borderBottomWidth: '1px', borderBottomColor: '#e5e7eb', borderBottomStyle: 'solid' as const, minHeight: '56px' },
+      style: { backgroundColor: '#f9fafb', borderBottomWidth: '1px', borderBottomColor: '#e5e7eb', borderBottomStyle: 'solid' as const, minHeight: '48px' },
     },
     headCells: {
-      style: { fontSize: '14px', fontWeight: '600', color: '#374151', paddingLeft: '16px', paddingRight: '16px' },
+      style: { fontSize: '13px', fontWeight: '600', color: '#374151', paddingLeft: '10px', paddingRight: '10px' },
+    },
+    cells: {
+      style: { paddingLeft: '10px', paddingRight: '10px' },
     },
   };
 

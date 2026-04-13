@@ -514,3 +514,22 @@ export interface EnumOption {
   value: string;
   label: string;
 }
+
+export interface Project {
+  id: number;
+  name: string;
+  description?: string;
+  status?: string;
+  estimated_value?: number;
+  org_id?: number;
+  company_id?: number;
+  customer_id?: number;
+  deleted_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  customer?: {
+    id: number;
+    name: string;
+    company_name?: string;
+  };
+}
