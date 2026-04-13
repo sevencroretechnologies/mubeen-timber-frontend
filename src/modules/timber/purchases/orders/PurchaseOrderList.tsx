@@ -245,14 +245,16 @@ function PurchaseOrderCard({ order, onView, onEdit, onDelete, onSend, onReceive,
   return (
     <Card className="rounded-xl shadow-sm border border-slate-100 bg-white p-4 transition-all hover:shadow-md">
       <div className="flex justify-between items-start mb-3">
-        <div className="space-y-1">
-          <h3 className="font-bold text-slate-900 text-lg uppercase tracking-tight">{order.po_code}</h3>
-          <div className="flex items-center gap-1.5 text-slate-500 text-sm">
-            <Building2 className="h-3.5 w-3.5" />
-            <span className="truncate max-w-[180px]">{order.supplier?.name || 'Unknown Supplier'}</span>
+        <div className="space-y-1 min-w-0 flex-1">
+          <h3 className="font-bold text-slate-900 text-base sm:text-lg uppercase tracking-tight truncate">{order.po_code}</h3>
+          <div className="flex items-center gap-1.5 text-slate-500 text-[11px] sm:text-sm">
+            <Building2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
+            <span className="truncate max-w-[120px] sm:max-w-[180px]">{order.supplier?.name || 'Unknown Supplier'}</span>
           </div>
         </div>
-        {getStatusBadge(order.status)}
+        <div className="shrink-0 ml-2">
+          {getStatusBadge(order.status)}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 py-3 border-y border-slate-50">
@@ -273,10 +275,10 @@ function PurchaseOrderCard({ order, onView, onEdit, onDelete, onSend, onReceive,
       </div>
 
       <div className="mt-4 pt-3 border-t border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center justify-between sm:justify-start gap-3">
-          <div className="flex items-center gap-1.5 text-slate-500">
-            <span className="text-[10px] font-black uppercase text-slate-300">W/H:</span>
-            <span className="font-bold text-slate-600 text-xs truncate max-w-[150px] sm:max-w-none">{order.warehouse?.name || '-'}</span>
+        <div className="flex items-center justify-between sm:justify-start gap-2 min-w-0">
+          <div className="flex items-center gap-1 text-slate-500 min-w-0">
+            <span className="text-[10px] font-black uppercase text-slate-300 shrink-0">W/H:</span>
+            <span className="font-bold text-slate-600 text-[11px] sm:text-xs truncate max-w-[100px] sm:max-w-none">{order.warehouse?.name || '-'}</span>
           </div>
           
           <div className="sm:hidden">

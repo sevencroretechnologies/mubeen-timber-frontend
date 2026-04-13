@@ -59,15 +59,15 @@ function ReceivedOrderSkeleton() {
 function ReceivedOrderCard({ order, onView, onReceive }: { order: TimberPurchaseOrder; onView: (id: number) => void; onReceive: (id: number) => void }) {
   return (
     <Card className="rounded-xl shadow-sm border border-slate-100 bg-white p-4 transition-all hover:shadow-md">
-      <div className="flex justify-between items-start mb-3">
-        <div className="space-y-1">
-          <h3 className="font-bold text-slate-900 text-lg uppercase tracking-tight">{order.po_code}</h3>
-          <div className="flex items-center gap-1.5 text-slate-500 text-sm">
-            <Building2 className="h-3.5 w-3.5" />
-            <span className="truncate max-w-[180px]">{order.supplier?.name || 'Unknown Supplier'}</span>
+      <div className="flex justify-between items-start mb-3 gap-2">
+        <div className="space-y-1 min-w-0 flex-1">
+          <h3 className="font-bold text-slate-900 text-base sm:text-lg uppercase tracking-tight truncate">{order.po_code}</h3>
+          <div className="flex items-center gap-1.5 text-slate-500 text-[11px] sm:text-sm">
+            <Building2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
+            <span className="truncate max-w-[120px] sm:max-w-[180px]">{order.supplier?.name || 'Unknown Supplier'}</span>
           </div>
         </div>
-        <span className="px-2 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-700 tracking-wider">
+        <span className="shrink-0 px-2 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-700 tracking-wider">
           Received
         </span>
       </div>
@@ -205,7 +205,7 @@ export default function PurchaseOrderReceivedList() {
           <p className="text-sm text-slate-500">History of completed procurement & verified inventory</p>
         </div>
         <Button onClick={() => navigate('/purchases/orders')} variant="outline" className="rounded-xl font-bold border-slate-200">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Main List
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to List
         </Button>
       </div>
 

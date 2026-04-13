@@ -222,7 +222,7 @@ export default function PurchaseOrderView() {
           )} */}
 
           <Button
-            onClick={() => navigate('/purchases/orders/received')}
+            onClick={() => navigate('/purchases/orders')}
             className="font-bold"
           >
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to List
