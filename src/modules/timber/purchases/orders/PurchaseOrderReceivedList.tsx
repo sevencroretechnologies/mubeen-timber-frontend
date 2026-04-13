@@ -112,7 +112,7 @@ function ReceivedOrderCard({ order, onView, onReceive }: { order: TimberPurchase
             className="h-10 sm:h-9 flex-1 sm:flex-none px-2 rounded-xl sm:rounded-lg hover:bg-slate-50 border-slate-200 text-slate-600 font-bold gap-2 text-[11px] sm:text-xs" 
             onClick={() => onView(order.id)}
           >
-            <Eye className="h-4 w-4 shrink-0" /> <span className="truncate">Summary</span>
+            <Eye className="h-4 w-4 shrink-0" /> <span className="truncate">View</span>
           </Button>
         </div>
       </div>
@@ -201,7 +201,7 @@ export default function PurchaseOrderReceivedList() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Received Orders</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Receive Orders</h1>
           <p className="text-sm text-slate-500">History of completed procurement & verified inventory</p>
         </div>
         <Button onClick={() => navigate('/purchases/orders')} variant="outline" className="rounded-xl font-bold border-slate-200">
@@ -253,7 +253,7 @@ export default function PurchaseOrderReceivedList() {
               noDataComponent={
                 <div className="text-center py-12 text-slate-400">
                   <ShoppingCart className="mx-auto h-12 w-12 mb-4 opacity-10" />
-                  <p className="font-bold uppercase tracking-widest text-xs">No received orders recorded</p>
+                  <p className="font-bold uppercase tracking-widest text-xs">No receive orders recorded</p>
                 </div>
               }
             />

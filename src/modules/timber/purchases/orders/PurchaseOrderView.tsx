@@ -292,7 +292,7 @@ export default function PurchaseOrderView() {
               </CardHeader>
               <CardHeader className="bg-slate-50/50 border-b border-slate-50 py-4 md:hidden">
                 <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-black-600" />
+                  <Building2 className="h-4 w-4 text-slate-600" />
                   <CardTitle className="text-xs font-bold text-slate-800  tracking-widest">Supplier & Order Info</CardTitle>
                 </div>
               </CardHeader>
