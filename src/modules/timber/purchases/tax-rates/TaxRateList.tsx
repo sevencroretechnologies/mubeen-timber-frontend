@@ -22,7 +22,100 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import DataTable, { TableColumn } from 'react-data-table-component';
-import { Plus, Search, Edit, Trash2, Percent, CheckCircle2, XCircle, Eye, Loader2, Ghost } from 'lucide-react';
+import { 
+  Plus, 
+  Search, 
+  Edit, 
+  Trash2, 
+  Percent, 
+  Eye, 
+  Loader2, 
+  Ghost, 
+  MoreVertical, 
+  Hash 
+} from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+
+function TaxRateSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[1, 2, 3].map((i) => (
+        <Card key={i} className="rounded-xl shadow-sm border border-slate-100 bg-white p-4">
+          <div className="flex justify-between items-start mb-4">
+            <div className="space-y-2 flex-1">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+            <Skeleton className="h-6 w-16 rounded-lg" />
+          </div>
+          <div className="flex justify-between items-end mt-4 pt-3 border-t border-slate-50">
+            <Skeleton className="h-8 w-24 rounded-lg" />
+            <div className="flex gap-2">
+              <Skeleton className="h-8 w-8 rounded-md" />
+              <Skeleton className="h-8 w-8 rounded-md" />
+            </div>
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+interface TaxRateCardProps {
+  rate: TimberTaxRate;
+  onView: (item: TimberTaxRate) => void;
+  onEdit: (item: TimberTaxRate) => void;
+  onDelete: (id: number) => void;
+}
+
+function TaxRateCard({ rate, onView, onEdit, onDelete }: TaxRateCardProps) {
+  return (
+    <Card className="rounded-xl shadow-sm border border-slate-100 bg-white p-4 transition-all hover:shadow-md mb-4 last:mb-0">
+      <div className="flex justify-between items-start mb-3">
+        <div className="space-y-1 min-w-0 flex-1">
+          <h3 className="font-bold text-slate-900 text-base uppercase tracking-tight truncate">{rate.name}</h3>
+          {/* <div className="flex items-center gap-1.5 text-slate-500 text-[11px]">
+            <Hash className="h-3 w-3 shrink-0" />
+            <span className="truncate">Tax ID: {rate.id}</span>
+          </div> */}
+        </div>
+        <div className="shrink-0 ml-2">
+          <span className="px-2 py-1 rounded-lg text-[10px] font-black uppercase bg-indigo-50 text-indigo-700 border border-indigo-100">
+            {rate.tax_type}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between py-3 border-y border-slate-50">
+        <div className="space-y-1">
+          <span className="text-[10px] font-bold text-slate-400  tracking-wider">Tax Percentage</span>
+          <div className="flex items-center gap-1 text-solarized-blue font-black text-xl">
+            <Percent className="h-4 w-4" />
+            {rate.rate}%
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-1">
+          <Button  variant='ghost'
+                        size='icon'
+                        className='h-7 w-7' onClick={() => onView(rate)}>
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button  variant='ghost'
+                        size='icon'
+                        className='h-7 w-7' onClick={() => onEdit(rate)}>
+            <Edit className="h-4 w-4  text-blue-600" />
+          </Button>
+          <Button  variant='ghost'
+                        size='icon'
+                        className='h-7 w-7' onClick={() => onDelete(rate.id)}>
+            <Trash2 className="h-4 w-4 text-red-600" />
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+}
 
 export default function TaxRateList() {
   const [taxRates, setTaxRates] = useState<TimberTaxRate[]>([]);
@@ -194,7 +287,7 @@ export default function TaxRateList() {
           <Button variant='ghost'
             size='icon'
             className='h-7 w-7' onClick={() => handleEdit(row)} title="Edit">
-            <Edit className="h-4 w-4" />
+            <Edit className="h-4 w-4 text-blue-600"/>
           </Button>
           <Button variant='ghost'
             size='icon'
@@ -228,42 +321,65 @@ export default function TaxRateList() {
         </Button>
       </div>
 
-      <Card className="shadow-sm border">
-        <CardHeader className="pb-3 px-6 pt-6">
-          <form onSubmit={(e) => { e.preventDefault(); fetchTaxRates(); }} className="flex gap-4">
+      <Card className="shadow-sm border rounded-xl overflow-hidden">
+        <CardHeader className="bg-slate-50/50 pb-4 px-4 sm:px-6 pt-6">
+          <form onSubmit={(e) => { e.preventDefault(); fetchTaxRates(); }} className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name or tax type..."
+                placeholder="Search taxes..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 h-10 rounded-lg"
+                className="pl-10 h-10 rounded-xl bg-white border-slate-200"
               />
             </div>
-            <Button type="submit" variant="outline" className="h-10">
+            <Button type="submit" variant="outline" className="h-10 rounded-xl font-bold bg-white">
               Search
             </Button>
           </form>
         </CardHeader>
-        <CardContent className="px-0">
-          <DataTable
-            columns={columns}
-            data={filteredRates}
-            progressPending={isLoading}
-            customStyles={customStyles}
-            pagination
-            highlightOnHover
-            responsive
-            noDataComponent={
-              <div className="text-center py-20 bg-gray-50/50 rounded-lg border border-dashed mx-6">
-                <Ghost className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900">No tax rates found</h3>
-                <p className="text-muted-foreground max-w-xs mx-auto mt-1">
-                  Try adjusting your search or add a new tax configuration to get started.
-                </p>
-              </div>
-            }
-          />
+        <CardContent className="p-0">
+          <div className="hidden sm:block">
+            <DataTable
+              columns={columns}
+              data={filteredRates}
+              progressPending={isLoading}
+              customStyles={customStyles}
+              pagination
+              highlightOnHover
+              responsive
+              noDataComponent={
+                <div className="text-center py-20 bg-gray-50/50 rounded-lg border border-dashed mx-6 my-6">
+                  <Ghost className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900">No tax rates found</h3>
+                  <p className="text-muted-foreground max-w-xs mx-auto mt-1">
+                    Try adjusting your search or add a new tax configuration.
+                  </p>
+                </div>
+              }
+            />
+          </div>
+          
+          <div className="sm:hidden p-4">
+            {isLoading ? <TaxRateSkeleton /> : (
+              filteredRates.length > 0 ? (
+                filteredRates.map(rate => (
+                  <TaxRateCard 
+                    key={rate.id} 
+                    rate={rate} 
+                    onView={handleView} 
+                    onEdit={handleEdit} 
+                    onDelete={handleDelete} 
+                  />
+                ))
+              ) : (
+                <div className="text-center py-12 bg-gray-50/50 rounded-xl border border-dashed">
+                  <Ghost className="mx-auto h-10 w-10 text-muted-foreground/50 mb-3" />
+                  <p className="text-sm text-slate-500 font-medium">No tax rates found</p>
+                </div>
+              )
+            )}
+          </div>
         </CardContent>
       </Card>
 
