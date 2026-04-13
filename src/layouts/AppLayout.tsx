@@ -110,6 +110,7 @@ const navigation: NavItem[] = [
       { name: "Purchase Orders", href: "/purchases/orders" },
       { name: "Receive Orders", href: "/purchases/orders/received" },
       { name: "Suppliers", href: "/purchases/suppliers" },
+      { name: "Tax Rates", href: "/purchases/tax-rates" },
     ],
   },
 

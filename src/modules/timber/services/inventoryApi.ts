@@ -15,6 +15,8 @@ import type {
   ReceiveGoodsFormData,
   MaterialRequisitionFormData,
   PoItemReceivedFormData,
+  TimberTaxRate,
+  TaxRateFormData,
 } from '../types/inventory';
 
 const PREFIX = '/timber';
@@ -169,4 +171,21 @@ export const poItemReceivedApi = {
       if (data && typeof data === 'object' && 'data' in data) return data;
       return { data };
     }),
+};
+
+// Tax Rates
+export const taxRateApi = {
+  list: (params?: Record<string, unknown>) =>
+    api.get(`${PREFIX}/tax-rates`, { params }).then((res) => {
+      const data = res.data;
+      if (data && typeof data === 'object' && 'data' in data) return data;
+      return { data };
+    }),
+  get: (id: number) =>
+    api.get<{ data: TimberTaxRate }>(`${PREFIX}/tax-rates/${id}`).then((r) => r.data.data || r.data),
+  create: (data: TaxRateFormData) =>
+    api.post(`${PREFIX}/tax-rates`, data).then((r) => r.data),
+  update: (id: number, data: Partial<TaxRateFormData>) =>
+    api.put(`${PREFIX}/tax-rates/${id}`, data).then((r) => r.data),
+  delete: (id: number) => api.delete(`${PREFIX}/tax-rates/${id}`),
 };

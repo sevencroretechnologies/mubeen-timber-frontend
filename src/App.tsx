@@ -89,6 +89,7 @@ import PurchaseOrderView from "@/modules/timber/purchases/orders/PurchaseOrderVi
 import ReceivedOrderView from "./modules/timber/purchases/orders/ReceivedOrderView";
 import PurchaseOrderReceivedList from "./modules/timber/purchases/orders/PurchaseOrderReceivedList";
 import ReceiveGoodsForm from "@/modules/timber/purchases/orders/ReceiveGoodsForm";
+import TaxRateList from "@/modules/timber/purchases/tax-rates/TaxRateList";
 
 // Error Pages
 import Unauthorized from "@/pages/Unauthorized";
@@ -252,6 +253,9 @@ function App() {
               path="/purchases/suppliers/:id/edit"
               element={<SupplierForm />}
             />
+
+            {/* Tax Rates */}
+            <Route path="/purchases/tax-rates" element={<TaxRateList />} />
 
             {/* Admin */}
             <Route path="/admin" element={<Users />} />

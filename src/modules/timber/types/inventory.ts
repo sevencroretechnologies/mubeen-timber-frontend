@@ -109,6 +109,27 @@ export const PURCHASE_ORDER_STATUS = {
 
 export type PurchaseOrderStatus = typeof PURCHASE_ORDER_STATUS[keyof typeof PURCHASE_ORDER_STATUS] | (string & {});
 
+// Tax Types
+export const TAX_TYPE = {
+    SGST: 'SGST',
+    CGST: 'CGST',
+    IGST: 'IGST',
+    CESS: 'CESS',
+    FLOOD_CESS: 'FLOOD_CESS',
+} as const;
+
+export type TaxRateType = typeof TAX_TYPE[keyof typeof TAX_TYPE];
+
+export interface TimberTaxRate {
+    id: number;
+    name: string;
+    rate: number;
+    tax_type: TaxRateType;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface TimberPurchaseOrder {
   id: number;
   po_code: string;
@@ -284,6 +305,13 @@ export interface PoItemReceivedFormData {
     received_quantity: number;
     received_date: string;
     total_amount?: number;
+}
+
+export interface TaxRateFormData {
+    name: string;
+    rate: number | string;
+    tax_type: TaxRateType;
+    is_active?: boolean;
 }
 
 export interface MaterialRequisitionFormData {
