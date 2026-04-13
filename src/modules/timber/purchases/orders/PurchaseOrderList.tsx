@@ -272,40 +272,53 @@ function PurchaseOrderCard({ order, onView, onEdit, onDelete, onSend, onReceive,
         </div>
       </div>
 
-      <div className="flex justify-between items-center mt-4 gap-3">
-        <div className="flex items-center gap-1.5 text-slate-500 text-xs">
-          <span className="text-[10px] font-black uppercase text-slate-300">W/H:</span>
-          <span className="font-medium text-slate-600">{order.warehouse?.name || '-'}</span>
+      <div className="mt-4 pt-3 border-t border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center justify-between sm:justify-start gap-3">
+          <div className="flex items-center gap-1.5 text-slate-500">
+            <span className="text-[10px] font-black uppercase text-slate-300">W/H:</span>
+            <span className="font-bold text-slate-600 text-xs truncate max-w-[150px] sm:max-w-none">{order.warehouse?.name || '-'}</span>
+          </div>
+          
+          <div className="sm:hidden">
+            <ActionMenu
+              actions={getActionGroups(order.status).remainingActions}
+              onAction={(action) => {
+                switch (action.type) {
+                  case 'view': onView(order.id); break;
+                  case 'cancel': onCancel(order.id); break;
+                  case 'invoice': onDownloadInvoice(order.id, order.po_code); break;
+                }
+              }}
+              id={order.id}
+            />
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-1 justify-end">
+        <div className="flex items-center gap-2 sm:w-auto">
           {getActionGroups(order.status).primaryAction && (
             <Button
               size="sm"
-              className="h-9 px-4 gap-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-semibold text-sm shadow-md shadow-emerald-200 whitespace-nowrap"
+              className="sm:h-9 px-5 gap-2 rounded-xl sm:rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-bold sm:font-semibold shadow-md shadow-emerald-100 sm:shadow-emerald-200 whitespace-nowrap"
               onClick={() => onSend(order.id)}
             >
               <Send className="h-4 w-4" />
               Confirm Order
             </Button>
           )}
-          <ActionMenu
-            actions={getActionGroups(order.status).remainingActions}
-            onAction={(action) => {
-              switch (action.type) {
-                case 'view':
-                  onView(order.id);
-                  break;
-                case 'cancel':
-                  onCancel(order.id);
-                  break;
-                case 'invoice':
-                  onDownloadInvoice(order.id, order.po_code);
-                  break;
-              }
-            }}
-            id={order.id}
-          />
+          
+          <div className="hidden sm:block">
+            <ActionMenu
+              actions={getActionGroups(order.status).remainingActions}
+              onAction={(action) => {
+                switch (action.type) {
+                  case 'view': onView(order.id); break;
+                  case 'cancel': onCancel(order.id); break;
+                  case 'invoice': onDownloadInvoice(order.id, order.po_code); break;
+                }
+              }}
+              id={order.id}
+            />
+          </div>
         </div>
       </div>
     </Card>
@@ -465,7 +478,7 @@ export default function PurchaseOrderList() {
           <div className="flex items-center justify-center px-2">
             <Button
               size="sm"
-              className="h-8 px-3 gap-1.5 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 font-semibold text-xs shadow-md shadow-emerald-200 whitespace-nowrap"
+              className="h-8 px-3 gap-1.5 rounded-md  text-white font-semibold text-xs whitespace-nowrap"
               onClick={() => handleSend(row.id)}
             >
               <Send className="h-3 w-3" />

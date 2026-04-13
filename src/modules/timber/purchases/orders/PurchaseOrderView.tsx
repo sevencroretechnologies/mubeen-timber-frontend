@@ -223,9 +223,9 @@ export default function PurchaseOrderView() {
 
           <Button
             onClick={() => navigate('/purchases/orders/received')}
-            className="bg-emerald-600 hover:bg-emerald-700 font-bold"
+            className="font-bold"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Receive Order List
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to List
           </Button>
         </div>
       </div>
@@ -297,7 +297,7 @@ export default function PurchaseOrderView() {
                 </div>
               </CardHeader>
               <CardContent className="pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <div className="grid grid-cols-2 gap-x-4 md:gap-x-8 gap-y-6">
                   <div className="space-y-1">
                     <Label className="text-muted-foreground md:text-slate-500 font-medium">Supplier Name</Label>
                     <p className="text-sm font-bold text-slate-800">{order.supplier?.name || '-'}</p>
@@ -329,14 +329,12 @@ export default function PurchaseOrderView() {
                         order.expected_date ? new Date(order.expected_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                     </div>
                   </div>
-                  {order.notes && (
-                    <div className="col-span-2 pt-2">
-                      <Label className="text-muted-foreground md:text-slate-500 font-medium">Notes</Label>
-                      <div className="mt-2 text-sm text-slate-600">
-                        {order.notes}
-                      </div>
+                  <div className="space-y-1">
+                    <Label className="text-muted-foreground md:text-slate-500 font-medium">Notes</Label>
+                    <div className="text-sm font-bold text-slate-800 break-words">
+                      {order.notes || '-'}
                     </div>
-                  )}
+                  </div>
                 </div>
               </CardContent>
             </Card>

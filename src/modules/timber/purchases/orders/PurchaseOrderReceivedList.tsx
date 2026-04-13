@@ -89,20 +89,30 @@ function ReceivedOrderCard({ order, onView, onReceive }: { order: TimberPurchase
         </div>
       </div>
 
-      <div className="flex justify-between items-center mt-4">
-         <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-bold uppercase italic">
-            <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-            Received Date: {new Date(order.updated_at).toLocaleDateString('en-IN')}
-         </div>
+      <div className="mt-4 pt-3 border-t border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-bold uppercase">
+          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+          <span>Received: {new Date(order.updated_at).toLocaleDateString('en-IN')}</span>
+        </div>
         
-        <div className="flex gap-2">
+        <div className="flex flex-row gap-2 w-full sm:w-auto items-center">
           {!isFullyReceived(order) && (
-            <Button variant="outline" size="sm" className="h-9 px-4 rounded-xl hover:bg-green-50 border-green-100 text-green-600 font-bold gap-2" onClick={() => onReceive(order.id)}>
-              <PackageCheck className="h-4 w-4" /> Receive Goods
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-10 sm:h-9 flex-1 sm:flex-none px-2 rounded-xl sm:rounded-lg hover:bg-emerald-50 border-emerald-100 text-emerald-600 font-bold gap-2 text-[11px] sm:text-xs" 
+              onClick={() => onReceive(order.id)}
+            >
+              <PackageCheck className="h-4 w-4 shrink-0" /> <span className="truncate">Receive</span>
             </Button>
           )}
-          <Button variant="outline" size="sm" className="h-9 px-4 rounded-xl hover:bg-emerald-50 border-emerald-100 text-emerald-600 font-bold gap-2" onClick={() => onView(order.id)}>
-            <Eye className="h-4 w-4" /> View
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-10 sm:h-9 flex-1 sm:flex-none px-2 rounded-xl sm:rounded-lg hover:bg-slate-50 border-slate-200 text-slate-600 font-bold gap-2 text-[11px] sm:text-xs" 
+            onClick={() => onView(order.id)}
+          >
+            <Eye className="h-4 w-4 shrink-0" /> <span className="truncate">Summary</span>
           </Button>
         </div>
       </div>
