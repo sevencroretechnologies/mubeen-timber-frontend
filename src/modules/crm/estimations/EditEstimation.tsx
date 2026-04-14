@@ -581,7 +581,7 @@ export default function EditEstimation() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50/30 to-orange-50/30 py-4 sm:py-8 px-0">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50/30 to-orange-50/30 py-4 sm:py-8 px-2 sm:px-4">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
@@ -605,7 +605,7 @@ export default function EditEstimation() {
 
             <CardContent className="space-y-4 sm:space-y-6 pt-4 sm:pt-6 p-3 sm:p-6">
               {/* Basic Information */}
-              <div className="space-y-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="space-y-4 p-3 sm:p-4 bg-slate-50 rounded-lg border border-slate-200">
                 <h3 className="text-amber-800 font-bold text-sm uppercase tracking-tight flex items-center gap-2">
                   <div className="h-1 w-6 bg-amber-600 rounded-full"></div>
                   Basic Information
@@ -628,7 +628,7 @@ export default function EditEstimation() {
               </div>
 
               {/* Products Section */}
-              <div className="space-y-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="space-y-4 p-3 sm:p-4 bg-slate-50 rounded-lg border border-slate-200">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <h3 className="text-amber-800 font-bold text-sm uppercase tracking-tight flex items-center gap-2">
                     <Hammer className="h-4 w-4 text-amber-600" />
@@ -653,19 +653,34 @@ export default function EditEstimation() {
                       const isExpanded = expandedProducts.has(product.tempId);
                       return (
                         <div key={product.tempId} className="bg-white rounded-lg border border-slate-200 hover:border-amber-300 transition-all overflow-hidden">
-                          <div className="p-3 flex items-center justify-between cursor-pointer" onClick={() => toggleProductExpanded(product.tempId)}>
-                            <div className="flex items-center gap-2 flex-1">
-                              <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-medium">#{index + 1}</span>
-                              <h4 className="font-semibold text-slate-800 text-sm">{productInfo}</h4>
-                              <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">{product.items.length} items</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-bold text-blue-600">{Number(product.total_cft).toFixed(2)} CFT</span>
-                              <span className="text-sm font-bold text-green-600">₹{Number(product.total_amount).toFixed(2)}</span>
-                              <Button type="button" variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleRemoveProduct(product.tempId); }} className="h-7 w-7 text-slate-400 hover:text-red-600">
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                              {isExpanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                          <div className="p-3 cursor-pointer" onClick={() => toggleProductExpanded(product.tempId)}>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              {/* Product Info (Index, Name, Count) */}
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <span className="shrink-0 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">#{index + 1}</span>
+                                <h4 className="font-bold text-slate-800 text-sm truncate">{productInfo}</h4>
+                                <span className="shrink-0 text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-medium">{product.items.length} items</span>
+                              </div>
+
+                              {/* Product Stats (CFT, Amount) & Actions */}
+                              <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 border-t sm:border-t-0 pt-2 sm:pt-0">
+                                <div className="flex items-center gap-4 sm:gap-6">
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2">
+                                    <span className="text-[10px] text-slate-400 uppercase sm:hidden leading-none mb-1 sm:mb-0">Total CFT</span>
+                                    <span className="text-xs sm:text-sm font-bold text-blue-600">{Number(product.total_cft).toFixed(2)} <span className="text-[10px] ml-0.5">CFT</span></span>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2 border-l pl-3 sm:border-l-0 sm:pl-0">
+                                    <span className="text-[10px] text-slate-400 uppercase sm:hidden leading-none mb-1 sm:mb-0">Amount</span>
+                                    <span className="text-xs sm:text-sm font-bold text-green-600">₹{Number(product.total_amount).toLocaleString()}</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <Button type="button" variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleRemoveProduct(product.tempId); }} className="h-8 w-8 text-slate-400 hover:text-red-600 bg-slate-50/50 sm:bg-transparent rounded-full transition-colors">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                  {isExpanded ? <ChevronUp className="h-5 w-5 text-slate-400" /> : <ChevronDown className="h-5 w-5 text-slate-400" />}
+                                </div>
+                              </div>
                             </div>
                           </div>
 
@@ -745,7 +760,7 @@ export default function EditEstimation() {
               </div>
 
               {/* Additional Charges */}
-              <div className="space-y-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="space-y-4 p-3 sm:p-4 bg-slate-50 rounded-lg border border-slate-200">
                 <h3 className="text-amber-800 font-bold text-sm uppercase tracking-tight flex items-center gap-2">
                   <IndianRupee className="h-4 w-4 text-amber-600" /> Additional Charges
                 </h3>
@@ -759,23 +774,22 @@ export default function EditEstimation() {
                 </div>
               </div>
 
-              {/* Summary */}
-              <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-lg border border-amber-200">
-                <h3 className="text-amber-900 font-bold text-sm uppercase mb-4 tracking-tight">Summary</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 text-sm">
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-3 sm:p-4 rounded-lg border border-amber-200">
+                <h3 className="text-amber-900 font-bold text-xs sm:text-sm uppercase mb-3 sm:mb-4 tracking-tight">Estimation Summary</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 text-sm">
                   {[
-                    { label: 'Total CFT', value: Number(productsSummary.totalCft).toFixed(2), color: 'text-amber-700' },
-                    { label: 'Products Amount', value: `₹${Number(productsSummary.totalAmount).toFixed(2)}`, color: 'text-green-600' },
-                    { label: 'Charges', value: `₹${Number(chargesTotal).toFixed(2)}`, color: 'text-blue-600' }
+                    { label: 'Total CFT', value: Number(productsSummary.totalCft).toFixed(2), color: 'text-amber-700 font-bold' },
+                    { label: 'Products Amount', value: `₹${Number(productsSummary.totalAmount).toLocaleString()}`, color: 'text-green-600 font-bold' },
+                    { label: 'Charges', value: `₹${Number(chargesTotal).toLocaleString()}`, color: 'text-blue-600 font-bold' }
                   ].map((item) => (
-                    <div key={item.label} className="bg-white p-3 rounded-lg border border-amber-200">
+                    <div key={item.label} className="bg-white p-2.5 sm:p-3 rounded-lg border border-amber-200 flex sm:flex-col justify-between items-center sm:items-start">
                       <p className="text-[10px] text-slate-500 uppercase font-semibold">{item.label}</p>
-                      <p className={`text-lg font-bold ${item.color}`}>{item.value}</p>
+                      <p className={`text-base sm:text-lg ${item.color}`}>{item.value}</p>
                     </div>
                   ))}
-                  <div className="bg-gradient-to-br from-amber-500 to-orange-500 p-3 rounded-lg border border-amber-600">
-                    <p className="text-[10px] text-white uppercase font-semibold">Grand Total</p>
-                    <p className="text-xl font-black text-white">₹{Number(grandTotal).toFixed(2)}</p>
+                  <div className="bg-gradient-to-br from-amber-500 to-orange-500 p-3 rounded-lg border border-amber-600 shadow-md flex sm:flex-col justify-between items-center sm:items-start mt-2 sm:mt-0">
+                    <p className="text-[10px] text-white/90 uppercase font-bold tracking-wider">Grand Total</p>
+                    <p className="text-xl sm:text-2xl font-black text-white">₹{Number(grandTotal).toLocaleString()}</p>
                   </div>
                 </div>
               </div>
@@ -930,7 +944,7 @@ export default function EditEstimation() {
                   })}
                 </select>
               </div>
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 {currentItem.unit_type !== "5" && (
                   <>
                     <div>
@@ -975,7 +989,7 @@ export default function EditEstimation() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 grid grid-cols-3 gap-3">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-2.5 sm:p-3 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
               <div>
                 <p className="text-[10px] text-slate-500 uppercase">CFT</p>
                 <p className="text-base font-bold text-blue-700">{currentItem.unit_type === "5" ? currentItem.item_cft || 0 : calculatedItemCft.toFixed(2)}</p>
