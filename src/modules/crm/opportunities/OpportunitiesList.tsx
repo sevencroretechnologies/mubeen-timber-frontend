@@ -20,7 +20,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '../../../components/ui/dropdown-menu';
 import DataTable, { TableColumn } from 'react-data-table-component';
-import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Target, XCircle } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Target, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 // import { Customer } from '@/types';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -280,16 +280,6 @@ export default function OpportunitiesList() {
       selector: (row) => row.stage_name || '-',
     },
     {
-      name: 'Amount',
-      cell: (row) => {
-        const amt = row.amount ?? (row.items?.reduce((sum, item) => sum + Number(item.amount || 0), 0) || 0);
-        return amt > 0
-          ? `${row.currency ?? '₹'} ${Number(amt).toLocaleString()}`
-          : '-';
-      },
-      width: '120px',
-    },
-    {
       name: 'Expected Close',
       selector: (row) => row.expected_closing
         ? String(row.expected_closing).split('T')[0]
@@ -378,21 +368,132 @@ export default function OpportunitiesList() {
               <p className="text-xs text-muted-foreground mt-1">Try adjusting your filters or search.</p>
             </div>
           ) : (
-            <DataTable
-              columns={columns}
-              data={items}
-              progressPending={loading}
-              pagination
-              paginationServer
-              paginationTotalRows={total}
-              paginationPerPage={perPage}
-              paginationDefaultPage={page}
-              onChangePage={(p) => setPage(p)}
-              onChangeRowsPerPage={(pp) => { setPerPage(pp); setPage(1); }}
-              customStyles={tableStyles}
-              highlightOnHover
-              responsive
-            />
+            <>
+              {/* ── Desktop Table View (≥ md) ── */}
+              <div className="hidden md:block">
+                <DataTable
+                  columns={columns}
+                  data={items}
+                  progressPending={loading}
+                  pagination
+                  paginationServer
+                  paginationTotalRows={total}
+                  paginationPerPage={perPage}
+                  paginationDefaultPage={page}
+                  onChangePage={(p) => setPage(p)}
+                  onChangeRowsPerPage={(pp) => { setPerPage(pp); setPage(1); }}
+                  customStyles={tableStyles}
+                  highlightOnHover
+                  responsive
+                />
+              </div>
+
+              {/* ── Mobile Card View (< md) ── */}
+              <div className="md:hidden space-y-4">
+                {loading ? (
+                  <div className="flex flex-col items-center justify-center p-12 border border-dashed rounded-xl">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-solarized-blue border-t-transparent mb-4" />
+                    <p className="text-sm text-muted-foreground">Loading opportunities...</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 gap-4">
+                      {items.map((row) => {
+                        let party = '-';
+                        if (row.opportunity_from === 'lead' && row.lead) {
+                          party = [row.lead.first_name, row.lead.last_name].filter(Boolean).join(' ') || '-';
+                        } else if (row.opportunity_from === 'customer' && row.customer) {
+                          party = row.customer.name || '-';
+                        } else if (row.party_name) {
+                          party = row.party_name;
+                        }
+
+                        return (
+                          <div key={row.id} className="bg-white rounded-xl shadow-sm border p-4 space-y-3">
+                            <div className="flex justify-between items-start">
+                              <div className="space-y-1 flex-1 min-w-0 mr-2">
+                                <h3 className="font-bold text-lg text-solarized-blue truncate uppercase tracking-tight">
+                                  {row.naming_series || `#${row.id}`}
+                                </h3>
+                                <p className="text-sm font-semibold text-gray-900 truncate">{party}</p>
+                              </div>
+                              <div className="flex gap-1">
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelected(row); setViewOpen(true); }}>
+                                  <Eye className="h-4 w-4 text-gray-400" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/crm/opportunities/${row.id}/edit`)}>
+                                  <Edit className="h-4 w-4 text-gray-400" />
+                                </Button>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-3 gap-x-4 text-sm">
+                              <div>
+                                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-0.5">Status</p>
+                                {row.status_name ? statusBadge(row.status_name) : '—'}
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-0.5">From</p>
+                                <span className="capitalize text-gray-700 font-semibold">{row.opportunity_from || '—'}</span>
+                              </div>
+                              <div className="col-span-2 sm:col-span-1">
+                                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-0.5">Expected Close</p>
+                                <span className="text-gray-700 font-medium">{row.expected_closing ? String(row.expected_closing).split('T')[0] : '—'}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex gap-2 pt-3 border-t">
+                              <Button
+                                variant="outline"
+                                className="flex-1 h-10 text-xs font-bold uppercase tracking-wider text-solarized-blue border-solarized-blue/20 hover:bg-solarized-blue/5"
+                                onClick={() => { setSelected(row); setViewOpen(true); }}
+                              >
+                                View Details
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-10 w-10 text-red-500 hover:bg-red-50"
+                                onClick={() => handleDelete(row.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Mobile Pagination */}
+                    {total > perPage && (
+                      <div className="flex items-center justify-between pt-4 pb-2 border-t mt-4">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={page === 1}
+                          onClick={() => setPage((p) => p - 1)}
+                          className="text-muted-foreground"
+                        >
+                          <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+                        </Button>
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                          Page {page} / {Math.ceil(total / perPage)}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={page >= Math.ceil(total / perPage)}
+                          onClick={() => setPage((p) => p + 1)}
+                          className="text-muted-foreground"
+                        >
+                          Next <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
