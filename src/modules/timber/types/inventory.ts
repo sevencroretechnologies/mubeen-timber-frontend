@@ -100,11 +100,11 @@ export interface TimberStockMovement {
 
 // Purchase Order Status Constants
 export const PURCHASE_ORDER_STATUS = {
-  DRAFT: 'draft',
-  ORDERED: 'ordered',
-  PARTIAL_RECEIVED: 'partial_received',
-  RECEIVED: 'received',
-  CANCELLED: 'cancelled',
+    DRAFT: 'draft',
+    ORDERED: 'ordered',
+    PARTIAL_RECEIVED: 'partial_received',
+    RECEIVED: 'received',
+    CANCELLED: 'cancelled',
 } as const;
 
 export type PurchaseOrderStatus = typeof PURCHASE_ORDER_STATUS[keyof typeof PURCHASE_ORDER_STATUS] | (string & {});
@@ -130,32 +130,55 @@ export interface TimberTaxRate {
     updated_at: string;
 }
 
+export interface TimberTaxGroup {
+    id: number;
+    name: string;
+    code: string | null;
+    tax_rate_ids: number[];
+    total_rate: number;
+    is_active: boolean;
+    org_id: number;
+    company_id: number;
+    created_at: string;
+    updated_at: string;
+    tax_rates?: TimberTaxRate[];
+}
+
+export interface TaxGroupFormData {
+    name: string;
+    code?: string;
+    tax_rate_ids: number[];
+    is_active?: boolean;
+}
+
 export interface TimberPurchaseOrder {
-  id: number;
-  po_code: string;
-  supplier_id: number;
-  warehouse_id: number;
-  status: PurchaseOrderStatus;
-  order_date: string | null;
-  expected_delivery_date: string | null;
-  expected_date: string | null;
-  subtotal: number;
-  tax_percentage: number;
-  tax_amount: number;
-  discount_amount: number;
-  total_amount: number;
-  notes: string | null;
-  company_id: number;
-  org_id: number;
-  supplier?: TimberSupplier;
-  warehouse?: TimberWarehouse;
-  items?: TimberPurchaseOrderItem[];
-  // Backend-computed fields (present in list responses)
-  total_ordered_qty?: number | null;
-  total_received_qty?: number | null;
-  is_fully_received?: boolean;
-  created_at: string;
-  updated_at: string;
+    id: number;
+    po_code: string;
+    supplier_id: number;
+    warehouse_id: number;
+    status: PurchaseOrderStatus;
+    order_date: string | null;
+    expected_delivery_date: string | null;
+    expected_date: string | null;
+    subtotal: number;
+    tax_percentage: number;
+    tax_group_id?: number | null;
+    tax_amount: number;
+    discount_amount: number;
+    total_amount: number;
+    notes: string | null;
+    company_id: number;
+    org_id: number;
+    supplier?: TimberSupplier;
+    warehouse?: TimberWarehouse;
+    items?: TimberPurchaseOrderItem[];
+    // Backend-computed fields (present in list responses)
+    total_ordered_qty?: number | null;
+    total_received_qty?: number | null;
+    is_fully_received?: boolean;
+    taxGroup?: TimberTaxGroup;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface TimberPurchaseOrderItem {
@@ -182,24 +205,24 @@ export type RequisitionStatus =
     | "returned";
 
 export interface TimberMaterialRequisition {
-  id: number;
-  requisition_code: string;
-  job_card_id: number | null;
-  project_id: number | null;
-  requested_by: number | null;
-  approved_by: number | null;
-  status: RequisitionStatus;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  requisition_date: string | null;
-  notes: string | null;
-  rejection_reason: string | null;
-  company_id: number;
-  org_id: number;
-  items?: TimberMaterialRequisitionItem[];
-  requested_by_user?: { id: number; name: string };
-  approved_by_user?: { id: number; name: string };
-  created_at: string;
-  updated_at: string;
+    id: number;
+    requisition_code: string;
+    job_card_id: number | null;
+    project_id: number | null;
+    requested_by: number | null;
+    approved_by: number | null;
+    status: RequisitionStatus;
+    priority: 'low' | 'medium' | 'high' | 'urgent';
+    requisition_date: string | null;
+    notes: string | null;
+    rejection_reason: string | null;
+    company_id: number;
+    org_id: number;
+    items?: TimberMaterialRequisitionItem[];
+    requested_by_user?: { id: number; name: string };
+    approved_by_user?: { id: number; name: string };
+    created_at: string;
+    updated_at: string;
 }
 
 export interface TimberMaterialRequisitionItem {
@@ -279,6 +302,9 @@ export interface PurchaseOrderFormData {
     warehouse_id: number;
     order_date?: string;
     expected_date?: string;
+    tax_group_id?: number | null;
+    tax_percentage?: number;
+    discount_amount?: number;
     notes?: string;
     items: PurchaseOrderItemFormData[];
 }
@@ -291,11 +317,11 @@ export interface PurchaseOrderItemFormData {
 }
 
 export interface ReceiveGoodsFormData {
-  items: {
-    item_id: number;
-    quantity: number;
-  }[];
-  notes?: string;
+    items: {
+        item_id: number;
+        quantity: number;
+    }[];
+    notes?: string;
 }
 
 export interface PoItemReceivedFormData {

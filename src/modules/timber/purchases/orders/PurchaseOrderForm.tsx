@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { purchaseOrderApi, supplierApi, warehouseApi } from '../../services/inventoryApi';
-import type { TimberSupplier, TimberWarehouse, TimberWoodType, TimberPurchaseOrder } from '../../types/inventory';
+import { purchaseOrderApi, supplierApi, warehouseApi, taxGroupApi } from '../../services/inventoryApi';
+import type { TimberSupplier, TimberWarehouse, TimberWoodType, TimberPurchaseOrder, TimberTaxGroup } from '../../types/inventory';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { showAlert, getErrorMessage } from '@/lib/sweetalert';
-import { ArrowLeft, Save, Plus, Trash2, Calendar, Building2, Package, ChevronLeft, LayoutGrid, Clock, IndianRupee } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Calendar, Building2, Package, ChevronLeft } from 'lucide-react';
 import api from '@/services/api';
 
 interface POItemRow {
@@ -110,11 +110,15 @@ export default function PurchaseOrderForm() {
   const [suppliers, setSuppliers] = useState<TimberSupplier[]>([]);
   const [warehouses, setWarehouses] = useState<TimberWarehouse[]>([]);
   const [woodTypes, setWoodTypes] = useState<TimberWoodType[]>([]);
+  const [taxGroups, setTaxGroups] = useState<TimberTaxGroup[]>([]);
 
   const [supplierId, setSupplierId] = useState('');
   const [warehouseId, setWarehouseId] = useState('');
   const [orderDate, setOrderDate] = useState('');
   const [expectedDate, setExpectedDate] = useState('');
+  const [taxGroupId, setTaxGroupId] = useState('');
+  const [taxPercentage, setTaxPercentage] = useState('0');
+  const [discountAmount, setDiscountAmount] = useState('0');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<POItemRow[]>([
     { wood_type_id: '', quantity: '', unit: 'CFT', unit_price: '', notes: '' },
@@ -123,10 +127,11 @@ export default function PurchaseOrderForm() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [supRes, whRes, wtRes] = await Promise.all([
+        const [supRes, whRes, wtRes, tgRes] = await Promise.all([
           supplierApi.list({ per_page: 100 }),
           warehouseApi.list({ per_page: 100 }),
           api.get('/timber/wood-types', { params: { per_page: 100 } }),
+          taxGroupApi.listAll(),
         ]);
         const supData = (supRes as Record<string, unknown>).data;
         setSuppliers(Array.isArray(supData) ? supData as TimberSupplier[] : []);
@@ -134,6 +139,7 @@ export default function PurchaseOrderForm() {
         setWarehouses(Array.isArray(whData) ? whData as TimberWarehouse[] : []);
         const wtData = wtRes.data?.data || wtRes.data;
         setWoodTypes(Array.isArray(wtData) ? wtData : []);
+        setTaxGroups(Array.isArray(tgRes) ? tgRes : []);
       } catch (error) {
         console.error('Failed to fetch form data:', error);
       }
@@ -150,6 +156,9 @@ export default function PurchaseOrderForm() {
           setWarehouseId(String(po.warehouse_id));
           setOrderDate(po.order_date || '');
           setExpectedDate(po.expected_delivery_date || '');
+          setTaxGroupId(po.tax_group_id ? String(po.tax_group_id) : '');
+          setTaxPercentage(String(po.tax_percentage || 0));
+          setDiscountAmount(String(po.discount_amount || 0));
           setNotes(po.notes || '');
           if (po.items && po.items.length > 0) {
             setItems(po.items.map((item) => ({
@@ -183,12 +192,30 @@ export default function PurchaseOrderForm() {
     setItems(updated);
   };
 
-  const calculateTotal = () => {
+  const handleTaxGroupChange = (value: string) => {
+    setTaxGroupId(value);
+    if (value) {
+      const selectedGroup = taxGroups.find(tg => String(tg.id) === value);
+      if (selectedGroup) {
+        setTaxPercentage(String(selectedGroup.total_rate));
+      }
+    } else {
+      setTaxPercentage('0');
+    }
+  };
+
+  const calculateSubtotal = () => {
     return items.reduce((sum, item) => {
       const qty = Number(item.quantity) || 0;
       const price = Number(item.unit_price) || 0;
       return sum + qty * price;
     }, 0);
+  };
+
+  const calculateTotal = () => {
+    const subtotal = calculateSubtotal();
+    const tax = subtotal * (Number(taxPercentage) / 100);
+    return subtotal + tax - Number(discountAmount);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -210,6 +237,9 @@ export default function PurchaseOrderForm() {
         warehouse_id: Number(warehouseId),
         order_date: orderDate || undefined,
         expected_delivery_date: expectedDate || undefined,
+        tax_group_id: taxGroupId ? Number(taxGroupId) : null,
+        tax_percentage: Number(taxPercentage),
+        discount_amount: Number(discountAmount),
         notes: notes || undefined,
         items: validItems.map((item) => ({
           wood_type_id: Number(item.wood_type_id),
@@ -299,6 +329,39 @@ export default function PurchaseOrderForm() {
                   <Input type="date" value={expectedDate} onChange={(e) => setExpectedDate(e.target.value)} className="pl-11 md:px-3 h-11 md:h-10 rounded-lg" />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-bold md:font-normal">Tax Group</Label>
+                <select 
+                  value={taxGroupId} 
+                  onChange={(e) => handleTaxGroupChange(e.target.value)} 
+                  className="w-full md:bg-white border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 h-11 md:h-10"
+                >
+                  <option value="">Select tax group</option>
+                  {taxGroups.map((tg) => <option key={tg.id} value={tg.id}>{tg.name} ({tg.total_rate}%)</option>)}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-bold md:font-normal">Tax Percentage (%)</Label>
+                <Input 
+                  type="number" 
+                  step="0.01" 
+                  value={taxPercentage} 
+                  onChange={(e) => setTaxPercentage(e.target.value)} 
+                  className="h-11 md:h-10 rounded-lg" 
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-bold md:font-normal">Discount Amount</Label>
+                <Input 
+                  type="number" 
+                  step="0.01" 
+                  value={discountAmount} 
+                  onChange={(e) => setDiscountAmount(e.target.value)} 
+                  className="h-11 md:h-10 rounded-lg" 
+                  placeholder="0.00"
+                />
+              </div>
               <div className="md:col-span-2 lg:col-span-3 space-y-2">
                 <Label className="text-sm font-bold md:font-normal">Notes</Label>
                 <Textarea placeholder="Additional notes..." value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="rounded-lg" />
@@ -386,9 +449,18 @@ export default function PurchaseOrderForm() {
                 </div>
                 <div className="w-full md:w-auto text-center md:text-right space-y-1">
                   <p className="text-[10px] md:text-xs font-bold text-muted-foreground uppercase tracking-widest">Grand Total</p>
-                  <div className="flex items-center justify-center md:justify-end gap-2 text-2xl md:text-3xl font-bold text-solarized-base02">
-                    <span className="text-xl md:text-2xl text-slate-400">₹</span>
-                    <span>{calculateTotal().toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                  <div className="flex flex-col items-center justify-center md:items-end gap-1">
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                      <span>Subtotal: ₹{calculateSubtotal().toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      <span>•</span>
+                      <span>Tax ({taxPercentage}%): ₹{(calculateSubtotal() * (Number(taxPercentage) / 100)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      <span>•</span>
+                      <span>Discount: ₹{Number(discountAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-2xl md:text-3xl font-bold text-solarized-base02">
+                      <span className="text-xl md:text-2xl text-slate-400">₹</span>
+                      <span>{calculateTotal().toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    </div>
                   </div>
                 </div>
               </div>

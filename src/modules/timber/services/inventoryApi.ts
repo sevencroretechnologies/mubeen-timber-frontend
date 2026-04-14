@@ -189,3 +189,23 @@ export const taxRateApi = {
     api.put(`${PREFIX}/tax-rates/${id}`, data).then((r) => r.data),
   delete: (id: number) => api.delete(`${PREFIX}/tax-rates/${id}`),
 };
+
+// Tax Groups
+export const taxGroupApi = {
+  list: (params?: Record<string, unknown>) =>
+    api.get(`${PREFIX}/tax-groups`, { params }).then((res) => {
+      const data = res.data;
+      if (data && typeof data === 'object' && 'data' in data) return data;
+      return { data };
+    }),
+  get: (id: number) =>
+    api.get<{ data: TimberTaxGroup }>(`${PREFIX}/tax-groups/${id}`).then((r) => r.data.data || r.data),
+  create: (data: TaxGroupFormData) =>
+    api.post(`${PREFIX}/tax-groups`, data).then((r) => r.data),
+  update: (id: number, data: Partial<TaxGroupFormData>) =>
+    api.put(`${PREFIX}/tax-groups/${id}`, data).then((r) => r.data),
+  delete: (id: number) => api.delete(`${PREFIX}/tax-groups/${id}`),
+  // For dropdowns
+  listAll: () =>
+    api.get(`${PREFIX}/tax-groups/list`).then((res) => res.data.data || res.data),
+};
