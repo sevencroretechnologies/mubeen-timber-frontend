@@ -636,19 +636,52 @@ export default function CreateEstimation() {
                       return (
                         <div key={product.tempId} className={`bg-white rounded-lg border transition-all overflow-hidden ${activeProductTempId === product.tempId ? "border-amber-500 ring-2 ring-amber-500/20 shadow-md scale-[1.005]" : "border-slate-200 hover:border-amber-300"}`}>
                           {/* Product Header */}
-                          <div className="p-3 flex items-center justify-between cursor-pointer" onClick={() => toggleProductExpanded(product.tempId)}>
-                            <div className="flex items-center gap-2 flex-1">
-                              <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-medium">#{index + 1}</span>
-                              <h4 className="font-semibold text-slate-800 text-sm">{productInfo?.name || "Unknown Product"}</h4>
-                              <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">{product.items.length} items</span>
+                          <div
+                            className="p-3 cursor-pointer select-none"
+                            onClick={() => toggleProductExpanded(product.tempId)}
+                          >
+                            {/* === MOBILE layout (< sm) === */}
+                            <div className="sm:hidden">
+                              {/* Row 1: index + name + chevron */}
+                              <div className="flex items-center justify-between gap-2 mb-1.5">
+                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                  <span className="shrink-0 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-medium">
+                                    #{index + 1}
+                                  </span>
+                                  <h4 className="font-semibold text-slate-800 text-sm truncate">
+                                    {productInfo?.name || "Unknown Product"}
+                                  </h4>
+                                </div>
+                                {isExpanded
+                                  ? <ChevronUp className="shrink-0 h-4 w-4 text-slate-400" />
+                                  : <ChevronDown className="shrink-0 h-4 w-4 text-slate-400" />}
+                              </div>
+                              {/* Row 2: stats + delete */}
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">{product.items.length} items</span>
+                                <span className="text-xs font-bold text-blue-600">{Number(product.total_cft).toFixed(2)} CFT</span>
+                                <span className="text-xs font-bold text-green-600">₹{Number(product.total_amount).toFixed(2)}</span>
+                                <Button type="button" variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleRemoveProduct(product.tempId); }} className="h-6 w-6 text-slate-400 hover:text-red-600 ml-auto">
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-bold text-blue-600">{Number(product.total_cft).toFixed(2)} CFT</span>
-                              <span className="text-sm font-bold text-green-600">₹{Number(product.total_amount).toFixed(2)}</span>
-                              <Button type="button" variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleRemoveProduct(product.tempId); }} className="h-7 w-7 text-slate-400 hover:text-red-600">
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                              {isExpanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+
+                            {/* === DESKTOP layout (sm+) — original === */}
+                            <div className="hidden sm:flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 flex-1">
+                                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-medium">#{index + 1}</span>
+                                <h4 className="font-semibold text-slate-800 text-sm">{productInfo?.name || "Unknown Product"}</h4>
+                                <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">{product.items.length} items</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-blue-600">{Number(product.total_cft).toFixed(2)} CFT</span>
+                                <span className="text-sm font-bold text-green-600">₹{Number(product.total_amount).toFixed(2)}</span>
+                                <Button type="button" variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleRemoveProduct(product.tempId); }} className="h-7 w-7 text-slate-400 hover:text-red-600">
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                                {isExpanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                              </div>
                             </div>
                           </div>
 
@@ -662,7 +695,36 @@ export default function CreateEstimation() {
                               ) : (
                                 product.items.map((item, itemIdx) => (
                                   <div key={item.tempId} className="bg-white p-2.5 rounded-lg border border-slate-200 text-xs">
-                                    <div className="flex items-start justify-between">
+                                    {/* === MOBILE item layout (< sm) === */}
+                                    <div className="sm:hidden space-y-1.5">
+                                      <div className="flex items-center justify-between gap-1">
+                                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                          <span className="shrink-0 text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">{itemIdx + 1}</span>
+                                          {item.name
+                                            ? <span className="font-semibold text-slate-700 truncate">{item.name}</span>
+                                            : <span className="text-slate-400 italic truncate">Unnamed item</span>}
+                                        </div>
+                                        <div className="flex items-center gap-0.5 shrink-0">
+                                          <Button type="button" variant="ghost" size="icon" onClick={() => openEditItemModal(product.tempId, item)} className="h-6 w-6 text-slate-400 hover:text-amber-600"><Edit2 className="h-3 w-3" /></Button>
+                                          <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveItem(product.tempId, item.tempId)} className="h-6 w-6 text-slate-400 hover:text-red-600"><Trash2 className="h-3 w-3" /></Button>
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-wrap gap-1.5 text-[11px] text-slate-500">
+                                        <span className="bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded">L: {item.length}</span>
+                                        <span className="bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded">B: {item.breadth}</span>
+                                        {parseFloat(item.height) > 0 && <span className="bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded">H: {item.height}</span>}
+                                        {parseFloat(item.thickness) > 0 && <span className="bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded">T: {item.thickness}</span>}
+                                      </div>
+                                      <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                                        <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-medium">CFT: {Number(item.item_cft).toFixed(2)}</span>
+                                        <span className="bg-green-50 text-green-600 px-1.5 py-0.5 rounded font-medium">Qty: {item.quantity}</span>
+                                        <span className="bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded font-medium">₹{Number(item.rate).toFixed(2)}/CFT</span>
+                                        <span className="ml-auto font-bold text-green-700 text-xs">= ₹{Number(item.total_amount).toFixed(2)}</span>
+                                      </div>
+                                    </div>
+
+                                    {/* === DESKTOP item layout (sm+) — original === */}
+                                    <div className="hidden sm:flex items-start justify-between">
                                       <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-1.5">
                                           <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">{itemIdx + 1}</span>
@@ -680,12 +742,8 @@ export default function CreateEstimation() {
                                       </div>
                                       <div className="flex items-center gap-1 ml-2">
                                         <span className="text-xs font-bold text-green-600 mr-1">₹{Number(item.total_amount).toFixed(2)}</span>
-                                        <Button type="button" variant="ghost" size="icon" onClick={() => openEditItemModal(product.tempId, item)} className="h-6 w-6 text-slate-400 hover:text-amber-600">
-                                          <Edit2 className="h-3 w-3" />
-                                        </Button>
-                                        <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveItem(product.tempId, item.tempId)} className="h-6 w-6 text-slate-400 hover:text-red-600">
-                                          <Trash2 className="h-3 w-3" />
-                                        </Button>
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => openEditItemModal(product.tempId, item)} className="h-6 w-6 text-slate-400 hover:text-amber-600"><Edit2 className="h-3 w-3" /></Button>
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveItem(product.tempId, item.tempId)} className="h-6 w-6 text-slate-400 hover:text-red-600"><Trash2 className="h-3 w-3" /></Button>
                                       </div>
                                     </div>
                                   </div>
@@ -805,7 +863,7 @@ export default function CreateEstimation() {
 
       {/* ─── Add Product Modal (Simple: just select product_id) ──── */}
       <Dialog open={isProductModalOpen} onOpenChange={(open) => { setIsProductModalOpen(open); if (!open) { setSelectedProductId(null); setSearchValue(""); } }}>
-        <DialogContent className="sm:max-w-[500px] w-[calc(100%-3rem)] sm:w-full max-h-[90vh] overflow-y-auto rounded-lg">
+        <DialogContent className="sm:max-w-[500px] w-[calc(100%-2rem)] sm:w-full overflow-y-auto rounded-lg top-[2%] translate-y-0 sm:top-[50%] sm:translate-y-[-50%]" style={{ position: 'fixed', maxHeight: 'min(92dvh, 560px)' }}>
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
               <Hammer className="h-5 w-5 text-amber-600" />
@@ -824,7 +882,7 @@ export default function CreateEstimation() {
                     <ChevronDown className="h-4 w-4 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-full p-0" align="start">
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start" side="bottom" sideOffset={4} avoidCollisions={false}>
                   <Command shouldFilter={false}>
                     <CommandInput placeholder="Search products..." value={searchValue} onValueChange={setSearchValue} className="h-11" />
                     <CommandList>
@@ -895,7 +953,7 @@ export default function CreateEstimation() {
 
       {/* ─── Add/Edit Item Modal (Detailed: dimensions, CFT, rate) ──── */}
       <Dialog open={isItemModalOpen} onOpenChange={(open) => { setIsItemModalOpen(open); if (!open) { setCurrentItem(emptyItem()); setActiveProductTempId(null); } }}>
-        <DialogContent className="sm:max-w-[600px] w-[calc(100%-3rem)] sm:w-full min-h-[60vh] sm:min-h-[500px] max-h-[90vh] overflow-y-auto rounded-lg top-[5%] translate-y-0 sm:top-[50%] sm:translate-y-[-50%]">
+        <DialogContent className="sm:max-w-[600px] w-[calc(100%-2rem)] sm:w-full overflow-y-auto rounded-lg top-[2%] translate-y-0 sm:top-[50%] sm:translate-y-[-50%]" style={{ position: 'fixed', maxHeight: 'min(92dvh, 600px)' }}>
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-slate-800 flex flex-col gap-0.5">
               <div className="flex items-center gap-2">

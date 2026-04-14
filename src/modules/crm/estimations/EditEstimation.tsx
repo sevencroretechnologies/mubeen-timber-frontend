@@ -652,7 +652,7 @@ export default function EditEstimation() {
                       const productInfo = product.product_name || products.find((p) => p.id === product.product_id)?.name || "Unknown Product";
                       const isExpanded = expandedProducts.has(product.tempId);
                       return (
-                        <div key={product.tempId} className={`bg-white rounded-lg border transition-all overflow-hidden ${activeProductTempId === product.tempId ? "border-amber-500 ring-2 ring-amber-500/20 shadow-md scale-[1.005]" : "border-slate-200 hover:border-amber-300"}`}>
+                        <div key={product.tempId} className="bg-white rounded-lg border border-slate-200 hover:border-amber-300 transition-all overflow-hidden">
                           <div className="p-3 flex items-center justify-between cursor-pointer" onClick={() => toggleProductExpanded(product.tempId)}>
                             <div className="flex items-center gap-2 flex-1">
                               <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-medium">#{index + 1}</span>
@@ -678,7 +678,36 @@ export default function EditEstimation() {
                               ) : (
                                 product.items.map((item, itemIdx) => (
                                   <div key={item.tempId} className="bg-white p-2.5 rounded-lg border border-slate-200 text-xs">
-                                    <div className="flex items-start justify-between">
+                                    {/* === MOBILE item layout (< sm) === */}
+                                    <div className="sm:hidden space-y-1.5">
+                                      <div className="flex items-center justify-between gap-1">
+                                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                          <span className="shrink-0 text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">{itemIdx + 1}</span>
+                                          {item.name
+                                            ? <span className="font-semibold text-slate-700 truncate">{item.name}</span>
+                                            : <span className="text-slate-400 italic truncate">Unnamed item</span>}
+                                        </div>
+                                        <div className="flex items-center gap-0.5 shrink-0">
+                                          <Button type="button" variant="ghost" size="icon" onClick={() => openEditItemModal(product.tempId, item)} className="h-6 w-6 text-slate-400 hover:text-amber-600"><Edit2 className="h-3 w-3" /></Button>
+                                          <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveItem(product.tempId, item.tempId)} className="h-6 w-6 text-slate-400 hover:text-red-600"><Trash2 className="h-3 w-3" /></Button>
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-wrap gap-1.5 text-[11px] text-slate-500">
+                                        <span className="bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded">L: {item.length}</span>
+                                        <span className="bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded">B: {item.breadth}</span>
+                                        {parseFloat(item.height) > 0 && <span className="bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded">H: {item.height}</span>}
+                                        {parseFloat(item.thickness) > 0 && <span className="bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded">T: {item.thickness}</span>}
+                                      </div>
+                                      <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                                        <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-medium">CFT: {Number(item.item_cft).toFixed(2)}</span>
+                                        <span className="bg-green-50 text-green-600 px-1.5 py-0.5 rounded font-medium">Qty: {item.quantity}</span>
+                                        <span className="bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded font-medium">₹{Number(item.rate).toFixed(2)}/CFT</span>
+                                        <span className="ml-auto font-bold text-green-700 text-xs">= ₹{Number(item.total_amount).toFixed(2)}</span>
+                                      </div>
+                                    </div>
+
+                                    {/* === DESKTOP item layout (sm+) — original === */}
+                                    <div className="hidden sm:flex items-start justify-between">
                                       <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-1.5">
                                           <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">{itemIdx + 1}</span>
@@ -696,12 +725,8 @@ export default function EditEstimation() {
                                       </div>
                                       <div className="flex items-center gap-1 ml-2">
                                         <span className="text-xs font-bold text-green-600 mr-1">₹{Number(item.total_amount).toFixed(2)}</span>
-                                        <Button type="button" variant="ghost" size="icon" onClick={() => openEditItemModal(product.tempId, item)} className="h-6 w-6 text-slate-400 hover:text-amber-600">
-                                          <Edit2 className="h-3 w-3" />
-                                        </Button>
-                                        <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveItem(product.tempId, item.tempId)} className="h-6 w-6 text-slate-400 hover:text-red-600">
-                                          <Trash2 className="h-3 w-3" />
-                                        </Button>
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => openEditItemModal(product.tempId, item)} className="h-6 w-6 text-slate-400 hover:text-amber-600"><Edit2 className="h-3 w-3" /></Button>
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveItem(product.tempId, item.tempId)} className="h-6 w-6 text-slate-400 hover:text-red-600"><Trash2 className="h-3 w-3" /></Button>
                                       </div>
                                     </div>
                                   </div>
