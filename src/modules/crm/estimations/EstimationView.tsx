@@ -250,20 +250,41 @@ export default function EstimationView() {
                                 <div key={product.id} className="border border-slate-200 rounded-lg overflow-hidden hover:border-amber-300 transition-colors">
                                     {/* Product Header */}
                                     <div
-                                        className="p-3 bg-white flex items-center justify-between cursor-pointer hover:bg-slate-50/50 transition-colors"
+                                        className="p-3 bg-white cursor-pointer hover:bg-slate-50/50 transition-colors"
                                         onClick={() => toggleProduct(product.id)}
                                     >
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-xs bg-orange-50 text-orange-700 px-2 py-0.5 rounded font-bold">#{index + 1}</span>
-                                            <h4 className="font-semibold text-slate-800 text-sm">
-                                                {product.product?.name || `Product #${product.product_id}`}
-                                            </h4>
-                                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">{items.length} items</span>
+                                        {/* === MOBILE header (< sm) === */}
+                                        <div className="sm:hidden">
+                                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                    <span className="shrink-0 text-xs bg-orange-50 text-orange-700 px-2 py-0.5 rounded font-bold">#{index + 1}</span>
+                                                    <h4 className="font-semibold text-slate-800 text-sm truncate">
+                                                        {product.product?.name || `Product #${product.product_id}`}
+                                                    </h4>
+                                                </div>
+                                                {isExpanded ? <ChevronUp className="shrink-0 h-4 w-4 text-slate-400" /> : <ChevronDown className="shrink-0 h-4 w-4 text-slate-400" />}
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                                                <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded">{items.length} items</span>
+                                                <span className="font-bold text-blue-600">{Number(product.total_cft || 0).toFixed(2)} CFT</span>
+                                                <span className="font-bold text-green-600">&#8377;{Number(product.total_amount || 0).toFixed(2)}</span>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-sm font-bold text-blue-600">{Number(product.total_cft || 0).toFixed(2)} CFT</span>
-                                            <span className="text-sm font-bold text-green-600">₹{Number(product.total_amount || 0).toFixed(2)}</span>
-                                            {isExpanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+
+                                        {/* === DESKTOP header (sm+) — original layout unchanged === */}
+                                        <div className="hidden sm:flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-xs bg-orange-50 text-orange-700 px-2 py-0.5 rounded font-bold">#{index + 1}</span>
+                                                <h4 className="font-semibold text-slate-800 text-sm">
+                                                    {product.product?.name || `Product #${product.product_id}`}
+                                                </h4>
+                                                <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">{items.length} items</span>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-sm font-bold text-blue-600">{Number(product.total_cft || 0).toFixed(2)} CFT</span>
+                                                <span className="text-sm font-bold text-green-600">&#8377;{Number(product.total_amount || 0).toFixed(2)}</span>
+                                                {isExpanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                                            </div>
                                         </div>
                                     </div>
 
@@ -312,39 +333,27 @@ export default function EstimationView() {
                                             {/* Mobile Cards */}
                                             <div className="md:hidden divide-y divide-slate-100">
                                                 {items.map((item, itemIdx) => (
-                                                    <div key={item.id} className="p-3 space-y-2">
-                                                        <div className="flex justify-between items-start">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">{itemIdx + 1}</span>
-                                                                <span className="font-medium text-sm text-slate-700">{item.name || 'Item'}</span>
+                                                    <div key={item.id} className="p-2.5 space-y-1.5 text-xs">
+                                                        {/* Row 1: index + name + total */}
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                                                <span className="shrink-0 text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">{itemIdx + 1}</span>
+                                                                <span className="font-semibold text-slate-700 truncate">{item.name || 'Item'}</span>
                                                             </div>
-                                                            <span className="font-bold text-sm text-green-600">₹{Number(item.total_amount || 0).toFixed(2)}</span>
+                                                            <span className="shrink-0 font-bold text-green-600">&#8377;{Number(item.total_amount || 0).toFixed(2)}</span>
                                                         </div>
-                                                        <div className="grid grid-cols-2 gap-2 text-xs">
-                                                            <div className="bg-white p-2 rounded border border-slate-100">
-                                                                <p className="text-[9px] text-slate-400 uppercase font-bold mb-0.5">Formula</p>
-                                                                <p className="font-medium text-slate-700 truncate">{getCftTypeLabel(item.unit_type)}</p>
-                                                            </div>
-                                                            <div className="bg-white p-2 rounded border border-slate-100">
-                                                                <p className="text-[9px] text-slate-400 uppercase font-bold mb-0.5">Dimensions</p>
-                                                                <p className="font-mono font-bold text-slate-700">{getDimensionsDisplay(item)}</p>
-                                                            </div>
+                                                        {/* Row 2: formula + dimensions */}
+                                                        <div className="flex flex-wrap gap-1">
+                                                            <span className="bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded text-slate-500 text-[10px]">{getCftTypeLabel(item.unit_type)}</span>
+                                                            {String(item.unit_type) !== '5' && (
+                                                                <span className="bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded font-mono text-slate-600 text-[10px]">{getDimensionsDisplay(item)}</span>
+                                                            )}
                                                         </div>
-                                                        <div className="flex items-center justify-between text-[11px] pt-1">
-                                                            <div className="flex gap-3">
-                                                                <div className="bg-white px-2 py-1 rounded border border-slate-100">
-                                                                    <span className="text-slate-500 uppercase font-bold text-[9px] block">Qty</span>
-                                                                    <span className="font-semibold text-slate-800">{item.quantity}</span>
-                                                                </div>
-                                                                <div className="bg-white px-2 py-1 rounded border border-slate-100">
-                                                                    <span className="text-slate-500 uppercase font-bold text-[9px] block">Rate</span>
-                                                                    <span className="font-semibold text-slate-800">₹{Number(item.rate || 0).toFixed(2)}</span>
-                                                                </div>
-                                                            </div>
-                                                            <div className="bg-blue-50 px-3 py-1 rounded border border-blue-100 text-right">
-                                                                <span className="text-blue-500 uppercase font-bold text-[9px] block">CFT</span>
-                                                                <span className="font-black text-blue-700 text-[13px]">{Number(item.item_cft || 0).toFixed(2)}</span>
-                                                            </div>
+                                                        {/* Row 3: Qty + Rate + CFT */}
+                                                        <div className="flex flex-wrap items-center gap-1.5">
+                                                            <span className="bg-green-50 text-green-600 px-1.5 py-0.5 rounded font-medium">Qty: {item.quantity}</span>
+                                                            <span className="bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded font-medium">&#8377;{Number(item.rate || 0).toFixed(2)}/CFT</span>
+                                                            <span className="ml-auto bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold">CFT: {Number(item.item_cft || 0).toFixed(2)}</span>
                                                         </div>
                                                     </div>
                                                 ))}

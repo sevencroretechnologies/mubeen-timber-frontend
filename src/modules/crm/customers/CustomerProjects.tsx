@@ -261,8 +261,8 @@ export default function CustomerProjects() {
         // Favor grand_total or total from API if available
         const apiTotal = estimation.grand_total ?? estimation.total;
         if (apiTotal !== undefined && apiTotal !== null) {
-            return typeof apiTotal === 'string' 
-                ? parseFloat(apiTotal) 
+            return typeof apiTotal === 'string'
+                ? parseFloat(apiTotal)
                 : apiTotal;
         }
 
@@ -457,131 +457,164 @@ export default function CustomerProjects() {
                                                         return (
                                                             <div
                                                                 key={estimation.id}
-                                                                className="bg-white p-3 rounded-lg border border-amber-200 hover:border-amber-300 transition-colors"
+                                                                className="bg-white rounded-lg border border-amber-200 hover:border-amber-300 transition-colors overflow-hidden"
                                                             >
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <div className="flex items-center gap-2 mb-1">
-                                                                    <span className={`text-xs px-2 py-0.5 rounded font-medium ${getStatusColor(estimation.status)}`}>
-                                                                        {estimation.status?.replace('_', ' ').toUpperCase()}
-                                                                    </span>
-                                                                    {/* <span className="text-xs text-gray-400">
-                                                                        #{estimation.id}
-                                                                    </span>
-                                                                    <span className="text-xs text-gray-400">
-                                                                        {new Date(estimation.created_at).toLocaleDateString()}
-                                                                    </span> */}
-                                                                </div>
-                                                                {estimation.description && (
-                                                                    <p className="text-sm text-gray-700 truncate mb-1">
-                                                                        {estimation.description}
-                                                                    </p>
-                                                                )}
-                                                                {estimation.products && estimation.products.length > 0 && (
-                                                                    <p className="text-xs text-gray-500">
-                                                                        {estimation.products.length} product(s) • {estimation.products.reduce((sum, p) => sum + (Number(p.total_cft) || 0), 0).toFixed(2)} CFT
-                                                                    </p>
-                                                                )}
-                                                            </div>
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="text-right">
-                                                                    <p className="text-sm font-bold text-green-600 flex items-center gap-1">
-                                                                        <IndianRupee className="h-3 w-3" />
-                                                                        {total.toFixed(2)}
-                                                                    </p>
-                                                                </div>
-                                                                <button
-                                                                    onClick={() => navigate(`/crm/estimations/${estimation.id}/edit`)}
-                                                                    className="p-1.5 hover:bg-amber-100 rounded text-amber-600"
-                                                                    title="Edit Estimation"
-                                                                >
-                                                                    <Edit className="h-4 w-4" />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => navigate(`/crm/estimations/${estimation.id}`)}
-                                                                    className="p-1.5 hover:bg-amber-100 rounded text-amber-600"
-                                                                    title="View Details"
-                                                                >
-                                                                    <FileText className="h-4 w-4" />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleDeleteEstimation(estimation.id, project.id)}
-                                                                    className="p-1.5 hover:bg-red-50 rounded text-red-500"
-                                                                    title="Delete"
-                                                                >
-                                                                    <Trash2 className="h-4 w-4" />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => toggleEstimation(estimation.id)}
-                                                                    className="p-1.5 hover:bg-amber-100 rounded text-amber-700 ml-2"
-                                                                    title="Expand Details"
-                                                                >
-                                                                    {expandedEstimations.has(estimation.id) ? (
-                                                                        <ChevronDown className="h-4 w-4" />
-                                                                    ) : (
-                                                                        <ChevronRight className="h-4 w-4" />
-                                                                    )}
-                                                                </button>
-                                                            </div>
-
-                                                        </div>
-                                                        
-                                                        {/* Expanded Estimation Details (Nested Items) */}
-                                                        {expandedEstimations.has(estimation.id) && estimation.products && estimation.products.length > 0 && (
-                                                            <div className="mt-3 pl-4 border-l-2 border-amber-200 space-y-3">
-                                                                {estimation.products.map(product => (
-                                                                    <div key={product.id} className="bg-amber-50/50 rounded-lg p-3 border border-amber-100">
-                                                                        <div className="flex justify-between items-center mb-2">
-                                                                            <h5 className="font-semibold text-amber-900 text-sm">
-                                                                                {product.product?.name || 'Custom Product'}
-                                                                            </h5>
-                                                                            <div className="text-sm font-bold text-green-600">
-                                                                                ₹{Number(product.total_amount || 0).toFixed(2)}
-                                                                            </div>
+                                                                {/* ── MOBILE card (< sm) ── */}
+                                                                <div className="sm:hidden p-3 space-y-2">
+                                                                    {/* Row 1: status + info + expand toggle */}
+                                                                    <div className="flex items-start justify-between gap-2">
+                                                                        <div className="flex-1 min-w-0 space-y-0.5">
+                                                                            <span className={`inline-block text-xs px-2 py-0.5 rounded font-semibold ${getStatusColor(estimation.status)}`}>
+                                                                                {estimation.status?.replace('_', ' ').toUpperCase()}
+                                                                            </span>
+                                                                            {estimation.description && (
+                                                                                <p className="text-sm text-gray-700 truncate">{estimation.description}</p>
+                                                                            )}
+                                                                            {estimation.products && estimation.products.length > 0 && (
+                                                                                <p className="text-xs text-gray-500">
+                                                                                    {estimation.products.length} product(s) &middot; {estimation.products.reduce((sum, p) => sum + (Number(p.total_cft) || 0), 0).toFixed(2)} CFT
+                                                                                </p>
+                                                                            )}
                                                                         </div>
-                                                                        
-                                                                        {product.items && product.items.length > 0 ? (
-                                                                            <div className="overflow-x-auto">
-                                                                                <table className="w-full text-xs text-left">
-                                                                                    <thead className="text-gray-500 uppercase bg-amber-100/50">
-                                                                                        <tr>
-                                                                                            <th className="px-2 py-1.5 rounded-l-md font-medium">Item Name</th>
-                                                                                            <th className="px-2 py-1.5 font-medium">Dimensions</th>
-                                                                                            <th className="px-2 py-1.5 font-medium text-right">CFT</th>
-                                                                                            <th className="px-2 py-1.5 font-medium text-right">Qty</th>
-                                                                                            <th className="px-2 py-1.5 font-medium text-right">Rate</th>
-                                                                                            <th className="px-2 py-1.5 rounded-r-md font-medium text-right">Total</th>
-                                                                                        </tr>
-                                                                                    </thead>
-                                                                                    <tbody className="divide-y divide-amber-100/50">
-                                                                                        {product.items.map(item => (
-                                                                                            <tr key={item.id} className="hover:bg-amber-50/80">
-                                                                                                <td className="px-2 py-1.5 font-medium">{item.name || '-'}</td>
-                                                                                                <td className="px-2 py-1.5 text-gray-600">
-                                                                                                    {(item.unit_type === "5") ? "Manual" : `${item.length || 0} × ${item.breadth || 0} × ${['1','2'].includes(item.unit_type) ? (item.height || 0) : (item.thickness || 0)}`}
-                                                                                                </td>
-                                                                                                <td className="px-2 py-1.5 text-right font-medium text-blue-600">{Number(item.item_cft || 0).toFixed(2)}</td>
-                                                                                                <td className="px-2 py-1.5 text-right">{item.quantity}</td>
-                                                                                                <td className="px-2 py-1.5 text-right">₹{Number(item.rate || 0).toFixed(2)}</td>
-                                                                                                <td className="px-2 py-1.5 text-right font-medium text-green-600">₹{Number(item.total_amount || 0).toFixed(2)}</td>
-                                                                                            </tr>
-                                                                                        ))}
-                                                                                    </tbody>
-                                                                                </table>
-                                                                            </div>
-                                                                        ) : (
-                                                                            <p className="text-xs text-gray-400 italic">No items found</p>
-                                                                        )}
+                                                                        <button
+                                                                            onClick={() => toggleEstimation(estimation.id)}
+                                                                            className="shrink-0 p-1.5 hover:bg-amber-100 rounded text-amber-700"
+                                                                            title="Expand Details"
+                                                                        >
+                                                                            {expandedEstimations.has(estimation.id)
+                                                                                ? <ChevronDown className="h-4 w-4" />
+                                                                                : <ChevronRight className="h-4 w-4" />}
+                                                                        </button>
                                                                     </div>
-                                                                ))}
+                                                                    {/* Row 2: total + action buttons */}
+                                                                    <div className="flex items-center justify-between pt-1 border-t border-amber-50">
+                                                                        <p className="text-sm font-bold text-green-700 flex items-center gap-0.5">
+                                                                            <IndianRupee className="h-3.5 w-3.5" />{total.toFixed(2)}
+                                                                        </p>
+                                                                        <div className="flex items-center gap-1">
+                                                                            <button onClick={() => navigate(`/crm/estimations/${estimation.id}/edit`)} className="p-1.5 hover:bg-amber-100 rounded text-amber-600" title="Edit"><Edit className="h-4 w-4" /></button>
+                                                                            <button onClick={() => navigate(`/crm/estimations/${estimation.id}`)} className="p-1.5 hover:bg-amber-100 rounded text-amber-600" title="View"><FileText className="h-4 w-4" /></button>
+                                                                            <button onClick={() => handleDeleteEstimation(estimation.id, project.id)} className="p-1.5 hover:bg-red-50 rounded text-red-500" title="Delete"><Trash2 className="h-4 w-4" /></button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* ── DESKTOP card (sm+) — original layout unchanged ── */}
+                                                                <div className="hidden sm:block p-3">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <div className="flex items-center gap-2 mb-1">
+                                                                                <span className={`text-xs px-2 py-0.5 rounded font-medium ${getStatusColor(estimation.status)}`}>
+                                                                                    {estimation.status?.replace('_', ' ').toUpperCase()}
+                                                                                </span>
+                                                                            </div>
+                                                                            {estimation.description && (
+                                                                                <p className="text-sm text-gray-700 truncate mb-1">{estimation.description}</p>
+                                                                            )}
+                                                                            {estimation.products && estimation.products.length > 0 && (
+                                                                                <p className="text-xs text-gray-500">
+                                                                                    {estimation.products.length} product(s) &bull; {estimation.products.reduce((sum, p) => sum + (Number(p.total_cft) || 0), 0).toFixed(2)} CFT
+                                                                                </p>
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className="text-right">
+                                                                                <p className="text-sm font-bold text-green-600 flex items-center gap-1">
+                                                                                    <IndianRupee className="h-3 w-3" />
+                                                                                    {total.toFixed(2)}
+                                                                                </p>
+                                                                            </div>
+                                                                            <button onClick={() => navigate(`/crm/estimations/${estimation.id}/edit`)} className="p-1.5 hover:bg-amber-100 rounded text-amber-600" title="Edit Estimation"><Edit className="h-4 w-4" /></button>
+                                                                            <button onClick={() => navigate(`/crm/estimations/${estimation.id}`)} className="p-1.5 hover:bg-amber-100 rounded text-amber-600" title="View Details"><FileText className="h-4 w-4" /></button>
+                                                                            <button onClick={() => handleDeleteEstimation(estimation.id, project.id)} className="p-1.5 hover:bg-red-50 rounded text-red-500" title="Delete"><Trash2 className="h-4 w-4" /></button>
+                                                                            <button onClick={() => toggleEstimation(estimation.id)} className="p-1.5 hover:bg-amber-100 rounded text-amber-700 ml-2" title="Expand Details">
+                                                                                {expandedEstimations.has(estimation.id)
+                                                                                    ? <ChevronDown className="h-4 w-4" />
+                                                                                    : <ChevronRight className="h-4 w-4" />}
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* ── Expanded items (shared — inside the card) ── */}
+                                                                {expandedEstimations.has(estimation.id) && estimation.products && estimation.products.length > 0 && (
+                                                                    <div className="border-t border-amber-100 px-3 pb-3 pt-2 space-y-3">
+                                                                        {estimation.products.map(product => (
+                                                                            <div key={product.id} className="bg-amber-50/50 rounded-lg p-3 border border-amber-100">
+                                                                                <div className="flex justify-between items-center mb-2">
+                                                                                    <h5 className="font-semibold text-amber-900 text-sm">
+                                                                                        {product.product?.name || 'Custom Product'}
+                                                                                    </h5>
+                                                                                    <div className="text-sm font-bold text-green-600">
+                                                                                        &#8377;{Number(product.total_amount || 0).toFixed(2)}
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                {product.items && product.items.length > 0 ? (
+                                                                                    <>
+                                                                                        {/* Desktop: original table (hidden on mobile) */}
+                                                                                        <div className="hidden sm:block overflow-x-auto">
+                                                                                            <table className="w-full text-xs text-left">
+                                                                                                <thead className="text-gray-500 uppercase bg-amber-100/50">
+                                                                                                    <tr>
+                                                                                                        <th className="px-2 py-1.5 rounded-l-md font-medium">Item Name</th>
+                                                                                                        <th className="px-2 py-1.5 font-medium">Dimensions</th>
+                                                                                                        <th className="px-2 py-1.5 font-medium text-right">CFT</th>
+                                                                                                        <th className="px-2 py-1.5 font-medium text-right">Qty</th>
+                                                                                                        <th className="px-2 py-1.5 font-medium text-right">Rate</th>
+                                                                                                        <th className="px-2 py-1.5 rounded-r-md font-medium text-right">Total</th>
+                                                                                                    </tr>
+                                                                                                </thead>
+                                                                                                <tbody className="divide-y divide-amber-100/50">
+                                                                                                    {product.items.map(item => (
+                                                                                                        <tr key={item.id} className="hover:bg-amber-50/80">
+                                                                                                            <td className="px-2 py-1.5 font-medium">{item.name || '-'}</td>
+                                                                                                            <td className="px-2 py-1.5 text-gray-600">
+                                                                                                                {item.unit_type === "5" ? "Manual" : `${item.length || 0} \u00d7 ${item.breadth || 0} \u00d7 ${['1', '2'].includes(item.unit_type) ? (item.height || 0) : (item.thickness || 0)}`}
+                                                                                                            </td>
+                                                                                                            <td className="px-2 py-1.5 text-right font-medium text-blue-600">{Number(item.item_cft || 0).toFixed(2)}</td>
+                                                                                                            <td className="px-2 py-1.5 text-right">{item.quantity}</td>
+                                                                                                            <td className="px-2 py-1.5 text-right">&#8377;{Number(item.rate || 0).toFixed(2)}</td>
+                                                                                                            <td className="px-2 py-1.5 text-right font-medium text-green-600">&#8377;{Number(item.total_amount || 0).toFixed(2)}</td>
+                                                                                                        </tr>
+                                                                                                    ))}
+                                                                                                </tbody>
+                                                                                            </table>
+                                                                                        </div>
+
+                                                                                        {/* Mobile: stacked item cards (hidden on desktop) */}
+                                                                                        <div className="sm:hidden space-y-1.5">
+                                                                                            {product.items.map(item => (
+                                                                                                <div key={item.id} className="bg-white rounded border border-amber-100 p-2 text-[11px] space-y-1">
+                                                                                                    <div className="flex items-center justify-between gap-2">
+                                                                                                        <span className="font-semibold text-slate-700 truncate">{item.name || '\u2014'}</span>
+                                                                                                        <span className="shrink-0 font-bold text-green-600">&#8377;{Number(item.total_amount || 0).toFixed(2)}</span>
+                                                                                                    </div>
+                                                                                                    <div className="flex flex-wrap gap-1">
+                                                                                                        <span className="bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded text-slate-500">
+                                                                                                            {item.unit_type === '5' ? 'Manual' : `${item.length || 0}\u00d7${item.breadth || 0}\u00d7${['1', '2'].includes(item.unit_type) ? (item.height || 0) : (item.thickness || 0)}`}
+                                                                                                        </span>
+                                                                                                        <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">CFT: {Number(item.item_cft || 0).toFixed(2)}</span>
+                                                                                                        <span className="bg-green-50 text-green-600 px-1.5 py-0.5 rounded">Qty: {item.quantity}</span>
+                                                                                                        <span className="bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded">&#8377;{Number(item.rate || 0).toFixed(2)}/CFT</span>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    </>
+                                                                                ) : (
+                                                                                    <p className="text-xs text-gray-400 italic">No items found</p>
+                                                                                )}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                    </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             ))
