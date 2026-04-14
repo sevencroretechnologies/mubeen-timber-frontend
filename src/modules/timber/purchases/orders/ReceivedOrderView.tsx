@@ -95,7 +95,7 @@ export default function ReceivedOrderView() {
                <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => navigate('/purchases/orders')}
+                  onClick={() => navigate('/purchases/orders/received')}
                   className="h-9 w-9 text-slate-500 rounded-xl border-slate-200 shadow-sm"
                >
                   <ArrowLeft className="h-4 w-4" />
