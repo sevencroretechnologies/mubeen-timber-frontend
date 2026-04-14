@@ -634,7 +634,7 @@ export default function CreateEstimation() {
                       const isExpanded = expandedProducts.has(product.tempId);
 
                       return (
-                        <div key={product.tempId} className="bg-white rounded-lg border border-slate-200 hover:border-amber-300 transition-all overflow-hidden">
+                        <div key={product.tempId} className={`bg-white rounded-lg border transition-all overflow-hidden ${activeProductTempId === product.tempId ? "border-amber-500 ring-2 ring-amber-500/20 shadow-md scale-[1.005]" : "border-slate-200 hover:border-amber-300"}`}>
                           {/* Product Header */}
                           <div className="p-3 flex items-center justify-between cursor-pointer" onClick={() => toggleProductExpanded(product.tempId)}>
                             <div className="flex items-center gap-2 flex-1">
@@ -696,7 +696,7 @@ export default function CreateEstimation() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => openAddItemModal(product.tempId)}
-                                className="w-full mt-1 h-8 text-xs border-dashed border-amber-300 text-amber-700 hover:bg-amber-50"
+                                className="w-full mt-1 h-8 text-xs border-dashed border-amber-300 text-amber-700 bg-amber-50"
                               >
                                 <Plus className="h-3 w-3 mr-1" /> Add Item
                               </Button>
@@ -897,11 +897,21 @@ export default function CreateEstimation() {
       <Dialog open={isItemModalOpen} onOpenChange={(open) => { setIsItemModalOpen(open); if (!open) { setCurrentItem(emptyItem()); setActiveProductTempId(null); } }}>
         <DialogContent className="sm:max-w-[600px] w-[calc(100%-3rem)] sm:w-full min-h-[60vh] sm:min-h-[500px] max-h-[90vh] overflow-y-auto rounded-lg top-[5%] translate-y-0 sm:top-[50%] sm:translate-y-[-50%]">
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-              <Layers className="h-5 w-5 text-blue-600" />
-              {currentItem.tempId && estimationProducts.find((p) => p.tempId === activeProductTempId)?.items.find((i) => i.tempId === currentItem.tempId)
-                ? "Edit Item"
-                : "Add Item"}
+            <DialogTitle className="text-lg font-semibold text-slate-800 flex flex-col gap-0.5">
+              <div className="flex items-center gap-2">
+                <Layers className="h-5 w-5 text-blue-600" />
+                {currentItem.tempId && estimationProducts.find((p) => p.tempId === activeProductTempId)?.items.find((i) => i.tempId === currentItem.tempId)
+                  ? "Edit Item"
+                  : "Add Item"}
+              </div>
+              {activeProductTempId && (
+                <div className="text-sm font-bold text-amber-700 ml-7 flex items-center gap-2 mt-1">
+                  <span className="text-slate-400 font-semibold text-[10px] uppercase tracking-wider whitespace-nowrap">Product:</span>
+                  <span className="bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full border border-amber-200 shadow-sm animate-in fade-in slide-in-from-left-2 duration-300">
+                    {products.find((p) => p.id === estimationProducts.find((ep) => ep.tempId === activeProductTempId)?.product_id)?.name || "Unknown Product"}
+                  </span>
+                </div>
+              )}
             </DialogTitle>
             <DialogDescription className="sr-only">Add or edit item details with dimensions and calculations.</DialogDescription>
           </DialogHeader>
