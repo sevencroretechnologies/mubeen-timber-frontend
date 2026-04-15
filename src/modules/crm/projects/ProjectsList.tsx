@@ -151,6 +151,16 @@ export default function ProjectsList() {
         <span>{row.customer?.name || row.customer?.company_name || "-"}</span>
       ),
     },
+
+    {
+      name: "Description",
+      selector: (row) => row.description || "-",
+      sortable: true,
+      minWidth: "200px",
+      cell: (row) => (
+        <span>{row.description || "-"}</span>
+      ),
+    },
     {
       name: "Actions",
 

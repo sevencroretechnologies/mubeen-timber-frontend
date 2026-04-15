@@ -464,7 +464,7 @@ export default function TaxGroupList() {
             highlightOnHover
             responsive
             noDataComponent={
-              <div className="text-center py-20 bg-gray-50/50 rounded-lg border border-dashed mx-6">
+              <div className="text-center py-20 mx-6">
                 <Ghost className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900">No tax groups found</h3>
                 <p className="text-muted-foreground max-w-xs mx-auto mt-1">
