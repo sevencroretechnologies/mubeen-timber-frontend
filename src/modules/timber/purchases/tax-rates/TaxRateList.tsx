@@ -580,19 +580,20 @@ export default function TaxRateList() {
                             </div>
                         </div>
 
-                        <DialogFooter className='pt-4'>
+                        <DialogFooter className='pt-4 flex flex-row items-center justify-end gap-3'>
                             <Button
                                 type='button'
                                 variant='outline'
                                 onClick={() => setIsFormOpen(false)}
                                 disabled={isSaving}
+                                className='flex-1 sm:flex-none'
                             >
                                 Cancel
                             </Button>
                             <Button
                                 type='submit'
                                 disabled={isSaving}
-                                className='bg-solarized-blue'
+                                className='bg-solarized-blue flex-1 sm:flex-none'
                             >
                                 {isSaving && (
                                     <Loader2 className='mr-2 h-4 w-4 animate-spin' />
