@@ -199,13 +199,13 @@ export default function PurchaseOrderReceivedList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Receive Orders</h1>
-          <p className="text-sm text-slate-500">History of completed procurement & verified inventory</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">Receive Orders</h1>
+          <p className="text-xs sm:text-sm text-slate-500">History of completed procurement &amp; verified inventory</p>
         </div>
-        <Button onClick={() => navigate('/purchases/orders')} variant="outline" className="rounded-xl font-bold border-slate-200">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to List
+        <Button size="sm" onClick={() => navigate('/purchases/orders')} variant="outline" className="shrink-0 h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm font-semibold border-slate-200 text-slate-600 hover:bg-slate-50">
+          <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Back to List
         </Button>
       </div>
 
