@@ -7,9 +7,9 @@ import {
     crmOpportunityTypeService,
     crmOpportunityStageService,
     crmLeadService,
-    crmTerritoryService,
-    crmCustomerService,
-    crmContactService,
+    // crmTerritoryService,
+    // crmCustomerService,
+    // crmContactService,
     crmProductService,
     crmProductCategoryService,
 } from '../../../services/api';
@@ -91,12 +91,7 @@ export default function OpportunityForm() {
     const [products, setProducts] = useState<DDItem[]>([]);
     const [categories, setCategories] = useState<DDItem[]>([]);
 
-    // Item addition state
-    const [showAddSection, setShowAddSection] = useState(false);
-    const [itemSearch, setItemSearch] = useState('');
-    const [showProductDropdown, setShowProductDropdown] = useState(false);
-    const [newItem, setNewItem] = useState<OppItem>({ ...EMPTY_ITEM });
-    const productDropdownRef = useRef<HTMLDivElement>(null);
+    const [selectedProducts, setSelectedProducts] = useState<any[]>([]);
 
     // ── Load all dropdowns on mount ───────────────────────────────────────────────
     useEffect(() => {
@@ -107,16 +102,16 @@ export default function OpportunityForm() {
                 crmOpportunityTypeService.getAll({ per_page: 200 }),
                 crmOpportunityStageService.getAll({ per_page: 200 }),
                 crmLeadService.getAll({ per_page: 500 }),
-                crmTerritoryService.getAll({ per_page: 200 }),
-                crmCustomerService.getAll({ per_page: 500 }),
-                crmContactService.getAll({ per_page: 500 }),
+                // crmTerritoryService.getAll({ per_page: 200 }),
+                // crmCustomerService.getAll({ per_page: 500 }),
+                // crmContactService.getAll({ per_page: 500 }),
                 crmProductService.getAll({ per_page: 1000 }),
                 crmProductCategoryService.getAll({ per_page: 200 }),
             ]);
 
             const setters = [
                 setStatuses, setSources, setOpportunityTypes, setOpportunityStages,
-                setLeads, setTerritories, setCustomers, setContacts, setProducts, setCategories
+                setLeads, setCustomers, setContacts, setProducts, setCategories
             ];
 
             results.forEach((res, idx) => {
@@ -160,8 +155,13 @@ export default function OpportunityForm() {
                     expected_closing: item.expected_closing ? String(item.expected_closing).split('T')[0] : '',
                     next_contact_date: item.next_contact_date ? String(item.next_contact_date).split('T')[0] : '',
                     with_items: Boolean(item.with_items) || existingItems.length > 0,
-                    items: existingItems.length > 0 ? existingItems : (item.items ?? []),
                 });
+                setSelectedProducts(existingItems.map(p => ({
+                    id: p.product_id,
+                    name: p.item_name,
+                    price: p.rate || 0,
+                    qty: p.qty || 1
+                })));
             })
             .catch(() => {
                 showAlert('error', 'Error', 'Failed to load opportunity');
@@ -170,139 +170,33 @@ export default function OpportunityForm() {
             .finally(() => setLoading(false));
     }, [id, navigate]);
 
-    // Close product dropdown on outside click
-    useEffect(() => {
-        const handler = (e: MouseEvent) => {
-            if (productDropdownRef.current && !productDropdownRef.current.contains(e.target as Node)) {
-                setShowProductDropdown(false);
-            }
-        };
-        document.addEventListener('mousedown', handler);
-        return () => document.removeEventListener('mousedown', handler);
-    }, []);
 
     const setField = (key: string, value: unknown) => setForm((p: Record<string, unknown>) => ({ ...p, [key]: value }));
 
     // ── Product search / item helpers ─────────────────────────────────────────────
-    const filteredProducts = products.filter((p) => {
-        const search = itemSearch.toLowerCase();
-        return (
-            (p.name && String(p.name).toLowerCase().includes(search)) ||
-            (p.code && String(p.code).toLowerCase().includes(search))
-        );
-    });
-
     const handleProductSelect = (product: DDItem) => {
-        const productRate = Number(product.rate ?? 0);
-        const productAmount = Number(product.amount ?? 0);
-        // When rate is 0, use the stored amount as the effective unit price
-        // so that qty × rate calculation works correctly
-        const rate = productRate > 0 ? productRate : productAmount;
-        const qty = Number(newItem.qty) || 1;
-        const amount = rate * qty;
-
-        setNewItem({
-            ...newItem,
-            product_id: product.id,
-            item_code: String(product.code ?? ''),
-            item_name: String(product.name ?? ''),
-            category_id: product.category_id as number,
-            description: String(product.description ?? ''),
-            qty,
-            rate,
-            amount,
-            is_new_product: false,
-        });
-        setItemSearch(String(product.name ?? ''));
-        setShowProductDropdown(false);
-    };
-
-    const handleManualProductEntry = () => {
-        setNewItem({ ...newItem, product_id: null, item_name: itemSearch, item_code: '', is_new_product: true });
-        setShowProductDropdown(false);
-    };
-
-    const updateItemDetails = (field: string, value: any) => {
-        if (field === 'amount') {
-            setNewItem(prev => ({ ...prev, amount: value }));
+        if (selectedProducts.find(p => p.id === product.id)) {
+            showAlert('warning', 'Duplicate', 'Product already added');
             return;
         }
-
-        const strValue = String(value);
-
-        if (strValue === "") {
-            setNewItem(prev => {
-                const updated = { ...prev, [field]: "" };
-                // If we clear qty or rate, amount should recalculate. If either is empty, amount becomes empty.
-                const newQty = field === 'qty' ? "" : Number(prev.qty);
-                const newRate = field === 'rate' ? "" : Number(prev.rate);
-
-                updated.amount = (newQty === "" || newRate === "") ? "" : Number(newQty) * Number(newRate);
-                return updated;
-            });
-            return;
-        }
-
-        const numValue = parseFloat(strValue);
-
-        if (field === 'qty') {
-            setNewItem(prev => {
-                const rateVal = Number(prev.rate || 0);
-                return {
-                    ...prev,
-                    qty: strValue,
-                    amount: isNaN(numValue) ? "" : numValue * rateVal
-                };
-            });
-        } else if (field === 'rate') {
-            setNewItem(prev => {
-                const qtyVal = Number(prev.qty || 0);
-                return {
-                    ...prev,
-                    rate: strValue,
-                    amount: isNaN(numValue) ? "" : qtyVal * numValue
-                };
-            });
-        }
+        setSelectedProducts([...selectedProducts, {
+            id: product.id,
+            name: product.name,
+            price: product.price || 0,
+            qty: 1
+        }]);
     };
 
-    const handleAddItem = async () => {
-        if (!newItem.item_name) { showAlert('error', 'Error', 'Please select or enter a product name'); return; }
-        let productId = newItem.product_id;
-
-        if (newItem.is_new_product && !productId) {
-            try {
-                const r = await crmProductService.create({
-                    name: newItem.item_name,
-                    category_id: newItem.category_id ?? null,
-                    slug: newItem.slug ?? null,
-                    stock: Number(newItem.stock) ?? 0,
-                    amount: Number(newItem.amount) ?? 0,
-                    description: newItem.description ?? null,
-                    long_description: newItem.long_description ?? null,
-                });
-                const created = r.data as DDItem;
-                productId = created.id;
-                setProducts((prev) => [...prev, created]);
-            } catch (err) {
-                showAlert('error', 'Error', getErrorMessage(err, 'Failed to create new product'));
-                return;
-            }
-        }
-
-        const updatedItems = [...(form.items ?? []), { ...newItem, product_id: productId, amount: Number(newItem.amount) }];
-        setField('items', updatedItems);
-        setField('with_items', true);
-        setNewItem({ ...EMPTY_ITEM });
-        setItemSearch('');
-        setShowAddSection(false);
+    const removeSelectedProduct = (productId: number) => {
+        const updated = selectedProducts.filter(p => p.id !== productId);
+        setSelectedProducts(updated);
     };
 
-    const removeItem = (index: number) => {
-        const arr = [...(form.items ?? [])];
-        arr.splice(index, 1);
-        setField('items', arr);
-        if (arr.length === 0) setField('with_items', false);
+    const updateProductQty = (productId: number, qty: string) => {
+        const numQty = parseInt(qty) || 1;
+        setSelectedProducts(selectedProducts.map(p => 
+            p.id === productId ? { ...p, qty: numQty } : p
+        ));
     };
 
     // ── Submit ─────────────────────────────────────────────────────────────────────
@@ -315,8 +209,11 @@ export default function OpportunityForm() {
             const { status, source, industry, owner, lead, customer, contact, prospect, opportunityType, opportunityStage, ...cleanForm } = form;
             const payload: Record<string, unknown> = {
                 ...cleanForm,
-                with_items: Array.isArray(form.items) && form.items.length > 0,
-                items: form.items ?? [],
+                with_items: selectedProducts.length > 0,
+                products: selectedProducts.map(p => ({
+                    product_id: p.id,
+                    quantity: p.qty
+                })),
                 opportunity_lost_reasons: form.opportunity_lost_reasons ?? null,
             };
 
@@ -525,197 +422,121 @@ export default function OpportunityForm() {
                             </div> */}
                         </div>
 
-                        {/* With Items toggle */}
-                        <div className="flex items-center gap-2 pt-2">
-                            <Checkbox
-                                id="withItems"
-                                checked={Boolean(form.with_items)}
-                                onCheckedChange={(v) => setField('with_items', Boolean(v))}
-                            />
-                            <label htmlFor="withItems" className="text-sm font-medium cursor-pointer">With Items</label>
-                        </div>
+
                     </CardContent>
                 </Card>
 
                 {/* ── Items section (shown when with_items checked) ──────────────────────── */}
-                {Boolean(form.with_items) && (
+
                     <Card>
                         <CardHeader>
                             <div className="flex items-center justify-between border-b pb-2">
-                                <CardTitle className="text-base mb-0">Items</CardTitle>
-                                {!showAddSection && (
-                                    <Button type="button" variant="outline" size="sm" onClick={() => setShowAddSection(true)}>
-                                        + Add Product
-                                    </Button>
-                                )}
+                                <CardTitle className="text-base mb-0">Products</CardTitle>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                            <div className="space-y-1">
+                                <Label>Add Product</Label>
+                                <Select onValueChange={(v) => {
+                                    const prod = products.find(p => String(p.id) === v);
+                                    if (prod) handleProductSelect(prod);
+                                }}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a product" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {products.map(p => (
+                                            <SelectItem key={p.id} value={String(p.id)}>
+                                                {String(p.name || '')} - ₹{String(p.price || 0)}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                            {/* ── Add Item card ── */}
-                            {showAddSection && (
-                                <div className="border rounded p-3 mb-2 bg-muted/30">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h6 className="font-semibold text-sm">Add New Item</h6>
-                                        <button type="button" aria-label="Close" onClick={() => setShowAddSection(false)}
-                                            className="h-5 w-5 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted">
-                                            <X className="h-3.5 w-3.5" />
-                                        </button>
-                                    </div>
-
-                                    {/* Row: search(4) qty(2) rate(2) amount(2) button(2) — matches col-md-4/2/2/2/2 */}
-                                    <div className="grid grid-cols-12 gap-3 mb-3 items-end">
-                                        {/* Search — col-md-4 */}
-                                        <div className="col-span-12 md:col-span-4 relative" ref={productDropdownRef}>
-                                            <Label className="mb-1 block">Search Item Code / Name <span className="text-red-500">*</span></Label>
-                                            <Input
-                                                placeholder="Type to search..."
-                                                value={itemSearch}
-                                                onChange={(e) => {
-                                                    setItemSearch(e.target.value);
-                                                    setShowProductDropdown(true);
-                                                    if (e.target.value === '') setNewItem((p) => ({ ...p, is_new_product: false }));
-                                                }}
-                                                onFocus={() => setShowProductDropdown(true)}
-                                            />
-                                            {showProductDropdown && itemSearch && (
-                                                <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded border bg-card shadow-lg max-h-52 overflow-y-auto">
-                                                    <ul className="divide-y divide-border text-sm">
-                                                        {filteredProducts.map((p) => (
-                                                            <li key={p.id}
-                                                                className="px-3 py-2 cursor-pointer hover:bg-accent flex gap-1"
-                                                                onClick={() => handleProductSelect(p)}>
-                                                                <strong>{String(p.code ?? '')}</strong> - {String(p.name ?? '')}
-                                                            </li>
-                                                        ))}
-                                                        {filteredProducts.length === 0 && (
-                                                            <li className="px-3 py-2 cursor-pointer text-primary hover:bg-accent"
-                                                                onClick={handleManualProductEntry}>
-                                                                + Create new: &ldquo;{itemSearch}&rdquo;
-                                                            </li>
-                                                        )}
-                                                    </ul>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Quantity — col-md-2 */}
-                                        <div className="col-span-6 md:col-span-2">
-                                            <Label className="mb-1 block">Quantity</Label>
-                                            <Input type="number" min="1" value={newItem.qty} onChange={(e) => updateItemDetails('qty', e.target.value)} />
-                                        </div>
-
-                                        {/* Rate — col-md-2 */}
-                                        <div className="col-span-6 md:col-span-2">
-                                            <Label className="mb-1 block">Rate ({form.currency || 'INR'})</Label>
-                                            <Input type="number" min="0" value={newItem.rate} onChange={(e) => updateItemDetails('rate', e.target.value)} />
-                                        </div>
-
-                                        {/* Amount — col-md-2 */}
-                                        <div className="col-span-6 md:col-span-2">
-                                            <Label className="mb-1 block">Amount ({form.currency || 'INR'})</Label>
-                                            <Input type="number" value={newItem.amount} onChange={(e) => updateItemDetails('amount', e.target.value)} />
-                                        </div>
-
-                                        {/* Add button — col-md-2 */}
-                                        <div className="col-span-6 md:col-span-2">
-                                            <Button type="button" onClick={handleAddItem} className="w-full bg-green-600 hover:bg-green-700 text-white">
-                                                {newItem.is_new_product ? 'Create & Add' : 'Add Item'}
-                                            </Button>
-                                        </div>
-                                    </div>
-
-                                    {/* New Product Fields (conditional) */}
-                                    {newItem.is_new_product && (
-                                        <div className="rounded border bg-background p-3 mb-1">
-                                            <h6 className="font-semibold text-sm border-b pb-2 mb-3">New Product Details</h6>
-                                            <div className="grid grid-cols-12 gap-3">
-                                                {/* Name — col-md-8 */}
-                                                <div className="col-span-12 md:col-span-8">
-                                                    <Label className="mb-1 block">Product Name <span className="text-red-500">*</span></Label>
-                                                    <Input value={newItem.item_name} onChange={(e) => setNewItem((p) => ({ ...p, item_name: e.target.value }))} required />
-                                                </div>
-                                                {/* Category — col-md-4 */}
-                                                <div className="col-span-12 md:col-span-4">
-                                                    <Label className="mb-1 block">Category</Label>
-                                                    <Select value={String(newItem.category_id || 'none')} onValueChange={(v) => setNewItem((p) => ({ ...p, category_id: v === 'none' ? null : Number(v) }))}>
-                                                        <SelectTrigger><SelectValue placeholder="Select Category" /></SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="none">Select Category</SelectItem>
-                                                            {categories.map((c) => <SelectItem key={c.id} value={String(c.id)}>{lbl(c, 'name')}</SelectItem>)}
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-                                                {/* Slug — col-md-6 */}
-                                                <div className="col-span-12 md:col-span-6">
-                                                    <Label className="mb-1 block">Slug</Label>
-                                                    <Input placeholder="e.g. product-name" value={newItem.slug || ''} onChange={(e) => setNewItem((p) => ({ ...p, slug: e.target.value }))} />
-                                                </div>
-                                                {/* Stock — col-md-3 */}
-                                                <div className="col-span-6 md:col-span-3">
-                                                    <Label className="mb-1 block">Stock</Label>
-                                                    <Input type="number" min="0" value={newItem.stock ?? 0} onChange={(e) => setNewItem((p) => ({ ...p, stock: Number(e.target.value) }))} />
-                                                </div>
-                                                {/* Unit Price — col-md-3 */}
-                                                <div className="col-span-6 md:col-span-3">
-                                                    <Label className="mb-1 block">Amount (Unit Price)</Label>
-                                                    <Input type="number" min="0" step="0.01" value={newItem.amount || 0} onChange={(e) => setNewItem((p) => ({ ...p, amount: e.target.value }))} />
-                                                </div>
-                                                {/* Short desc — col-12 */}
-                                                <div className="col-span-12">
-                                                    <Label className="mb-1 block">Short Description</Label>
-                                                    <textarea rows={2} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                                        value={newItem.description || ''} onChange={(e) => setNewItem((p) => ({ ...p, description: e.target.value }))} />
-                                                </div>
-                                                {/* Long desc — col-12 */}
-                                                <div className="col-span-12">
-                                                    <Label className="mb-1 block">Long Description</Label>
-                                                    <textarea rows={3} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                                        value={newItem.long_description || ''} onChange={(e) => setNewItem((p) => ({ ...p, long_description: e.target.value }))} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* ── Items table — striped, bordered, same columns as reference ── */}
-                            <div className="overflow-x-auto">
+                            {/* Desktop Table View */}
+                            {/* <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full text-sm border border-border rounded">
                                     <thead>
                                         <tr className="bg-muted/60 border-b border-border">
-                                            {['#', 'Item Code', 'Item Name', 'Quantity', `Rate (${form.currency || 'INR'})`, `Amount (${form.currency || 'INR'})`, 'Action'].map((h) => (
-                                                <th key={h} className="text-left px-3 py-2 font-semibold text-foreground border-r border-border last:border-r-0">{h}</th>
-                                            ))}
+                                            <th className="text-left px-3 py-2 font-semibold border-r border-border">Product Name</th>
+                                            <th className="text-left px-3 py-2 font-semibold border-r border-border">Price</th>
+                                            <th className="text-left px-3 py-2 font-semibold border-r border-border w-24">Quantity</th>
+                                            <th className="text-left px-3 py-2 font-semibold border-r border-border">Total</th>
+                                            <th className="text-left px-3 py-2 font-semibold">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                        {(form.items ?? []).map((item: any, idx: number) => (
-                                            <tr key={idx} className={`border-b border-border ${idx % 2 === 1 ? 'bg-muted/30' : ''}`}>
-                                                <td className="px-3 py-2 border-r border-border">{idx + 1}</td>
-                                                <td className="px-3 py-2 border-r border-border">{item.item_code}</td>
-                                                <td className="px-3 py-2 border-r border-border">{item.item_name}</td>
-                                                <td className="px-3 py-2 border-r border-border">{item.qty}</td>
-                                                <td className="px-3 py-2 border-r border-border">{item.rate}</td>
-                                                <td className="px-3 py-2 border-r border-border">{item.amount}</td>
+                                        {selectedProducts.map((p) => (
+                                            <tr key={p.id} className="border-b border-border last:border-0">
+                                                <td className="px-3 py-2 border-r border-border">{p.name}</td>
+                                                <td className="px-3 py-2 border-r border-border">₹{p.price}</td>
+                                                <td className="px-3 py-2 border-r border-border">
+                                                    <Input 
+                                                        type="number" 
+                                                        min="1" 
+                                                        className="h-8 py-0" 
+                                                        value={p.qty} 
+                                                        onChange={(e) => updateProductQty(p.id, e.target.value)} 
+                                                    />
+                                                </td>
+                                                <td className="px-3 py-2 border-r border-border">₹{p.price * p.qty}</td>
                                                 <td className="px-3 py-2">
-                                                    <Button type="button" size="sm" variant="destructive" onClick={() => removeItem(idx)}>
+                                                    <Button variant="destructive" size="sm" onClick={() => removeSelectedProduct(p.id)}>
                                                         Remove
                                                     </Button>
                                                 </td>
                                             </tr>
                                         ))}
-                                        {(!form.items || form.items.length === 0) && (
-                                            <tr><td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">No items added yet.</td></tr>
+                                        {selectedProducts.length === 0 && (
+                                            <tr><td colSpan={5} className="text-center py-4 text-muted-foreground">No products selected</td></tr>
                                         )}
                                     </tbody>
                                 </table>
+                            </div> */}
+
+                            {/* Mobile Card View */}
+                            <div className="md:hidden space-y-3">
+                                {selectedProducts.map((p) => (
+                                    <div key={p.id} className="border rounded-lg p-3 space-y-3 bg-card">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h4 className="font-semibold">{p.name}</h4>
+                                                <p className="text-xs text-muted-foreground">Price: ₹{p.price}</p>
+                                            </div>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeSelectedProduct(p.id)}>
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <div className="flex items-center gap-2">
+                                                <Label className="text-xs">Qty:</Label>
+                                                <Input 
+                                                    type="number" 
+                                                    min="1" 
+                                                    className="w-16 h-8 py-0" 
+                                                    value={p.qty} 
+                                                    onChange={(e) => updateProductQty(p.id, e.target.value)} 
+                                                />
+                                            </div>
+                                            <div className="font-bold">Total: ₹{p.price * p.qty}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {selectedProducts.length === 0 && (
+                                    <p className="text-center py-4 text-muted-foreground text-sm">No products selected</p>
+                                )}
                             </div>
 
+                            {/* {selectedProducts.length > 0 && (
+                                <div className="text-right font-bold text-lg border-t pt-3">
+                                    Total Amount: ₹{selectedProducts.reduce((sum, p) => sum + (p.price * p.qty), 0)}
+                                </div>
+                            )} */}
                         </CardContent>
                     </Card>
-                )}
+
+
 
 
 
@@ -737,7 +558,7 @@ export default function OpportunityForm() {
                                 <Label>Contact Mobile</Label>
                                 <Input value={form.contact_mobile || ''} onChange={(e) => setField('contact_mobile', e.target.value)} />
                             </div> */}
-                            <div className="space-y-1">
+                            {/* <div className="space-y-1">
                                 <Label>Territory</Label>
                                 <Select value={String(form.territory_id || 'none')} onValueChange={(v) => setField('territory_id', v === 'none' ? '' : v)}>
                                     <SelectTrigger><SelectValue placeholder="Select Territory" /></SelectTrigger>
@@ -746,7 +567,7 @@ export default function OpportunityForm() {
                                         {territories.map((t) => <SelectItem key={t.id} value={String(t.id)}>{lbl(t, 'territory_name', 'name')}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
-                            </div>
+                            </div> */}
                             {/* <div className="space-y-1">
                                 <Label>Company Name</Label>
                                 <Input value={form.company_name || ''} onChange={(e) => setField('company_name', e.target.value)} />
@@ -792,6 +613,6 @@ export default function OpportunityForm() {
                     </Button>
                 </div>
             </form>
-        </div >
+        </div>
     );
 }
