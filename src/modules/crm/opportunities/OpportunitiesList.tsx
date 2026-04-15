@@ -417,14 +417,33 @@ export default function OpportunitiesList() {
                                 </h3>
                                 <p className="text-sm font-semibold text-gray-900 truncate">{party}</p>
                               </div>
-                              <div className="flex gap-1">
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelected(row); setViewOpen(true); }}>
-                                  <Eye className="h-4 w-4 text-gray-400" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/crm/opportunities/${row.id}/edit`)}>
-                                  <Edit className="h-4 w-4 text-gray-400" />
-                                </Button>
-                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreHorizontal className="h-4 w-4 text-gray-400" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  {/* <DropdownMenuItem onClick={() => { setSelected(row); setViewOpen(true); }} className="h-10">
+                                    <Eye className="mr-2 h-4 w-4 text-gray-500" />
+                                    <span>View Details</span>
+                                  </DropdownMenuItem> */}
+                                  <DropdownMenuItem onClick={() => navigate(`/crm/opportunities/${row.id}/edit`)} className="h-10">
+                                    <Edit className="mr-2 h-4 w-4 text-gray-500" />
+                                    <span>Edit</span>
+                                  </DropdownMenuItem>
+                                  {row.status_name?.toLowerCase() !== 'lost' && row.status_name?.toLowerCase() !== 'converted' && (
+                                    <DropdownMenuItem onClick={() => handleMarkAsLostClick(row)} className="h-10 text-orange-600 focus:text-orange-600">
+                                      <XCircle className="mr-2 h-4 w-4" />
+                                      <span>Mark as Lost</span>
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuItem onClick={() => handleDelete(row.id)} className="h-10 text-red-600 focus:text-red-600">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    <span>Delete</span>
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
 
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-3 gap-x-4 text-sm">
@@ -449,14 +468,6 @@ export default function OpportunitiesList() {
                                 onClick={() => { setSelected(row); setViewOpen(true); }}
                               >
                                 View Details
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-10 w-10 text-red-500 hover:bg-red-50"
-                                onClick={() => handleDelete(row.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
                           </div>
