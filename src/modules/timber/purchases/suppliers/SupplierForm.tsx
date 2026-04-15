@@ -29,7 +29,7 @@ export default function SupplierForm() {
     bank_name: '',
     bank_account_number: '',
     bank_ifsc_code: '',
-    payment_terms: '',
+    // payment_terms: '',
     notes: '',
     is_active: true,
   });
@@ -53,7 +53,7 @@ export default function SupplierForm() {
             bank_name: supplier.bank_name || '',
             bank_account_number: supplier.bank_account_number || '',
             bank_ifsc_code: supplier.bank_ifsc_code || '',
-            payment_terms: supplier.payment_terms || '',
+            // payment_terms: supplier.payment_terms || '',
             notes: supplier.notes || '',
             is_active: supplier.is_active ?? true,
           });
@@ -68,13 +68,23 @@ export default function SupplierForm() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === 'phone') {
+      // Strip non-digits and cap at 10 characters
+      const digits = value.replace(/\D/g, '').slice(0, 10);
+      setFormData((prev) => ({ ...prev, phone: digits }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) {
       showAlert('error', 'Validation', 'Supplier name is required');
+      return;
+    }
+    if (formData.phone && formData.phone.length !== 10) {
+      showAlert('error', 'Validation', 'Phone number must be exactly 10 digits');
       return;
     }
 
@@ -135,7 +145,16 @@ export default function SupplierForm() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone</Label>
-                <Input id="phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="Phone number" />
+                <Input
+                  id="phone"
+                  name="phone"
+                  type='tel'
+                  inputMode='numeric'
+                  // maxLength={10}
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder='10-digit mobile number'
+                />
               </div>
             </div>
           </CardContent>
@@ -185,10 +204,10 @@ export default function SupplierForm() {
                 <Label htmlFor="bank_ifsc_code">IFSC Code</Label>
                 <Input id="bank_ifsc_code" name="bank_ifsc_code" value={formData.bank_ifsc_code} onChange={handleChange} placeholder="IFSC code" />
               </div>
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="payment_terms">Payment Terms</Label>
                 <Input id="payment_terms" name="payment_terms" value={formData.payment_terms} onChange={handleChange} placeholder="e.g., Net 30" />
-              </div>
+              </div> */}
             </div>
           </CardContent>
         </Card>
