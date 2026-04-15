@@ -173,7 +173,7 @@ export default function PurchaseOrderView() {
       {/* Desktop Header - Previous Style */}
       <div className="hidden md:flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/purchases/orders')} className="h-10 w-10 text-slate-500">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/purchases/orders/received')} className="h-10 w-10 text-slate-500">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
@@ -222,7 +222,7 @@ export default function PurchaseOrderView() {
           )} */}
 
           <Button
-            onClick={() => navigate('/purchases/orders')}
+            onClick={() => navigate('/purchases/orders/received')}
             className="font-bold"
           >
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to List
