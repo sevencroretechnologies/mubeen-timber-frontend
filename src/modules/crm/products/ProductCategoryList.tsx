@@ -284,28 +284,55 @@ export default function ProductCategoryList() {
             </Button>
           </form>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0 sm:p-6">
           {!isLoading && items.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="text-center py-12 px-6">
               <Briefcase className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <p className="text-lg font-medium">No projects found</p>
               <p className="text-muted-foreground">Try adjusting your search or add a new project</p>
             </div>
           ) : (
-            <DataTable
-              columns={columns}
-              data={items}
-              progressPending={isLoading}
-              pagination
-              paginationServer
-              paginationTotalRows={totalRows}
-              paginationDefaultPage={page}
-              onChangePage={(p) => setPage(p)}
-              onChangeRowsPerPage={(pp) => setPerPage(pp)}
-              customStyles={customStyles}
-              highlightOnHover
-              responsive
-            />
+            <>
+              {/* Mobile card list (< sm) */}
+              <div className="sm:hidden divide-y divide-slate-100">
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-10"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-400" /></div>
+                ) : (
+                  items.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-slate-800 truncate">{item.name}</p>
+                        {item.description && (
+                          <p className="text-xs text-slate-400 truncate">{item.description}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button onClick={() => handleView(item)} className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors" title="View"><Eye className="h-4 w-4" /></button>
+                        <button onClick={() => handleEdit(item)} className="p-1.5 rounded hover:bg-amber-50 text-slate-500 hover:text-amber-600 transition-colors" title="Edit"><Edit className="h-4 w-4" /></button>
+                        <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded hover:bg-red-50 text-slate-500 hover:text-red-600 transition-colors" title="Delete"><Trash2 className="h-4 w-4" /></button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              {/* Desktop DataTable (sm+) */}
+              <div className="hidden sm:block">
+                <DataTable
+                  columns={columns}
+                  data={items}
+                  progressPending={isLoading}
+                  pagination
+                  paginationServer
+                  paginationTotalRows={totalRows}
+                  paginationDefaultPage={page}
+                  onChangePage={(p) => setPage(p)}
+                  onChangeRowsPerPage={(pp) => setPerPage(pp)}
+                  customStyles={customStyles}
+                  highlightOnHover
+                  responsive
+                />
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

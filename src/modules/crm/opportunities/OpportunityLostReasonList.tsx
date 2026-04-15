@@ -264,34 +264,57 @@ export default function OpportunityLostReasonList() {
                         </Button>
                     </form>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0 sm:p-6">
                     {!loading && reasons.length === 0 ? (
-                        <div className="text-center py-20 bg-gray-50/50 rounded-lg border border-dashed">
+                        <div className="text-center py-20 px-6 bg-gray-50/50 rounded-lg border border-dashed">
                             <Ghost className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
                             <h3 className="text-lg font-medium text-gray-900">No lost reasons found</h3>
-                            <p className="text-muted-foreground max-w-xs mx-auto mt-1">
-                                Try adjusting your search or add a new reason to get started.
-                            </p>
+                            <p className="text-muted-foreground max-w-xs mx-auto mt-1">Try adjusting your search or add a new reason to get started.</p>
                         </div>
                     ) : (
-                        <DataTable
-                            columns={columns}
-                            data={reasons}
-                            progressPending={loading}
-                            pagination
-                            paginationServer
-                            paginationTotalRows={totalRows}
-                            paginationPerPage={perPage}
-                            paginationDefaultPage={page}
-                            onChangePage={(p) => setPage(p)}
-                            onChangeRowsPerPage={(pp) => {
-                                setPerPage(pp);
-                                setPage(1);
-                            }}
-                            customStyles={customStyles}
-                            highlightOnHover
-                            responsive
-                        />
+                        <>
+                            {/* Mobile card list (< sm) */}
+                            <div className="sm:hidden divide-y divide-slate-100">
+                                {loading ? (
+                                    <div className="flex items-center justify-center py-10"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-400" /></div>
+                                ) : (
+                                    reasons.map((item) => (
+                                        <div key={item.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-semibold text-blue-600 truncate">{item.opportunity?.party_name || `Opp #${item.opportunity_id}`}</p>
+                                                {item.opportunity?.naming_series && (
+                                                    <span className="text-[11px] text-slate-400">{item.opportunity.naming_series}</span>
+                                                )}
+                                                <p className="text-xs text-slate-600 mt-0.5 line-clamp-2">{item.opportunity_lost_reasons}</p>
+                                            </div>
+                                            <div className="flex items-center gap-1 shrink-0 pt-0.5">
+                                                <button onClick={() => handleViewClick(item)} className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors" title="View"><Eye className="h-4 w-4" /></button>
+                                                <button onClick={() => handleEditClick(item)} className="p-1.5 rounded hover:bg-amber-50 text-slate-500 hover:text-amber-600 transition-colors" title="Edit"><Edit2 className="h-4 w-4" /></button>
+                                                <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded hover:bg-red-50 text-slate-500 hover:text-red-600 transition-colors" title="Delete"><Trash2 className="h-4 w-4" /></button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                            {/* Desktop DataTable (sm+) */}
+                            <div className="hidden sm:block">
+                                <DataTable
+                                    columns={columns}
+                                    data={reasons}
+                                    progressPending={loading}
+                                    pagination
+                                    paginationServer
+                                    paginationTotalRows={totalRows}
+                                    paginationPerPage={perPage}
+                                    paginationDefaultPage={page}
+                                    onChangePage={(p) => setPage(p)}
+                                    onChangeRowsPerPage={(pp) => { setPerPage(pp); setPage(1); }}
+                                    customStyles={customStyles}
+                                    highlightOnHover
+                                    responsive
+                                />
+                            </div>
+                        </>
                     )}
                 </CardContent>
             </Card>

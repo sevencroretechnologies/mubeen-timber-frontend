@@ -326,22 +326,53 @@ export default function TerritoryList() {
             </Button>
           </form>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0 sm:p-6">
           {!isLoading && items.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="text-center py-12 px-6">
               <MapPin className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <p className="text-lg font-medium">No territories found</p>
               <p className="text-muted-foreground">Try adjusting your search or add a new territory</p>
             </div>
           ) : (
-            <DataTable
-              columns={columns}
-              data={items}
-              progressPending={isLoading}
-              customStyles={customStyles}
-              highlightOnHover
-              responsive
-            />
+            <>
+              {/* Mobile card list (< sm) */}
+              <div className="sm:hidden divide-y divide-slate-100">
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-10">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-400" />
+                  </div>
+                ) : (
+                  items.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-slate-800 truncate">{item.territory_name}</p>
+                        {item.manager ? (
+                          <span className="inline-block mt-0.5 text-[11px] bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded">{item.manager.name}</span>
+                        ) : (
+                          <span className="text-xs text-slate-400 italic">No manager</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button onClick={() => handleView(item)} className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors" title="View"><Eye className="h-4 w-4" /></button>
+                        <button onClick={() => handleEdit(item)} className="p-1.5 rounded hover:bg-amber-50 text-slate-500 hover:text-amber-600 transition-colors" title="Edit"><Edit className="h-4 w-4" /></button>
+                        <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded hover:bg-red-50 text-slate-500 hover:text-red-600 transition-colors" title="Delete"><Trash2 className="h-4 w-4" /></button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              {/* Desktop DataTable (sm+) */}
+              <div className="hidden sm:block">
+                <DataTable
+                  columns={columns}
+                  data={items}
+                  progressPending={isLoading}
+                  customStyles={customStyles}
+                  highlightOnHover
+                  responsive
+                />
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

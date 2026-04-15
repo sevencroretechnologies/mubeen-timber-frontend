@@ -257,28 +257,61 @@ export default function SalesTaskDetailList() {
                         <Button type="submit" variant="secondary">Search</Button>
                     </form>
                 </CardHeader>
-                <CardContent>
-                    <DataTable
-                        columns={columns}
-                        data={details}
-                        progressPending={isLoading}
-                        pagination
-                        paginationServer
-                        paginationTotalRows={totalRows}
-                        paginationPerPage={perPage}
-                        paginationDefaultPage={page}
-                        onChangePage={handlePageChange}
-                        onChangeRowsPerPage={handlePerRowsChange}
-                        customStyles={customStyles}
-                        highlightOnHover
-                        responsive
-                        noDataComponent={
-                            <div className="text-center py-12">
+                <CardContent className="p-0 sm:p-6">
+                    {/* Mobile card list (< sm) */}
+                    <div className="sm:hidden divide-y divide-slate-100">
+                        {isLoading ? (
+                            <div className="flex items-center justify-center py-10"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-400" /></div>
+                        ) : details.length === 0 ? (
+                            <div className="text-center py-12 px-6">
                                 <ListChecks className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                                 <p>No task details found</p>
                             </div>
-                        }
-                    />
+                        ) : (
+                            details.map((item) => (
+                                <div key={item.id} className="px-4 py-3">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[10px] text-muted-foreground">{item.sales_task?.task_source?.name || 'Task'} - {getTaskName(item.sales_task)}</p>
+                                            <p className="font-semibold text-slate-800 text-sm truncate">{item.sales_task?.task_type?.name || '—'}</p>
+                                            {item.description && <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{item.description}</p>}
+                                        </div>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${getStatusBadgeColor(item.status)}`}>{item.status}</span>
+                                            <button onClick={() => openViewModal(item)} className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors" title="View"><Eye className="h-4 w-4" /></button>
+                                            <button onClick={() => openEditModal(item)} className="p-1.5 rounded hover:bg-amber-50 text-slate-500 hover:text-amber-600 transition-colors" title="Edit"><Edit className="h-4 w-4" /></button>
+                                            <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded hover:bg-red-50 text-slate-500 hover:text-red-600 transition-colors" title="Delete"><Trash2 className="h-4 w-4" /></button>
+                                        </div>
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 mt-0.5">{new Date(item.date).toLocaleDateString()} {item.time && `· ${item.time}`}</p>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                    {/* Desktop DataTable (sm+) */}
+                    <div className="hidden sm:block">
+                        <DataTable
+                            columns={columns}
+                            data={details}
+                            progressPending={isLoading}
+                            pagination
+                            paginationServer
+                            paginationTotalRows={totalRows}
+                            paginationPerPage={perPage}
+                            paginationDefaultPage={page}
+                            onChangePage={handlePageChange}
+                            onChangeRowsPerPage={handlePerRowsChange}
+                            customStyles={customStyles}
+                            highlightOnHover
+                            responsive
+                            noDataComponent={
+                                <div className="text-center py-12">
+                                    <ListChecks className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                                    <p>No task details found</p>
+                                </div>
+                            }
+                        />
+                    </div>
                 </CardContent>
             </Card>
 

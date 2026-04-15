@@ -223,28 +223,66 @@ export default function ContactList() {
                         <Button type="submit" variant="outline">Search</Button>
                     </form>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0 sm:p-6">
                     {!isLoading && contacts.length === 0 ? (
-                        <div className="text-center py-12">
+                        <div className="text-center py-12 px-6">
                             <UserCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                             <p>No contacts found</p>
                         </div>
                     ) : (
-                        <DataTable
-                            columns={columns}
-                            data={contacts}
-                            progressPending={isLoading}
-                            pagination
-                            paginationServer
-                            paginationTotalRows={totalRows}
-                            paginationPerPage={perPage}
-                            paginationDefaultPage={page}
-                            onChangePage={handlePageChange}
-                            onChangeRowsPerPage={handlePerRowsChange}
-                            customStyles={customStyles}
-                            highlightOnHover
-                            responsive
-                        />
+                        <>
+                            {/* Mobile card list (< sm) */}
+                            <div className="sm:hidden divide-y divide-slate-100">
+                                {isLoading ? (
+                                    <div className="flex items-center justify-center py-10"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-400" /></div>
+                                ) : (
+                                    contacts.map((item) => {
+                                        const phone = getPrimaryPhone(item);
+                                        const email = getPrimaryEmail(item);
+                                        return (
+                                            <div key={item.id} className="px-4 py-3 space-y-1">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-semibold text-slate-800 truncate">{item.full_name || `${item.first_name} ${item.last_name}`}</p>
+                                                        {item.company_name && <p className="text-xs text-slate-500 truncate">{item.company_name}</p>}
+                                                    </div>
+                                                    <div className="flex items-center gap-1 shrink-0">
+                                                        <button onClick={() => handleView(item)} className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors" title="View"><Eye className="h-4 w-4" /></button>
+                                                        <button onClick={() => handleEdit(item)} className="p-1.5 rounded hover:bg-amber-50 text-slate-500 hover:text-amber-600 transition-colors" title="Edit"><Edit className="h-4 w-4" /></button>
+                                                        <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded hover:bg-red-50 text-slate-500 hover:text-red-600 transition-colors" title="Delete"><Trash2 className="h-4 w-4" /></button>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                                                    {phone && <span className="flex items-center gap-0.5 text-slate-500"><Phone className="h-3 w-3" />{phone.phone_no}</span>}
+                                                    {email && <span className="flex items-center gap-0.5 text-slate-500 truncate max-w-[160px]"><Mail className="h-3 w-3" />{email.email}</span>}
+                                                    {item.status && (
+                                                        <span className={`px-1.5 py-0.5 rounded-full font-medium ${item.status === 'Open' ? 'bg-green-50 text-green-700' : item.status === 'Replied' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>{item.status}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+                            {/* Desktop DataTable (sm+) */}
+                            <div className="hidden sm:block">
+                                <DataTable
+                                    columns={columns}
+                                    data={contacts}
+                                    progressPending={isLoading}
+                                    pagination
+                                    paginationServer
+                                    paginationTotalRows={totalRows}
+                                    paginationPerPage={perPage}
+                                    paginationDefaultPage={page}
+                                    onChangePage={handlePageChange}
+                                    onChangeRowsPerPage={handlePerRowsChange}
+                                    customStyles={customStyles}
+                                    highlightOnHover
+                                    responsive
+                                />
+                            </div>
+                        </>
                     )}
                 </CardContent>
             </Card>
