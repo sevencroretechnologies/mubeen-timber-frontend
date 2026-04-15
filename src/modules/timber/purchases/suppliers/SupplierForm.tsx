@@ -27,8 +27,8 @@ export default function SupplierForm() {
     gst_number: '',
     pan_number: '',
     bank_name: '',
-    bank_account_number: '',
-    bank_ifsc_code: '',
+    bank_account: '',
+    ifsc_code: '',
     // payment_terms: '',
     notes: '',
     is_active: true,
@@ -51,8 +51,8 @@ export default function SupplierForm() {
             gst_number: supplier.gst_number || '',
             pan_number: supplier.pan_number || '',
             bank_name: supplier.bank_name || '',
-            bank_account_number: supplier.bank_account_number || '',
-            bank_ifsc_code: supplier.bank_ifsc_code || '',
+            bank_account: supplier.bank_account || '',
+            ifsc_code: supplier.ifsc_code || '',
             // payment_terms: supplier.payment_terms || '',
             notes: supplier.notes || '',
             is_active: supplier.is_active ?? true,
@@ -197,12 +197,12 @@ export default function SupplierForm() {
                 <Input id="bank_name" name="bank_name" value={formData.bank_name} onChange={handleChange} placeholder="Bank name" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bank_account_number">Account Number</Label>
-                <Input id="bank_account_number" name="bank_account_number" value={formData.bank_account_number} onChange={handleChange} placeholder="Account number" />
+                <Label htmlFor="bank_account">Account Number</Label>
+                <Input id="bank_account" name="bank_account" value={formData.bank_account} onChange={handleChange} placeholder="Account number" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bank_ifsc_code">IFSC Code</Label>
-                <Input id="bank_ifsc_code" name="bank_ifsc_code" value={formData.bank_ifsc_code} onChange={handleChange} placeholder="IFSC code" />
+                <Label htmlFor="ifsc_code">IFSC Code</Label>
+                <Input id="ifsc_code" name="ifsc_code" value={formData.ifsc_code} onChange={handleChange} placeholder="IFSC code" />
               </div>
               {/* <div className="space-y-2">
                 <Label htmlFor="payment_terms">Payment Terms</Label>

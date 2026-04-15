@@ -14,8 +14,8 @@ export interface TimberSupplier {
     gst_number: string | null;
     pan_number: string | null;
     bank_name: string | null;
-    bank_account_number: string | null;
-    bank_ifsc_code: string | null;
+    bank_account: string | null;
+    ifsc_code: string | null;
     payment_terms: string | null;
     notes: string | null;
     is_active: boolean;
@@ -273,8 +273,8 @@ export interface SupplierFormData {
     gst_number?: string;
     pan_number?: string;
     bank_name?: string;
-    bank_account_number?: string;
-    bank_ifsc_code?: string;
+    bank_account?: string;
+    ifsc_code?: string;
     payment_terms?: string;
     notes?: string;
     is_active?: boolean;

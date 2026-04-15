@@ -390,11 +390,11 @@ export default function SupplierList() {
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase">Account #</Label>
-                  <p className="text-sm">{selectedItem.bank_account_number || '-'}</p>
+                  <p className="text-sm">{selectedItem.bank_account || '-'}</p>
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase">IFSC</Label>
-                  <p className="text-sm">{selectedItem.bank_ifsc_code || '-'}</p>
+                  <p className="text-sm">{selectedItem.ifsc_code || '-'}</p>
                 </div>
               </div>
               {selectedItem.payment_terms && (
