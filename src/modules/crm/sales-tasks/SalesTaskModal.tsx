@@ -217,7 +217,8 @@ export default function SalesTaskModal({ show, onHide, onSave, taskId, readOnly 
 
     return (
         <Dialog open={show} onOpenChange={onHide}>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90dvh] overflow-y-auto overflow-x-hidden p-0 sm:p-6 flex flex-col">
+                <div className="p-6 sm:p-0 flex-1">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <CheckSquare className="h-5 w-5 text-solarized-blue" />
@@ -441,6 +442,7 @@ export default function SalesTaskModal({ show, onHide, onSave, taskId, readOnly 
                         </Button>
                     </DialogFooter>
                 )}
+                </div>
             </DialogContent>
         </Dialog>
     );

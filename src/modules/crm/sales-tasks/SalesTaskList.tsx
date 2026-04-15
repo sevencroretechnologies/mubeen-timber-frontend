@@ -346,11 +346,11 @@ export default function SalesTaskList() {
                                                         <Eye className="mr-2 h-4 w-4 text-gray-500" />
                                                         <span>View Details</span>
                                                     </DropdownMenuItem> */}
-                                                    <DropdownMenuItem onClick={() => openEditModal(task.id)} className="h-10">
+                                                    <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openEditModal(task.id); }} className="h-10 cursor-pointer">
                                                         <Edit className="mr-2 h-4 w-4 text-blue-600" />
                                                         <span>Edit</span>
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleDelete(task.id)} className="h-10 text-red-600 focus:text-red-600">
+                                                    <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleDelete(task.id); }} className="h-10 text-red-600 focus:text-red-600 cursor-pointer">
                                                         <Trash2 className="mr-2 h-4 w-4" />
                                                         <span>Delete</span>
                                                     </DropdownMenuItem>
