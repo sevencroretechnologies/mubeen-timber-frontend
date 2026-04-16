@@ -169,14 +169,14 @@ export default function CustomerList() {
         // },
         {
             name: "Email",
-            selector: (row) => row.email || "-",
+            selector: (row) => row.contact_details?.[0]?.personal_email || row.contact_details?.[0]?.company_email || "-",
             sortable: true,
-            minWidth: "90px",
+            minWidth: "150px",
         },
         {
             name: "Phone",
-            selector: (row) => row.phone || "-",
-            minWidth: "90px",
+            selector: (row) => row.contact_details?.[0]?.phone_no || "-",
+            minWidth: "120px",
         },
         {
             name: "Actions",
@@ -373,19 +373,19 @@ export default function CustomerList() {
                                             </div>
 
                                             <div className='grid grid-cols-1 gap-2.5 text-sm text-gray-500 mb-4'>
-                                                {customer.email && (
+                                                {(customer.contact_details?.[0]?.personal_email || customer.contact_details?.[0]?.company_email) && (
                                                     <div className='flex items-center gap-2'>
                                                         <Mail className='h-3.5 w-3.5 opacity-60' />
                                                         <span className='truncate'>
-                                                            {customer.email}
+                                                            {customer.contact_details?.[0]?.personal_email || customer.contact_details?.[0]?.company_email}
                                                         </span>
                                                     </div>
                                                 )}
-                                                {customer.phone && (
+                                                {customer.contact_details?.[0]?.phone_no && (
                                                     <div className='flex items-center gap-2'>
                                                         <Phone className='h-3.5 w-3.5 opacity-60' />
                                                         <span>
-                                                            {customer.phone}
+                                                            {customer.contact_details?.[0]?.phone_no}
                                                         </span>
                                                     </div>
                                                 )}
@@ -458,75 +458,102 @@ export default function CustomerList() {
             </Card>
 
             <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-                <DialogContent className='sm:max-w-[600px]'>
+                <DialogContent className='sm:max-w-[700px] max-h-[90vh] overflow-y-auto'>
                     <DialogHeader>
-                        <DialogTitle className='flex items-center gap-2'>
-                            <Building2 className='h-5 w-5 text-solarized-blue' />
-                            Customer Details
+                        <DialogTitle className='flex items-center gap-2 text-xl'>
+                            <Building2 className='h-6 w-6 text-solarized-blue' />
+                            Customer Information
                         </DialogTitle>
                         <DialogDescription>
-                            Full information for {selectedCustomer?.name}
+                            Detailed overview for {selectedCustomer?.name}
                         </DialogDescription>
                     </DialogHeader>
                     {selectedCustomer && (
-                        <div className='space-y-6 py-4'>
-                            <div className='grid grid-cols-2 gap-4'>
-                                <div className='space-y-1'>
-                                    <Label className='text-xs text-muted-foreground uppercase tracking-wider font-semibold'>
-                                        Customer Name
-                                    </Label>
-                                    <p className='text-base font-semibold text-solarized-blue'>
-                                        {selectedCustomer.name}
-                                    </p>
+                        <div className='space-y-8 py-4'>
+                            {/* Basic Section */}
+                            <section>
+                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 border-b pb-2">Basic Info</h3>
+                                <div className='grid grid-cols-2 md:grid-cols-3 gap-6'>
+                                    <div className='space-y-1'>
+                                        <Label className='text-[10px] text-muted-foreground uppercase tracking-widest font-bold'>Name</Label>
+                                        <p className='text-sm font-semibold'>{selectedCustomer.name}</p>
+                                    </div>
+                                    <div className='space-y-1'>
+                                        <Label className='text-[10px] text-muted-foreground uppercase tracking-widest font-bold'>Type</Label>
+                                        <p className='text-sm'>{selectedCustomer.customer_type || "—"}</p>
+                                    </div>
+                                    <div className='space-y-1'>
+                                        <Label className='text-[10px] text-muted-foreground uppercase tracking-widest font-bold'>Group</Label>
+                                        <p className='text-sm'>{selectedCustomer.customer_group_name || "—"}</p>
+                                    </div>
+                                    <div className='space-y-1'>
+                                        <Label className='text-[10px] text-muted-foreground uppercase tracking-widest font-bold'>Website</Label>
+                                        <p className='text-sm'>{selectedCustomer.website ? <a href={selectedCustomer.website} target="_blank" className="text-blue-600 hover:underline">{selectedCustomer.website}</a> : "—"}</p>
+                                    </div>
                                 </div>
-                                <div className='space-y-1'>
-                                    <Label className='text-xs text-muted-foreground uppercase tracking-wider font-semibold'>
-                                        Customer Type
-                                    </Label>
-                                    <p className='text-sm font-medium'>
-                                        {selectedCustomer.customer_type || "—"}
-                                    </p>
-                                </div>
-                            </div>
+                            </section>
 
-                            <div className='grid grid-cols-2 gap-4'>
-                                <div className='space-y-1'>
-                                    <Label className='text-xs text-muted-foreground uppercase tracking-wider font-semibold'>
-                                        Customer Group
-                                    </Label>
-                                    <p className='text-sm font-medium'>
-                                        {selectedCustomer.customer_group_name ||
-                                            "—"}
-                                    </p>
+                            {/* Contacts Section */}
+                            <section>
+                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 border-b pb-2">Contacts</h3>
+                                <div className="space-y-4">
+                                    {selectedCustomer.contact_details?.length ? selectedCustomer.contact_details.map((c, i) => (
+                                        <div key={i} className="p-3 bg-gray-50 rounded-lg border border-gray-100 grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            <div className="space-y-1">
+                                                <Label className='text-[10px] text-muted-foreground uppercase font-bold'>Phone</Label>
+                                                <p className="text-sm">{c.phone_no || "—"}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className='text-[10px] text-muted-foreground uppercase font-bold'>WhatsApp</Label>
+                                                <p className="text-sm">{c.whatsapp_no || "—"}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className='text-[10px] text-muted-foreground uppercase font-bold'>Personal Email</Label>
+                                                <p className="text-sm truncate" title={c.personal_email || ""}>{c.personal_email || "—"}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className='text-[10px] text-muted-foreground uppercase font-bold'>Company Email</Label>
+                                                <p className="text-sm truncate" title={c.company_email || ""}>{c.company_email || "—"}</p>
+                                            </div>
+                                        </div>
+                                    )) : <p className="text-sm text-muted-foreground italic">No contact details added.</p>}
                                 </div>
-                                <div className='space-y-1'>
-                                    <Label className='text-xs text-muted-foreground uppercase tracking-wider font-semibold'>
-                                        Territory
-                                    </Label>
-                                    <p className='text-sm font-medium'>
-                                        {selectedCustomer.territory_name || "—"}
-                                    </p>
-                                </div>
-                            </div>
+                            </section>
 
-                            <div className='grid grid-cols-2 gap-4'>
-                                <div className='space-y-1'>
-                                    <Label className='text-xs text-muted-foreground uppercase tracking-wider font-semibold'>
-                                        Email
-                                    </Label>
-                                    <p className='text-sm font-medium'>
-                                        {selectedCustomer.email || "—"}
-                                    </p>
+                            {/* Bank Section */}
+                            <section>
+                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 border-b pb-2">Bank Accounts</h3>
+                                <div className="space-y-4">
+                                    {selectedCustomer.bank_details?.length ? selectedCustomer.bank_details.map((b, i) => (
+                                        <div key={i} className="p-4 bg-blue-50/30 rounded-lg border border-blue-100 space-y-3">
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                <div className="space-y-1">
+                                                    <Label className='text-[10px] text-muted-foreground uppercase font-bold'>Bank</Label>
+                                                    <p className="text-sm font-semibold">{b.bank_name || "—"}</p>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Label className='text-[10px] text-muted-foreground uppercase font-bold'>Branch</Label>
+                                                    <p className="text-sm">{b.branch_name || "—"}</p>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Label className='text-[10px] text-muted-foreground uppercase font-bold'>A/C No</Label>
+                                                    <p className="text-sm font-mono">{b.account_no || "—"}</p>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Label className='text-[10px] text-muted-foreground uppercase font-bold'>IFSC</Label>
+                                                    <p className="text-sm font-mono">{b.ifsc_code || "—"}</p>
+                                                </div>
+                                            </div>
+                                            {b.bank_address && (
+                                                <div className="space-y-1 pt-2 border-t border-blue-100/50">
+                                                    <Label className='text-[10px] text-muted-foreground uppercase font-bold'>Address</Label>
+                                                    <p className="text-sm text-gray-600">{b.bank_address}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )) : <p className="text-sm text-muted-foreground italic">No bank details added.</p>}
                                 </div>
-                                <div className='space-y-1'>
-                                    <Label className='text-xs text-muted-foreground uppercase tracking-wider font-semibold'>
-                                        Phone
-                                    </Label>
-                                    <p className='text-sm font-medium'>
-                                        {selectedCustomer.phone || "—"}
-                                    </p>
-                                </div>
-                            </div>
+                            </section>
                         </div>
                     )}
                     <DialogFooter>

@@ -369,6 +369,33 @@ export interface ContactEmail {
   updated_at?: string;
 }
 
+export interface CustomerContactDetail {
+  id?: number;
+  customer_id?: number;
+  org_id?: number | null;
+  company_id?: number | null;
+  phone_no: string | null;
+  whatsapp_no: string | null;
+  personal_email: string | null;
+  company_email: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CustomerBankDetail {
+  id?: number;
+  customer_id?: number;
+  org_id?: number | null;
+  company_id?: number | null;
+  bank_name: string | null;
+  branch_name: string | null;
+  account_no: string | null;
+  ifsc_code: string | null;
+  bank_address: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Contact {
   id: number;
   salutation: string | null;
@@ -447,12 +474,9 @@ export interface Customer {
   opportunity: Opportunity | null;
   industry_id: number | null;
   industry_name?: string;
-  email: string | null;
-  phone: string | null;
   website?: string | null;
-  whatsapp_no?: string | null;
-  bank_name?: string | null;
-  ifc_code?: string | null;
+  contact_details?: CustomerContactDetail[];
+  bank_details?: CustomerBankDetail[];
 
   created_at: string;
   updated_at: string;

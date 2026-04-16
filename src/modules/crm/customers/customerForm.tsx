@@ -3,21 +3,11 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import {
     customerApi,
     customerGroupApi,
-    territoryApi,
     leadApi,
-    opportunityApi,
-    industryTypeApi,
-    priceListApi,
-    paymentTermApi,
-    contactApi
 } from "@/services/api";
 import type {
     CustomerGroup,
-    Territory,
     Lead,
-    Opportunity,
- 
-    Contact,
 } from "@/types";
 import { showAlert, getErrorMessage } from "@/lib/sweetalert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,8 +31,7 @@ import {
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2, ChevronLeft } from "lucide-react";
-import { set } from "date-fns";
+import { Loader2, ChevronLeft, Plus, Trash2 } from "lucide-react";
 
 const CUSTOMER_TYPES = ['Company', 'Individual', 'Partnership'];
 
@@ -58,13 +47,9 @@ export default function CustomerForm() {
         customer_type: "",
         customer_group_id: "",
         lead_id: "",
-       
-        email: "",
-        phone: "",
         website: "",
-        whatsapp_no: "",
-        bank_name: "",
-        ifc_code: "",
+        contact_details: [{ phone_no: "", whatsapp_no: "", personal_email: "", company_email: "" }],
+        bank_details: [{ bank_name: "", branch_name: "", account_no: "", ifsc_code: "", bank_address: "" }],
     });
 
     // Dropdown options
@@ -86,17 +71,9 @@ export default function CustomerForm() {
                 const [
                     groupsRes,
                     leadsRes,
-                    indRes,
-                    pricesRes,
-                    termsRes,
-                    contactsRes
                 ] = await Promise.all([
                     fetchResilient(() => customerGroupApi.list()),
                     fetchResilient(() => leadApi.getLead()),
-                    fetchResilient(() => industryTypeApi.list()),
-                    fetchResilient(() => priceListApi.list()),
-                    fetchResilient(() => paymentTermApi.list()),
-                    fetchResilient(() => contactApi.list()),
                 ]);
 
                 setCustomerGroups(groupsRes || []);
@@ -124,12 +101,13 @@ export default function CustomerForm() {
                         customer_type: customer.customer_type || "",
                         customer_group_id: customer.customer_group_id?.toString() || "",
                         lead_id: customer.lead_id?.toString() || "",
-                        email: customer.email || "",
-                        phone: customer.phone || "",
                         website: customer.website || "",
-                        whatsapp_no: customer.whatsapp_no || "",
-                        bank_name: customer.bank_name || "",
-                        ifc_code: customer.ifc_code || "",
+                        contact_details: (customer.contact_details?.length ?? 0) > 0 
+                            ? customer.contact_details 
+                            : [{ phone_no: "", whatsapp_no: "", personal_email: "", company_email: "" }],
+                        bank_details: (customer.bank_details?.length ?? 0) > 0
+                            ? customer.bank_details
+                            : [{ bank_name: "", branch_name: "", account_no: "", ifsc_code: "", bank_address: "" }],
                     });
                 } catch (error) {
                     showAlert("error", "Error", getErrorMessage(error, "Failed to fetch customer details"));
@@ -159,13 +137,58 @@ export default function CustomerForm() {
                 setForm(prev => ({
                     ...prev,
                     name: `${selectedLead.first_name || ''} ${selectedLead.last_name || ''}`.trim(),
-                    email: selectedLead.email || prev.email,
-                    phone: selectedLead.phone || selectedLead.mobile_no || prev.phone,
-                    whatsapp_no: selectedLead.whatsapp_no || prev.whatsapp_no,
                     website: selectedLead.website || prev.website,
+                    contact_details: [
+                        {
+                            phone_no: selectedLead.phone || selectedLead.mobile_no || "",
+                            whatsapp_no: selectedLead.whatsapp_no || "",
+                            personal_email: selectedLead.email || "",
+                            company_email: ""
+                        }
+                    ]
                 }));
             }
         }
+    };
+
+    const handleAddContact = () => {
+        setForm(prev => ({
+            ...prev,
+            contact_details: [...prev.contact_details, { phone_no: "", whatsapp_no: "", personal_email: "", company_email: "" }]
+        }));
+    };
+
+    const handleRemoveContact = (index: number) => {
+        setForm(prev => ({
+            ...prev,
+            contact_details: prev.contact_details.filter((_: any, i: number) => i !== index)
+        }));
+    };
+
+    const handleContactChange = (index: number, field: string, value: string) => {
+        const updatedContacts = [...form.contact_details];
+        updatedContacts[index][field] = value;
+        setField("contact_details", updatedContacts);
+    };
+
+    const handleAddBank = () => {
+        setForm(prev => ({
+            ...prev,
+            bank_details: [...prev.bank_details, { bank_name: "", branch_name: "", account_no: "", ifsc_code: "", bank_address: "" }]
+        }));
+    };
+
+    const handleRemoveBank = (index: number) => {
+        setForm(prev => ({
+            ...prev,
+            bank_details: prev.bank_details.filter((_: any, i: number) => i !== index)
+        }));
+    };
+
+    const handleBankChange = (index: number, field: string, value: string) => {
+        const updatedBanks = [...form.bank_details];
+        updatedBanks[index][field] = value;
+        setField("bank_details", updatedBanks);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -173,11 +196,17 @@ export default function CustomerForm() {
         setIsSubmitting(true);
         try {
             const payload = { ...form };
+            
+            // Filter out completely empty contact/bank records
+            payload.contact_details = payload.contact_details.filter((c: any) => 
+                c.phone_no || c.whatsapp_no || c.personal_email || c.company_email
+            );
+            payload.bank_details = payload.bank_details.filter((b: any) => 
+                b.bank_name || b.account_no || b.ifsc_code
+            );
+
             // Convert empty strings to null for foreign keys
-            const nullableFields = [
-                'customer_group_id', 'lead_id',
-                'industry_id', 'default_price_list_id', 'payment_term_id', 'customer_contact_id'
-            ];
+            const nullableFields = ['customer_group_id', 'lead_id'];
             nullableFields.forEach(key => {
                 if (payload[key] === '' || payload[key] === null) {
                     payload[key] = null;
@@ -244,8 +273,6 @@ export default function CustomerForm() {
                 </Button>
             </div>
 
-
-
             <form onSubmit={handleSubmit} className="space-y-8 pb-10">
                 {!isEdit && (
                     <Card>
@@ -297,7 +324,7 @@ export default function CustomerForm() {
                         <CardTitle>Basic Information</CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-6 md:grid-cols-2">
-                        <div className="space-y-2 md:col-span-1">
+                        <div className="space-y-2">
                             <Label>Customer Name <span className="text-destructive">*</span></Label>
                             <Input
                                 value={form.name}
@@ -340,126 +367,157 @@ export default function CustomerForm() {
                                 </Select>
                             </div>
                         </div>
+                        <div className="space-y-2">
+                            <Label>Website</Label>
+                            <Input
+                                value={form.website}
+                                onChange={(e) => setField("website", e.target.value)}
+                                placeholder="https://example.com"
+                            />
+                        </div>
                     </CardContent>
                 </Card>
-
-                {/* Classification & Relations */}
-                {isEdit && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Classification & Relations</CardTitle>
-                        </CardHeader>
-                        <CardContent className="grid gap-6 md:grid-cols-2">
-                            <div className="space-y-2">
-                                <Label>Select Lead (if any)</Label>
-                                <Select
-                                    value={form.lead_id}
-                                    onValueChange={handleLeadSelection}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select Lead" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {leads.map(l => (
-                                            <SelectItem key={l.id} value={l.id.toString()}>{l.first_name} {l.last_name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
 
                 {/* Contact Details */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Contact Details</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-6 md:grid-cols-2">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Email</Label>
-                                <Input
-                                    type="email"
-                                    value={form.email}
-                                    onChange={(e) => setField("email", e.target.value)}
-                                    placeholder="email@example.com"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Phone</Label>
-                                <Input
-                                    value={form.phone}
-                                    onChange={(e) => setField("phone", e.target.value)}
-                                    placeholder="Phone number"
-                                />
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>WhatsApp No.</Label>
-                                <Input
-                                    value={form.whatsapp_no}
-                                    onChange={(e) => setField("whatsapp_no", e.target.value)}
-                                    placeholder="WhatsApp number"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Website</Label>
-                                <Input
-                                    value={form.website}
-                                    onChange={(e) => setField("website", e.target.value)}
-                                    placeholder="https://example.com"
-                                />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-semibold flex items-center gap-2">
+                             Contact Details
+                        </h2>
+                        <Button type="button" size="sm" variant="outline" onClick={handleAddContact}>
+                            <Plus className="mr-1 h-3.5 w-3.5" /> Add Contact
+                        </Button>
+                    </div>
+                    {form.contact_details.map((contact: any, index: number) => (
+                        <Card key={index} className="relative">
+                            {form.contact_details.length > 1 && (
+                                <Button 
+                                    type="button" 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="absolute top-2 right-2 text-destructive"
+                                    onClick={() => handleRemoveContact(index)}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            )}
+                            <CardContent className="pt-6 grid gap-6 md:grid-cols-2">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Phone No.</Label>
+                                        <Input
+                                            value={contact.phone_no}
+                                            onChange={(e) => handleContactChange(index, "phone_no", e.target.value)}
+                                            placeholder="Phone number"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>WhatsApp No.</Label>
+                                        <Input
+                                            value={contact.whatsapp_no}
+                                            onChange={(e) => handleContactChange(index, "whatsapp_no", e.target.value)}
+                                            placeholder="WhatsApp number"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Personal Email</Label>
+                                        <Input
+                                            type="email"
+                                            value={contact.personal_email}
+                                            onChange={(e) => handleContactChange(index, "personal_email", e.target.value)}
+                                            placeholder="Personal email"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Company Email</Label>
+                                        <Input
+                                            type="email"
+                                            value={contact.company_email}
+                                            onChange={(e) => handleContactChange(index, "company_email", e.target.value)}
+                                            placeholder="Company email"
+                                        />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
 
                 {/* Bank Details */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Bank Details</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-6 md:grid-cols-2">
-                        <div className="space-y-2">
-                            <Label>Bank Name</Label>
-                            <Input
-                                value={form.bank_name}
-                                onChange={(e) => setField("bank_name", e.target.value)}
-                                placeholder="Bank name"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>IFSC Code</Label>
-                            <Input
-                                value={form.ifc_code}
-                                onChange={(e) => setField("ifc_code", e.target.value)}
-                                placeholder="IFSC Code"
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
-
-            
-
-                {/* Other Details */}
-                {/* <Card>
-                    <CardHeader>
-                        <CardTitle>Other Details</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-2">
-                            <Label>Customer Details</Label>
-                            <Textarea
-                                value={form.customer_details}
-                                onChange={(e) => setField("customer_details", e.target.value)}
-                                placeholder="Additional notes about the customer"
-                                className="min-h-[100px]"
-                            />
-                        </div>
-                    </CardContent>
-                </Card> */}
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-semibold flex items-center gap-2">
+                             Bank Details
+                        </h2>
+                        <Button type="button" size="sm" variant="outline" onClick={handleAddBank}>
+                            <Plus className="mr-1 h-3.5 w-3.5" /> Add Bank
+                        </Button>
+                    </div>
+                    {form.bank_details.map((bank: any, index: number) => (
+                        <Card key={index} className="relative">
+                            {form.bank_details.length > 1 && (
+                                <Button 
+                                    type="button" 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="absolute top-2 right-2 text-destructive"
+                                    onClick={() => handleRemoveBank(index)}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            )}
+                            <CardContent className="pt-6 space-y-6">
+                                <div className="grid gap-6 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label>Bank Name</Label>
+                                        <Input
+                                            value={bank.bank_name}
+                                            onChange={(e) => handleBankChange(index, "bank_name", e.target.value)}
+                                            placeholder="Bank name"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Branch Name</Label>
+                                        <Input
+                                            value={bank.branch_name}
+                                            onChange={(e) => handleBankChange(index, "branch_name", e.target.value)}
+                                            placeholder="Branch name"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid gap-6 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label>Account No.</Label>
+                                        <Input
+                                            value={bank.account_no}
+                                            onChange={(e) => handleBankChange(index, "account_no", e.target.value)}
+                                            placeholder="Account number"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>IFSC Code</Label>
+                                        <Input
+                                            value={bank.ifsc_code}
+                                            onChange={(e) => handleBankChange(index, "ifsc_code", e.target.value)}
+                                            placeholder="IFSC Code"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Bank Address</Label>
+                                    <Textarea
+                                        value={bank.bank_address}
+                                        onChange={(e) => handleBankChange(index, "bank_address", e.target.value)}
+                                        placeholder="Full bank address"
+                                        className="h-20"
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
 
                 <div className="flex justify-end gap-4">
                     <Button
