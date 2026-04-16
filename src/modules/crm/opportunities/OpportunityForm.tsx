@@ -408,6 +408,24 @@ export default function OpportunityForm() {
                                 <Label>Probability (%)</Label>
                                 <Input type="number" min="0" max="100" value={form.probability || ''} onChange={(e) => setField('probability', e.target.value)} />
                             </div>
+                             <div className="space-y-1">
+                                <Label>Add Product</Label>
+                                <Select onValueChange={(v) => {
+                                    const prod = products.find(p => String(p.id) === v);
+                                    if (prod) handleProductSelect(prod);
+                                }}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a product" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {products.map(p => (
+                                            <SelectItem key={p.id} value={String(p.id)}>
+                                                {String(p.name || '')} - ₹{String(p.price || 0)}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
                             {/* Currency */}
                             {/* <div className="space-y-1">
@@ -427,7 +445,7 @@ export default function OpportunityForm() {
                 </Card>
 
                 {/* ── Items section (shown when with_items checked) ──────────────────────── */}
-
+{/* 
                     <Card>
                         <CardHeader>
                             <div className="flex items-center justify-between border-b pb-2">
@@ -454,8 +472,7 @@ export default function OpportunityForm() {
                                 </Select>
                             </div>
 
-                            {/* Desktop Table View */}
-                            {/* <div className="hidden md:block overflow-x-auto">
+                            <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full text-sm border border-border rounded">
                                     <thead>
                                         <tr className="bg-muted/60 border-b border-border">
@@ -493,9 +510,8 @@ export default function OpportunityForm() {
                                         )}
                                     </tbody>
                                 </table>
-                            </div> */}
+                            </div>
 
-                            {/* Mobile Card View */}
                             <div className="md:hidden space-y-3">
                                 {selectedProducts.map((p) => (
                                     <div key={p.id} className="border rounded-lg p-3 space-y-3 bg-card">
@@ -528,18 +544,13 @@ export default function OpportunityForm() {
                                 )}
                             </div>
 
-                            {/* {selectedProducts.length > 0 && (
+                            {selectedProducts.length > 0 && (
                                 <div className="text-right font-bold text-lg border-t pt-3">
                                     Total Amount: ₹{selectedProducts.reduce((sum, p) => sum + (p.price * p.qty), 0)}
                                 </div>
-                            )} */}
+                            )}
                         </CardContent>
-                    </Card>
-
-
-
-
-
+                    </Card> */}
 
                 {/* ── Contact Info section ───────────────────────────────────────────────── */}
                 <Card>
