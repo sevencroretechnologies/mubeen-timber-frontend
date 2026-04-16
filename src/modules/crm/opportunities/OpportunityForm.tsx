@@ -7,11 +7,9 @@ import {
     crmOpportunityTypeService,
     crmOpportunityStageService,
     crmLeadService,
-    // crmTerritoryService,
-    // crmCustomerService,
-    // crmContactService,
+    crmCustomerService,
+    crmContactService,
     crmProductService,
-    // crmProductCategoryService,
 } from '../../../services/api';
 import { showAlert, getErrorMessage } from '../../../lib/sweetalert';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
@@ -58,10 +56,7 @@ interface OppItem {
     is_new_product?: boolean;
 }
 
-const EMPTY_ITEM: OppItem = {
-    item_code: '', item_name: '', qty: '', rate: 0, amount: '',
-    description: '', long_description: '', slug: '', stock: 0, is_new_product: false,
-};
+
 
 // ══════════════════════════════════════════════════════════════════════════════
 export default function OpportunityForm() {
@@ -93,81 +88,73 @@ export default function OpportunityForm() {
 
     const [selectedProducts, setSelectedProducts] = useState<any[]>([]);
 
-    // ── Load all dropdowns on mount ───────────────────────────────────────────────
+    // ── Load data (dropdowns and opportunity details) ──────────────────────────
     useEffect(() => {
-        const fetchAll = async () => {
-            const results = await Promise.allSettled([
-                crmStatusService.getAll({ per_page: 200 }),
-                crmSourceService.getAll({ per_page: 200 }),
-                crmOpportunityTypeService.getAll({ per_page: 200 }),
-                crmOpportunityStageService.getAll({ per_page: 200 }),
-                crmLeadService.getAll({ per_page: 500 }),
-                // crmTerritoryService.getAll({ per_page: 200 }),
-                // crmCustomerService.getAll({ per_page: 500 }),
-                // crmContactService.getAll({ per_page: 500 }),
-                crmProductService.getAll({ per_page: 1000 }),
-                // crmProductCategoryService.getAll({ per_page: 200 }),
-            ]);
+        const loadData = async () => {
+            setLoading(true);
+            try {
+                const results = await Promise.allSettled([
+                    crmStatusService.getAll({ per_page: 200 }),
+                    crmSourceService.getAll({ per_page: 200 }),
+                    crmOpportunityTypeService.getAll({ per_page: 200 }),
+                    crmOpportunityStageService.getAll({ per_page: 200 }),
+                    crmLeadService.getAll({ per_page: 500 }),
+                    crmProductService.getAll({ per_page: 1000 }),
+                ]);
 
-            const setters = [
-                setStatuses, setSources, setOpportunityTypes, setOpportunityStages,
-                setLeads, setCustomers, setContacts, setProducts, setCategories
-            ];
+                // Set dropdown states
+                let productsList: any[] = [];
+                results.forEach((res, idx) => {
+                    if (res.status === 'fulfilled') {
+                        const data = extractList(res.value);
+                        if (idx === 0) setStatuses(data);
+                        if (idx === 1) setSources(data);
+                        if (idx === 2) setOpportunityTypes(data);
+                        if (idx === 3) setOpportunityStages(data);
+                        if (idx === 4) setLeads(data);
+                        if (idx === 5) {
+                            setProducts(data);
+                            productsList = data;
+                        }
+                    }
+                });
 
-            results.forEach((res, idx) => {
-                const setter = setters[idx];
-                if (res.status === 'fulfilled') {
-                    setter(extractList(res.value));
-                } else {
-                    console.error(`Dropdown load failed at index ${idx}:`, res.reason);
+                // Load opportunity if id exists
+                if (id) {
+                    const r = await crmOpportunityService.getById(Number(id));
+                    const item = r.data as Record<string, unknown>;
+                    const itemsRaw = Array.isArray(item.items) ? item.items : [];
+
+                    const selected = itemsRaw.map((it: any) => {
+                        const pInfo = productsList.find((p: any) => p.id === it.product_id);
+                        return {
+                            id: it.product_id,
+                            name: pInfo ? (pInfo.name || pInfo.item_name) : 'Unknown Product',
+                            price: Number(it.rate) || 0,
+                            qty: Number(it.quantity || it.qty) || 1
+                        };
+                    });
+
+                    setForm({
+                        ...item,
+                        expected_closing: item.expected_closing ? String(item.expected_closing).split('T')[0] : '',
+                        next_contact_date: item.next_contact_date ? String(item.next_contact_date).split('T')[0] : '',
+                        with_items: Boolean(item.with_items) || selected.length > 0,
+                    });
+                    setSelectedProducts(selected);
                 }
-            });
+            } catch (error) {
+                console.error('Error loading opportunity form data:', error);
+                if (id) {
+                    showAlert('error', 'Error', 'Failed to load opportunity');
+                    navigate('/crm/opportunities');
+                }
+            } finally {
+                setLoading(false);
+            }
         };
 
-        fetchAll();
-    }, []);
-
-    // ── Load existing opportunity when editing ────────────────────────────────────
-    useEffect(() => {
-        if (!id) return;
-        setLoading(true);
-        crmOpportunityService.getById(Number(id))
-            .then(async (r) => {
-                const item = r.data as Record<string, unknown>;
-                let existingItems: OppItem[] = [];
-                try {
-                    const pr = await crmOpportunityService.getProducts(Number(id));
-                    const raw = pr.data;
-                    const arr = Array.isArray(raw) ? raw : [];
-                    existingItems = arr.map((p: Record<string, unknown>) => ({
-                        product_id: p.product_id as number,
-                        item_code: String(p.item_code ?? ''),
-                        item_name: String(p.item_name ?? ''),
-                        qty: p.qty as number,
-                        rate: p.rate as number ?? 0,
-                        amount: p.amount as number ?? 0,
-                        description: String(p.description ?? ''),
-                    }));
-                } catch { /* no items */ }
-
-                setForm({
-                    ...item,
-                    expected_closing: item.expected_closing ? String(item.expected_closing).split('T')[0] : '',
-                    next_contact_date: item.next_contact_date ? String(item.next_contact_date).split('T')[0] : '',
-                    with_items: Boolean(item.with_items) || existingItems.length > 0,
-                });
-                setSelectedProducts(existingItems.map(p => ({
-                    id: p.product_id,
-                    name: p.item_name,
-                    price: p.rate || 0,
-                    qty: p.qty || 1
-                })));
-            })
-            .catch(() => {
-                showAlert('error', 'Error', 'Failed to load opportunity');
-                navigate('/crm/opportunities');
-            })
-            .finally(() => setLoading(false));
+        loadData();
     }, [id, navigate]);
 
 
@@ -175,11 +162,8 @@ export default function OpportunityForm() {
 
     // ── Product search / item helpers ─────────────────────────────────────────────
     const handleProductSelect = (product: DDItem) => {
-        if (selectedProducts.find(p => p.id === product.id)) {
-            showAlert('warning', 'Duplicate', 'Product already added');
-            return;
-        }
-        setSelectedProducts([...selectedProducts, {
+        // Replace instead of add, as per user requirement to "change" the product
+        setSelectedProducts([{
             id: product.id,
             name: product.name,
             price: product.price || 0,
@@ -206,7 +190,7 @@ export default function OpportunityForm() {
         try {
             // Strip relation objects, keep primitive IDs — mirrors crm-frontend destructure
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { status, source, industry, owner, lead, customer, contact, prospect, opportunityType, opportunityStage, ...cleanForm } = form;
+            const { status, source, industry, owner, lead, customer, contact, prospect, opportunityType, opportunityStage, id: formId, ...cleanForm } = form;
             const payload: Record<string, unknown> = {
                 ...cleanForm,
                 with_items: selectedProducts.length > 0,
@@ -410,10 +394,13 @@ export default function OpportunityForm() {
                             </div>
                              <div className="space-y-1">
                                 <Label>Add Product</Label>
-                                <Select onValueChange={(v) => {
-                                    const prod = products.find(p => String(p.id) === v);
-                                    if (prod) handleProductSelect(prod);
-                                }}>
+                                <Select 
+                                    value={selectedProducts.length > 0 ? String(selectedProducts[0].id) : ""}
+                                    onValueChange={(v) => {
+                                        const prod = products.find(p => String(p.id) === v);
+                                        if (prod) handleProductSelect(prod);
+                                    }}
+                                >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a product" />
                                     </SelectTrigger>
@@ -446,61 +433,42 @@ export default function OpportunityForm() {
 
                 {/* ── Items section (shown when with_items checked) ──────────────────────── */}
 {/* 
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center justify-between border-b pb-2">
-                                <CardTitle className="text-base mb-0">Products</CardTitle>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-1">
-                                <Label>Add Product</Label>
-                                <Select onValueChange={(v) => {
-                                    const prod = products.find(p => String(p.id) === v);
-                                    if (prod) handleProductSelect(prod);
-                                }}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a product" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {products.map(p => (
-                                            <SelectItem key={p.id} value={String(p.id)}>
-                                                {String(p.name || '')} - ₹{String(p.price || 0)}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="hidden md:block overflow-x-auto">
-                                <table className="w-full text-sm border border-border rounded">
-                                    <thead>
-                                        <tr className="bg-muted/60 border-b border-border">
-                                            <th className="text-left px-3 py-2 font-semibold border-r border-border">Product Name</th>
-                                            <th className="text-left px-3 py-2 font-semibold border-r border-border">Price</th>
-                                            <th className="text-left px-3 py-2 font-semibold border-r border-border w-24">Quantity</th>
-                                            <th className="text-left px-3 py-2 font-semibold border-r border-border">Total</th>
-                                            <th className="text-left px-3 py-2 font-semibold">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {selectedProducts.map((p) => (
-                                            <tr key={p.id} className="border-b border-border last:border-0">
-                                                <td className="px-3 py-2 border-r border-border">{p.name}</td>
-                                                <td className="px-3 py-2 border-r border-border">₹{p.price}</td>
-                                                <td className="px-3 py-2 border-r border-border">
-                                                    <Input 
-                                                        type="number" 
-                                                        min="1" 
-                                                        className="h-8 py-0" 
-                                                        value={p.qty} 
-                                                        onChange={(e) => updateProductQty(p.id, e.target.value)} 
-                                                    />
-                                                </td>
-                                                <td className="px-3 py-2 border-r border-border">₹{p.price * p.qty}</td>
-                                                <td className="px-3 py-2">
-                                                    <Button variant="destructive" size="sm" onClick={() => removeSelectedProduct(p.id)}>
-                                                        Remove
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center justify-between border-b pb-2">
+                            <CardTitle className="text-base mb-0">Products</CardTitle>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full text-sm border border-border rounded">
+                                <thead>
+                                    <tr className="bg-muted/60 border-b border-border">
+                                        <th className="text-left px-3 py-2 font-semibold border-r border-border">Product Name</th>
+                                        <th className="text-left px-3 py-2 font-semibold border-r border-border">Price</th>
+                                        <th className="text-left px-3 py-2 font-semibold border-r border-border w-24">Quantity</th>
+                                        <th className="text-left px-3 py-2 font-semibold border-r border-border">Total</th>
+                                        <th className="text-left px-3 py-2 font-semibold">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {selectedProducts.map((p) => (
+                                        <tr key={p.id} className="border-b border-border last:border-0">
+                                            <td className="px-3 py-2 border-r border-border">{p.name}</td>
+                                            <td className="px-3 py-2 border-r border-border">₹{p.price}</td>
+                                            <td className="px-3 py-2 border-r border-border">
+                                                <Input 
+                                                    type="number" 
+                                                    min="1" 
+                                                    className="h-8 py-0" 
+                                                    value={p.qty} 
+                                                    onChange={(e) => updateProductQty(p.id, e.target.value)} 
+                                                />
+                                            </td>
+                                            <td className="px-3 py-2 border-r border-border">₹{p.price * (Number(p.qty) || 0)}</td>
+                                            <td className="px-3 py-2">
+                                                <Button variant="destructive" size="sm" onClick={() => removeSelectedProduct(p.id)}>
+                                                    Remove
                                                     </Button>
                                                 </td>
                                             </tr>
@@ -535,7 +503,7 @@ export default function OpportunityForm() {
                                                     onChange={(e) => updateProductQty(p.id, e.target.value)} 
                                                 />
                                             </div>
-                                            <div className="font-bold">Total: ₹{p.price * p.qty}</div>
+                                            <div className="font-bold">Total: ₹{p.price * (Number(p.qty) || 0)}</div>
                                         </div>
                                     </div>
                                 ))}
@@ -546,11 +514,12 @@ export default function OpportunityForm() {
 
                             {selectedProducts.length > 0 && (
                                 <div className="text-right font-bold text-lg border-t pt-3">
-                                    Total Amount: ₹{selectedProducts.reduce((sum, p) => sum + (p.price * p.qty), 0)}
+                                    Total Amount: ₹{selectedProducts.reduce((sum, p) => sum + (p.price * (Number(p.qty) || 0)), 0)}
                                 </div>
                             )}
                         </CardContent>
-                    </Card> */}
+                    </Card>
+*/}
 
                 {/* ── Contact Info section ───────────────────────────────────────────────── */}
                 <Card>
