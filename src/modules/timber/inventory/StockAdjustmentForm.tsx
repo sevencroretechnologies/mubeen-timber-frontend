@@ -69,14 +69,20 @@ export default function StockAdjustmentForm() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/inventory')}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-solarized-base02">Stock Adjustment</h1>
-          <p className="text-muted-foreground">Manually adjust stock levels for a wood type</p>
+          <h1 className="text-2xl font-bold text-solarized-base02 tracking-tight">Stock Adjustment</h1>
+          <p className="text-sm text-muted-foreground">Manually adjust stock levels for a wood type</p>
         </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => navigate('/inventory')} 
+          className="h-8 px-3 text-xs font-semibold border-gray-200 hover:bg-gray-50 flex items-center gap-2"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back To
+        </Button>
       </div>
 
       <Card>
