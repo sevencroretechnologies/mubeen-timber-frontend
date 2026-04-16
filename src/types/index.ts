@@ -449,6 +449,10 @@ export interface Customer {
   industry_name?: string;
   email: string | null;
   phone: string | null;
+  website?: string | null;
+  whatsapp_no?: string | null;
+  bank_name?: string | null;
+  ifc_code?: string | null;
 
   created_at: string;
   updated_at: string;

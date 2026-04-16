@@ -40,6 +40,7 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, ChevronLeft } from "lucide-react";
 import { set } from "date-fns";
 
@@ -51,25 +52,24 @@ export default function CustomerForm() {
     const isEdit = Boolean(id);
     const [loading, setLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [creationMode, setCreationMode] = useState<"new" | "lead">("new");
     const [form, setForm] = useState<Record<string, any>>({
         name: "",
         customer_type: "",
         customer_group_id: "",
-        territory_id: "",
         lead_id: "",
-        opportunity_id: "",
        
         email: "",
         phone: "",
         website: "",
-       
+        whatsapp_no: "",
+        bank_name: "",
+        ifc_code: "",
     });
 
     // Dropdown options
     const [customerGroups, setCustomerGroups] = useState<CustomerGroup[]>([]);
-    const [territories, setTerritories] = useState<Territory[]>([]);
     const [leads, setLeads] = useState<Lead[]>([]);
-    const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
 
     useEffect(() => {
         const loadOptions = async () => {
@@ -85,18 +85,14 @@ export default function CustomerForm() {
 
                 const [
                     groupsRes,
-                    territoriesRes,
                     leadsRes,
-                    oppsRes,
                     indRes,
                     pricesRes,
                     termsRes,
                     contactsRes
                 ] = await Promise.all([
                     fetchResilient(() => customerGroupApi.list()),
-                    fetchResilient(() => territoryApi.list()),
                     fetchResilient(() => leadApi.getLead()),
-                    fetchResilient(() => opportunityApi.getOpportunity()),
                     fetchResilient(() => industryTypeApi.list()),
                     fetchResilient(() => priceListApi.list()),
                     fetchResilient(() => paymentTermApi.list()),
@@ -104,9 +100,7 @@ export default function CustomerForm() {
                 ]);
 
                 setCustomerGroups(groupsRes || []);
-                setTerritories(territoriesRes || []);
                 setLeads(Array.isArray(leadsRes) ? leadsRes : (leadsRes as any).data || []);
-                setOpportunities(Array.isArray(oppsRes) ? oppsRes : (oppsRes as any).data || []);
                 
             } catch (error) {
                 console.error("Critical error in loadOptions:", error);
@@ -129,11 +123,13 @@ export default function CustomerForm() {
                         name: customer.name || "",
                         customer_type: customer.customer_type || "",
                         customer_group_id: customer.customer_group_id?.toString() || "",
-                        territory_id: customer.territory_id?.toString() || "",
                         lead_id: customer.lead_id?.toString() || "",
-                        opportunity_id: customer.opportunity_id?.toString() || "",
                         email: customer.email || "",
                         phone: customer.phone || "",
+                        website: customer.website || "",
+                        whatsapp_no: customer.whatsapp_no || "",
+                        bank_name: customer.bank_name || "",
+                        ifc_code: customer.ifc_code || "",
                     });
                 } catch (error) {
                     showAlert("error", "Error", getErrorMessage(error, "Failed to fetch customer details"));
@@ -148,6 +144,30 @@ export default function CustomerForm() {
 
     const setField = (key: string, value: any) => setForm((p) => ({ ...p, [key]: value }));
 
+    const handleModeChange = (mode: "new" | "lead") => {
+        setCreationMode(mode);
+        if (mode === "new") {
+            setField("lead_id", "");
+        }
+    };
+
+    const handleLeadSelection = (leadId: string) => {
+        setField("lead_id", leadId);
+        if (leadId) {
+            const selectedLead = leads.find(l => l.id.toString() === leadId);
+            if (selectedLead) {
+                setForm(prev => ({
+                    ...prev,
+                    name: `${selectedLead.first_name || ''} ${selectedLead.last_name || ''}`.trim(),
+                    email: selectedLead.email || prev.email,
+                    phone: selectedLead.phone || selectedLead.mobile_no || prev.phone,
+                    whatsapp_no: selectedLead.whatsapp_no || prev.whatsapp_no,
+                    website: selectedLead.website || prev.website,
+                }));
+            }
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -155,7 +175,7 @@ export default function CustomerForm() {
             const payload = { ...form };
             // Convert empty strings to null for foreign keys
             const nullableFields = [
-                'customer_group_id', 'territory_id', 'lead_id', 'opportunity_id',
+                'customer_group_id', 'lead_id',
                 'industry_id', 'default_price_list_id', 'payment_term_id', 'customer_contact_id'
             ];
             nullableFields.forEach(key => {
@@ -227,6 +247,50 @@ export default function CustomerForm() {
 
 
             <form onSubmit={handleSubmit} className="space-y-8 pb-10">
+                {!isEdit && (
+                    <Card>
+                        <CardContent className="pt-6">
+                            <RadioGroup
+                                defaultValue="new"
+                                value={creationMode}
+                                onValueChange={(value) => handleModeChange(value as "new" | "lead")}
+                                className="flex flex-col sm:flex-row sm:gap-6 gap-4"
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="new" id="mode-new" />
+                                    <Label htmlFor="mode-new" className="cursor-pointer font-medium">New Customer</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="lead" id="mode-lead" />
+                                    <Label htmlFor="mode-lead" className="cursor-pointer font-medium">Convert from Lead</Label>
+                                </div>
+                            </RadioGroup>
+
+                            {creationMode === "lead" && (
+                                <div className="mt-6 max-w-md">
+                                    <Label className="mb-2 block">Select Lead to Convert <span className="text-destructive">*</span></Label>
+                                    <Select
+                                        value={form.lead_id}
+                                        onValueChange={handleLeadSelection}
+                                        required={creationMode === "lead"}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Search or select a lead" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {leads.map(l => (
+                                                <SelectItem key={l.id} value={l.id.toString()}>
+                                                    {l.first_name} {l.last_name} {l.email ? `(${l.email})` : ''}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
+
                 {/* Basic Information */}
                 <Card>
                     <CardHeader>
@@ -280,62 +344,31 @@ export default function CustomerForm() {
                 </Card>
 
                 {/* Classification & Relations */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Classification & Relations</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-6 md:grid-cols-4">
-                        <div className="space-y-2">
-                            <Label>Territory</Label>
-                            <Select
-                                value={form.territory_id}
-                                onValueChange={(v) => setField("territory_id", v)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select Territory" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {territories.map(t => (
-                                        <SelectItem key={t.id} value={t.id.toString()}>{t.territory_name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Leads</Label>
-                            <Select
-                                value={form.lead_id}
-                                onValueChange={(v) => setField("lead_id", v)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select Lead" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {leads.map(l => (
-                                        <SelectItem key={l.id} value={l.id.toString()}>{l.first_name} {l.last_name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Opportunity</Label>
-                            <Select
-                                value={form.opportunity_id}
-                                onValueChange={(v) => setField("opportunity_id", v)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select Opportunity" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {opportunities.map(o => (
-                                        <SelectItem key={o.id} value={o.id.toString()}>{o.party_name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        
-                    </CardContent>
-                </Card>
+                {isEdit && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Classification & Relations</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid gap-6 md:grid-cols-2">
+                            <div className="space-y-2">
+                                <Label>Select Lead (if any)</Label>
+                                <Select
+                                    value={form.lead_id}
+                                    onValueChange={handleLeadSelection}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select Lead" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {leads.map(l => (
+                                            <SelectItem key={l.id} value={l.id.toString()}>{l.first_name} {l.last_name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Contact Details */}
                 <Card>
@@ -362,7 +395,49 @@ export default function CustomerForm() {
                                 />
                             </div>
                         </div>
-                       
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>WhatsApp No.</Label>
+                                <Input
+                                    value={form.whatsapp_no}
+                                    onChange={(e) => setField("whatsapp_no", e.target.value)}
+                                    placeholder="WhatsApp number"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Website</Label>
+                                <Input
+                                    value={form.website}
+                                    onChange={(e) => setField("website", e.target.value)}
+                                    placeholder="https://example.com"
+                                />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Bank Details */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Bank Details</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid gap-6 md:grid-cols-2">
+                        <div className="space-y-2">
+                            <Label>Bank Name</Label>
+                            <Input
+                                value={form.bank_name}
+                                onChange={(e) => setField("bank_name", e.target.value)}
+                                placeholder="Bank name"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>IFSC Code</Label>
+                            <Input
+                                value={form.ifc_code}
+                                onChange={(e) => setField("ifc_code", e.target.value)}
+                                placeholder="IFSC Code"
+                            />
+                        </div>
                     </CardContent>
                 </Card>
 
