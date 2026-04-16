@@ -321,7 +321,7 @@ export default function LeadsList() {
                                                         </h3>
                                                     </div>
                                                     <div className='flex gap-1 shrink-0'>
-                                                        <Button
+                                                        {/* <Button
                                                             variant='ghost'
                                                             size='icon'
                                                             className='h-8 w-8 text-gray-400 hover:text-solarized-blue'
@@ -330,7 +330,7 @@ export default function LeadsList() {
                                                             }
                                                         >
                                                             <Eye className='h-4 w-4' />
-                                                        </Button>
+                                                        </Button> */}
                                                         <Button
                                                             variant='ghost'
                                                             size='icon'

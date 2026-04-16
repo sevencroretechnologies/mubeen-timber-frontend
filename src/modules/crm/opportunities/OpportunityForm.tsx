@@ -11,7 +11,7 @@ import {
     // crmCustomerService,
     // crmContactService,
     crmProductService,
-    crmProductCategoryService,
+    // crmProductCategoryService,
 } from '../../../services/api';
 import { showAlert, getErrorMessage } from '../../../lib/sweetalert';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
@@ -106,7 +106,7 @@ export default function OpportunityForm() {
                 // crmCustomerService.getAll({ per_page: 500 }),
                 // crmContactService.getAll({ per_page: 500 }),
                 crmProductService.getAll({ per_page: 1000 }),
-                crmProductCategoryService.getAll({ per_page: 200 }),
+                // crmProductCategoryService.getAll({ per_page: 200 }),
             ]);
 
             const setters = [
