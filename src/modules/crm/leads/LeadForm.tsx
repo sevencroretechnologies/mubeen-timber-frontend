@@ -33,7 +33,7 @@ import {
 } from "../../../components/ui/breadcrumb";
 import { Loader2, ChevronLeft } from "lucide-react";
 
-const SALUTATIONS = ["Mr.", "Mrs.", "Ms.", "Dr.", "Prof."];
+const SALUTATIONS = ["Mr", "Mrs", "Ms", "Dr", "Prof"];
 const EMPLOYEE_RANGES = ["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"];
 
 export default function LeadForm() {
