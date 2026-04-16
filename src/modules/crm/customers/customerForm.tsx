@@ -147,7 +147,15 @@ export default function CustomerForm() {
     const handleModeChange = (mode: "new" | "lead") => {
         setCreationMode(mode);
         if (mode === "new") {
-            setField("lead_id", "");
+            setForm(prev => ({
+                ...prev,
+                lead_id: "",
+                name: "",
+                email: "",
+                phone: "",
+                whatsapp_no: "",
+                website: "",
+            }));
         }
     };
 
