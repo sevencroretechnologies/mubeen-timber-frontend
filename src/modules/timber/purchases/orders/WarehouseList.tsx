@@ -14,9 +14,11 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import DataTable, { TableColumn } from 'react-data-table-component';
-import { Plus, Warehouse, Edit, Trash2 } from 'lucide-react';
+import { Plus, Warehouse, Edit, Trash2, Loader2, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function WarehouseList() {
+  const navigate = useNavigate();
   const [warehouses, setWarehouses] = useState<TimberWarehouse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -157,32 +159,97 @@ export default function WarehouseList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-solarized-base02">Warehouses</h1>
-          <p className="text-muted-foreground">Manage warehouse locations for stock storage</p>
+          <h1 className="text-2xl font-bold text-solarized-base02 tracking-tight">Warehouses</h1>
+          <p className="text-sm text-muted-foreground">Manage warehouse locations for stock storage</p>
         </div>
-        <Button onClick={openCreateForm} className="bg-solarized-blue hover:bg-solarized-blue/90">
+        <Button 
+          size="sm" 
+          onClick={openCreateForm} 
+          className="bg-solarized-blue hover:bg-solarized-blue/90 shadow-sm shrink-0"
+        >
           <Plus className="mr-2 h-4 w-4" /> New Warehouse
         </Button>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <DataTable
-            columns={columns}
-            data={warehouses}
-            progressPending={isLoading}
-            customStyles={customStyles}
-            highlightOnHover
-            responsive
-            noDataComponent={
-              <div className="text-center py-12 text-muted-foreground">
-                <Warehouse className="mx-auto h-12 w-12 mb-4 opacity-20" />
-                <p>No warehouses found</p>
+      <Card className="border-none shadow-sm md:border md:shadow-none">
+        <CardContent className="p-0 sm:p-6">
+          {/* Desktop View */}
+          <div className="hidden md:block">
+            <DataTable
+              columns={columns}
+              data={warehouses}
+              progressPending={isLoading}
+              customStyles={customStyles}
+              highlightOnHover
+              responsive
+              noDataComponent={
+                <div className="text-center py-12 text-muted-foreground">
+                  <Warehouse className="mx-auto h-12 w-12 mb-4 opacity-20" />
+                  <p>No warehouses found</p>
+                </div>
+              }
+            />
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4 p-4">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 rounded-xl border border-dashed border-gray-200">
+                <Loader2 className="h-8 w-8 animate-spin text-solarized-blue/20 mb-2" />
+                <p className="text-sm text-muted-foreground animate-pulse">Loading warehouses...</p>
               </div>
-            }
-          />
+            ) : warehouses.length === 0 ? (
+              <div className="text-center py-20 rounded-xl border border-dashed border-gray-200">
+                <Warehouse className="mx-auto h-12 w-12 mb-4 opacity-10" />
+                <p className="text-muted-foreground">No warehouses found</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {warehouses.map((wh) => (
+                  <div key={wh.id} className="responsive-card p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-900 leading-tight mb-1">{wh.name}</h3>
+                        <p className="text-xs text-muted-foreground font-normal">{wh.code || 'No Code'}</p>
+                      </div>
+                      <div className="shrink-0 flex gap-2">
+                        {wh.is_default && (
+                          <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 uppercase tracking-wider">Default</span>
+                        )}
+                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${wh.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+                          {wh.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                      <div>
+                        <p className="text-[10px] text-gray-400 font-medium mb-1">City</p>
+                        <p className="font-bold text-gray-900">{wh.city || '-'}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] text-gray-400 font-medium mb-1">Created</p>
+                        <p className="font-bold text-gray-900">
+                          {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-gray-100 flex justify-end gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => openEditForm(wh)} className="h-9 px-4 text-solarized-blue font-bold bg-blue-50/50 hover:bg-blue-50">
+                        <Edit className="h-4 w-4 mr-1.5" /> EDIT
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(wh.id)} className="h-9 px-4 text-red-700 font-bold bg-red-50/50 hover:bg-red-50">
+                        <Trash2 className="h-4 w-4 mr-1.5" /> DELETE
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
