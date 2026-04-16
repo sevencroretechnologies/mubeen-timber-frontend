@@ -5,12 +5,21 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ProductForm from './ProductForm';
-import { Plus, Search, Package } from 'lucide-react';
+import { Plus, Search, Package, Eye } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface Product {
   id: number;
   name: string;
   description: string | null;
+  price?: number | string;
+  org_id?: number | string;
+  company_id?: number | string;
   created_at: string;
 }
 
@@ -19,9 +28,11 @@ export default function ProductList() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  // Form Modal State
+  // Modal States
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+  const [viewProductData, setViewProductData] = useState<Product | null>(null);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -67,6 +78,11 @@ export default function ProductList() {
     setIsFormOpen(true);
   };
 
+  const handleView = (product: Product) => {
+    setViewProductData(product);
+    setIsViewOpen(true);
+  };
+
   const handleFormSuccess = () => {
     fetchProducts();
   };
@@ -99,7 +115,8 @@ export default function ProductList() {
           </div>
 
           {/* Products Table */}
-          <div className="overflow-x-auto">
+          {/* Products Table - Desktop */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-solarized-base2">
@@ -135,6 +152,14 @@ export default function ProductList() {
                           <Button
                             variant="ghost"
                             size="icon"
+                            onClick={() => handleView(product)}
+                            title="View"
+                          >
+                            <Eye className="h-4 w-4 text-solarized-blue" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleEdit(product)}
                           >
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -159,6 +184,88 @@ export default function ProductList() {
               </tbody>
             </table>
           </div>
+
+          {/* Products List - Mobile Card View */}
+          <div className="block md:hidden space-y-3">
+            {loading ? (
+              <div className="text-center py-8 text-solarized-base01">Loading...</div>
+            ) : products.length === 0 ? (
+              <div className="text-center py-12">
+                <Package className="mx-auto h-12 w-12 text-solarized-base01 mb-4" />
+                <p className="text-lg font-medium text-solarized-base02">No products found</p>
+              </div>
+            ) : (
+              products.map((product) => (
+                <div key={product.id} className="bg-white rounded-xl shadow p-4 border border-solarized-base2">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-semibold text-solarized-base02">
+                      {product.name || '—'}
+                    </h3>
+                    {/* <span className="text-sm font-medium text-solarized-blue">
+                      ₹{product.price || 0}
+                    </span> */}
+                  </div>
+
+                  <p className="text-xs text-solarized-base01 mb-3">
+                    {product.description || 'No description'}
+                  </p>
+{/* 
+                  <div className="space-y-1.5 pt-2 border-t border-solarized-base3">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-solarized-base01">Org ID:</span>
+                      <span className="font-medium">{product.org_id || '—'}</span>
+                    </div>
+
+                    <div className="flex justify-between text-xs">
+                      <span className="text-solarized-base01">Company ID:</span>
+                      <span className="font-medium">{product.company_id || '—'}</span>
+                    </div>
+
+                    <div className="flex justify-between text-xs pt-1">
+                      <span className="text-solarized-base01">Created:</span>
+                      <span className="font-medium text-solarized-base01">
+                        {product.created_at ? String(product.created_at).split('T')[0] : '—'}
+                      </span>
+                    </div>
+                  </div> */}
+
+                  <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-solarized-base3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleView(product)}
+                      className="h-8 px-2"
+                    >
+                      <Eye className="h-4 w-4 mr-1 text-solarized-blue" />
+                      View
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(product)}
+                      className="h-8 px-2"
+                    >
+                      <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(product.id)}
+                      className="h-8 px-2 text-solarized-red hover:text-solarized-red"
+                    >
+                      <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -168,6 +275,50 @@ export default function ProductList() {
         onSuccess={handleFormSuccess}
         productId={selectedProductId}
       />
+
+      {/* Product Detail Modal */}
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent className="sm:max">
+          <DialogHeader className="border-b pb-3">
+            <DialogTitle className="text-xl font-bold text-solarized-base02 tracking-tight">
+              Product Details
+            </DialogTitle>
+          </DialogHeader>
+          
+          {viewProductData && (
+            <div className="py-6 space-y-6">
+              <div className="space-y-1.5">
+                <p className="text-[10px] uppercase font-bold text-solarized-base01 tracking-widest">
+                  Product Name
+                </p>
+                <p className="font-semibold text-solarized-base02 text-xl leading-snug">
+                  {viewProductData.name}
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <p className="text-[10px] uppercase font-bold text-solarized-base01 tracking-widest">
+                  Description
+                </p>
+                <div className="p-4 bg-solarized-base3/5 rounded-xl border border-solarized-base2/10">
+                  <p className="text-solarized-base01 text-sm leading-relaxed whitespace-pre-wrap">
+                    {viewProductData.description || 'No additional details available for this product.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <Button 
+                  onClick={() => setIsViewOpen(false)} 
+                  className="bg-solarized-blue hover:bg-solarized-blue/90 px-8 rounded-fulltransition-all"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
