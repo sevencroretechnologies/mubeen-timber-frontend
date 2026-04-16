@@ -205,21 +205,98 @@ export default function OrganizationList() {
                             <p>No organizations found</p>
                         </div>
                     ) : (
-                        <DataTable
-                            columns={columns}
-                            data={organizations}
-                            progressPending={isLoading}
-                            pagination
-                            paginationServer
-                            paginationTotalRows={totalRows}
-                            paginationPerPage={perPage}
-                            paginationRowsPerPageOptions={[1, 5, 10, 15, 20]}
-                            paginationDefaultPage={page}
-                            onChangePage={handlePageChange}
-                            onChangeRowsPerPage={handlePerRowsChange}
-                            highlightOnHover
-                            responsive
-                        />
+                        <>
+                            {/* Desktop View */}
+                            <div className="hidden md:block">
+                                <DataTable
+                                    columns={columns}
+                                    data={organizations}
+                                    progressPending={isLoading}
+                                    pagination
+                                    paginationServer
+                                    paginationTotalRows={totalRows}
+                                    paginationPerPage={perPage}
+                                    paginationRowsPerPageOptions={[1, 5, 10, 15, 20]}
+                                    paginationDefaultPage={page}
+                                    onChangePage={handlePageChange}
+                                    onChangeRowsPerPage={handlePerRowsChange}
+                                    highlightOnHover
+                                    responsive
+                                />
+                            </div>
+
+                            {/* Mobile View */}
+                            <div className="md:hidden space-y-4">
+                                {organizations.map((org) => (
+                                    <Card key={org.id} className="overflow-hidden border shadow-sm">
+                                        <CardContent className="p-4">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div>
+                                                    <h3 className="font-semibold text-lg text-slate-900">{org.name}</h3>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-4 text-sm text-muted-foreground">
+                                                <div className="flex items-start gap-2">
+                                                    <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-solarized-blue" />
+                                                    <span>{org.address || 'No address provided'}</span>
+                                                </div>
+                                                
+                                                <div className="flex items-center gap-2 pt-2 border-t mt-2">
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        className="flex-1"
+                                                        onClick={() => handleView(org)}
+                                                    >
+                                                        <Eye className="mr-2 h-4 w-4" /> View
+                                                    </Button>
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        className="flex-1"
+                                                        onClick={() => navigate(`/organizations/${org.id}/edit`)}
+                                                    >
+                                                        <Edit className="mr-2 h-4 w-4" /> Edit
+                                                    </Button>
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                        onClick={() => handleDelete(org.id)}
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+
+                                {/* Mobile Pagination */}
+                                <div className="flex items-center justify-between pt-4 border-t">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handlePageChange(Math.max(1, page - 1))}
+                                        disabled={page === 1}
+                                    >
+                                        Previous
+                                    </Button>
+                                    <span className="text-sm font-medium text-slate-600">
+                                        Page {page}
+                                    </span>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handlePageChange(page + 1)}
+                                        disabled={organizations.length < perPage || organizations.length === 0}
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            </div>
+                        </>
                     )}
                 </CardContent>
             </Card>
