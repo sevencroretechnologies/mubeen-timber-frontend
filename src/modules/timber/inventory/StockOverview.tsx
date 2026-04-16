@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import DataTable, { TableColumn } from 'react-data-table-component';
-import { Search, Package, AlertTriangle, Eye, Settings, Loader2 } from 'lucide-react';
+import { Search, Package, AlertTriangle, Eye, Settings, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -200,16 +200,16 @@ export default function StockOverview() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-solarized-base02">Stock Overview</h1>
-          <p className="text-muted-foreground">View current inventory levels across all warehouses</p>
+          <h1 className="text-2xl font-bold text-solarized-base02 tracking-tight">Stock Overview</h1>
+          <p className="text-sm text-muted-foreground">View current inventory levels across all warehouses</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate('/inventory/movements')}>
+        <div className="flex flex-row gap-2 w-full md:w-auto">
+          <Button variant="outline" onClick={() => navigate('/inventory/movements')} className="flex-1 md:w-auto text-xs sm:text-sm px-2 sm:px-4">
             View Movements
           </Button>
-          <Button onClick={() => navigate('/inventory/adjust')} className="bg-solarized-blue hover:bg-solarized-blue/90">
+          <Button onClick={() => navigate('/inventory/adjust')} className="bg-solarized-blue hover:bg-solarized-blue/90 flex-1 md:w-auto shadow-sm text-xs sm:text-sm px-2 sm:px-4">
             Stock Adjustment
           </Button>
         </div>
@@ -217,36 +217,146 @@ export default function StockOverview() {
 
       <Card>
         <CardHeader>
-          <form onSubmit={handleSearchSubmit} className="flex gap-4">
+          <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search by wood type or warehouse..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+              <Input 
+                placeholder="Search by wood type or warehouse..." 
+                value={search} 
+                onChange={(e) => setSearch(e.target.value)} 
+                className="pl-10 h-10 border-gray-200 focus:ring-solarized-blue/20" 
+              />
             </div>
-            <Button type="submit" variant="outline">Search</Button>
+            <Button type="submit" variant="secondary" className="w-full sm:w-auto h-10 px-6 font-semibold">
+              Search
+            </Button>
           </form>
         </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={stock}
-            progressPending={isLoading}
-            pagination
-            paginationServer
-            paginationTotalRows={totalRows}
-            paginationPerPage={perPage}
-            paginationDefaultPage={page}
-            onChangePage={(newPage) => setPage(newPage)}
-            onChangeRowsPerPage={(newPerPage) => { setPerPage(newPerPage); setPage(1); }}
-            customStyles={customStyles}
-            highlightOnHover
-            responsive
-            noDataComponent={
-              <div className="text-center py-12 text-muted-foreground">
-                <Package className="mx-auto h-12 w-12 mb-4 opacity-20" />
-                <p>No stock records found</p>
+        <CardContent className="p-0 sm:p-6">
+          {/* Desktop View */}
+          <div className="hidden md:block">
+            <DataTable
+              columns={columns}
+              data={stock}
+              progressPending={isLoading}
+              pagination
+              paginationServer
+              paginationTotalRows={totalRows}
+              paginationPerPage={perPage}
+              paginationDefaultPage={page}
+              onChangePage={(newPage) => setPage(newPage)}
+              onChangeRowsPerPage={(newPerPage) => { setPerPage(newPerPage); setPage(1); }}
+              customStyles={customStyles}
+              highlightOnHover
+              responsive
+              noDataComponent={
+                <div className="text-center py-12 text-muted-foreground">
+                  <Package className="mx-auto h-12 w-12 mb-4 opacity-20" />
+                  <p>No stock records found</p>
+                </div>
+              }
+            />
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4 p-4">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 rounded-xl border border-dashed border-gray-200">
+                <Loader2 className="h-8 w-8 animate-spin text-solarized-blue/20 mb-2" />
+                <p className="text-sm text-muted-foreground animate-pulse">Loading stock...</p>
               </div>
-            }
-          />
+            ) : stock.length === 0 ? (
+              <div className="text-center py-20 rounded-xl border border-dashed border-gray-200">
+                <Package className="mx-auto h-12 w-12 mb-4 opacity-10" />
+                <p className="text-muted-foreground">No stock records found</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 gap-4">
+                  {stock.map((item) => (
+                    <div key={item.id} className="responsive-card p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-gray-900 leading-tight mb-1">
+                            {item.wood_type?.name || 'Unknown Wood'}
+                          </h3>
+                          <p className="text-xs text-muted-foreground font-normal">
+                            {item.warehouse?.name || 'No Warehouse'}
+                          </p>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-gray-400 hover:text-solarized-blue"
+                            onClick={() => handleView(item)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-gray-400 hover:text-blue-600"
+                            onClick={() => handleEditThreshold(item)}
+                          >
+                            <Settings className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                       <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                        <div>
+                          <p className="text-[10px] text-gray-400 font-medium mb-1">Current Qty</p>
+                          <p className="font-bold text-lg text-gray-900">{Number(item.current_quantity).toFixed(2)} <span className="text-[10px] font-normal text-gray-400"></span></p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] text-gray-400 font-medium mb-1">Status</p>
+                          <div className="inline-block">{getStockLevelBadge(item)}</div>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-gray-100 grid grid-cols-2 gap-2">
+                        <div>
+                          <p className="text-[10px] text-gray-400 font-medium">Available</p>
+                          <p className="text-sm font-normal text-gray-500">{Number(item.available_quantity).toFixed(2)}</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-[10px] text-gray-400 font-medium">Min Threshold</p>
+                            <p className="text-sm font-normal text-gray-500">{Number(item.minimum_threshold).toFixed(2)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Mobile Pagination */}
+                {totalRows > perPage && (
+                  <div className="flex justify-between items-center py-4 px-2 border-t border-gray-100 mt-4">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={page === 1}
+                      onClick={() => setPage(page - 1)}
+                      className="h-9 px-3 text-gray-600"
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" /> Prev
+                    </Button>
+                    <div className="text-[11px] font-bold text-gray-500 uppercase tracking-widest text-center">
+                      Page {page} / {Math.ceil(totalRows / perPage)}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={page >= Math.ceil(totalRows / perPage)}
+                      onClick={() => setPage(page + 1)}
+                      className="h-9 px-3 text-gray-600"
+                    >
+                      Next <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -259,26 +369,55 @@ export default function StockOverview() {
             </DialogTitle>
           </DialogHeader>
           {selectedItem && (
-            <div className="space-y-4 py-4">
+            <div className="space-y-5 py-4">
               <div className="grid grid-cols-2 gap-4">
-                <div><Label className="text-xs text-muted-foreground uppercase">Warehouse</Label><p className="text-sm font-medium">{selectedItem.warehouse?.name}</p></div>
-                <div><Label className="text-xs text-muted-foreground uppercase">Wood Type</Label><p className="text-base font-semibold">{selectedItem.wood_type?.name}</p></div>
-                {/* <div><Label className="text-xs text-muted-foreground uppercase">Warehouse</Label><p className="text-sm font-medium">{selectedItem.warehouse?.name}</p></div> */}
+                <div><Label className="text-[10px] text-gray-400 uppercase font-medium">Warehouse</Label><p className="text-sm font-bold text-gray-900">{selectedItem.warehouse?.name}</p></div>
+                <div><Label className="text-[10px] text-gray-400 uppercase font-medium">Wood Type</Label><p className="text-sm font-bold text-gray-900">{selectedItem.wood_type?.name}</p></div>
               </div>
+              
               <div className="grid grid-cols-3 gap-4">
-                <div><Label className="text-xs text-muted-foreground uppercase">Current Qty</Label><p className="text-lg font-bold">{Number(selectedItem.current_quantity).toFixed(2)}</p></div>
-                <div><Label className="text-xs text-muted-foreground uppercase">Reserved</Label><p className="text-sm">{Number(selectedItem.reserved_quantity).toFixed(2)}</p></div>
-                <div><Label className="text-xs text-muted-foreground uppercase">Available</Label><p className="text-sm font-medium text-green-700">{Number(selectedItem.available_quantity).toFixed(2)}</p></div>
+                <div>
+                  <Label className="text-[10px] text-gray-400 uppercase font-medium">Current Qty</Label>
+                  <p className="text-lg font-bold text-gray-900">{Number(selectedItem.current_quantity).toFixed(2)}</p>
+                </div>
+                <div>
+                  <Label className="text-[10px] text-gray-400 uppercase font-medium">Reserved</Label>
+                  <p className="text-sm text-gray-500">{Number(selectedItem.reserved_quantity).toFixed(2)}</p>
+                </div>
+                <div>
+                  <Label className="text-[10px] text-gray-400 uppercase font-medium">Available</Label>
+                  <p className="text-sm font-bold text-green-600">{Number(selectedItem.available_quantity).toFixed(2)}</p>
+                </div>
               </div>
+
               <div className="grid grid-cols-3 gap-4">
-                <div><Label className="text-xs text-muted-foreground uppercase">Avg Cost</Label><p className="text-sm">₹{Number(selectedItem.average_cost).toFixed(2)}</p></div>
-                <div><Label className="text-xs text-muted-foreground uppercase">Last Purchase</Label><p className="text-sm">₹{Number(selectedItem.last_purchase_price).toFixed(2)}</p></div>
-                <div><Label className="text-xs text-muted-foreground uppercase">Status</Label>{getStockLevelBadge(selectedItem)}</div>
+                <div>
+                  <Label className="text-[10px] text-gray-400 uppercase font-medium">Avg Cost</Label>
+                  <p className="text-sm text-gray-500">₹{isNaN(Number(selectedItem.average_cost)) ? 'NaN' : Number(selectedItem.average_cost).toFixed(2)}</p>
+                </div>
+                <div>
+                  <Label className="text-[10px] text-gray-400 uppercase font-medium">Last Purchase</Label>
+                  <p className="text-sm text-gray-500">₹{isNaN(Number(selectedItem.last_purchase_price)) ? 'NaN' : Number(selectedItem.last_purchase_price).toFixed(2)}</p>
+                </div>
+                <div>
+                  <Label className="text-[10px] text-gray-400 uppercase font-medium">Status</Label>
+                  <div className="mt-1">{getStockLevelBadge(selectedItem)}</div>
+                </div>
               </div>
+
               <div className="grid grid-cols-3 gap-4">
-                <div><Label className="text-xs text-muted-foreground uppercase">Min Threshold</Label><p className="text-sm">{Number(selectedItem.minimum_threshold).toFixed(2)}</p></div>
-                <div><Label className="text-xs text-muted-foreground uppercase">Max Threshold</Label><p className="text-sm">{Number(selectedItem.maximum_threshold).toFixed(2)}</p></div>
-                <div><Label className="text-xs text-muted-foreground uppercase">Reorder Point</Label><p className="text-sm">{Number(selectedItem.reorder_point).toFixed(2)}</p></div>
+                <div>
+                  <Label className="text-[10px] text-gray-400 uppercase font-medium">Min Threshold</Label>
+                  <p className="text-sm text-gray-500">{Number(selectedItem.minimum_threshold).toFixed(2)}</p>
+                </div>
+                <div>
+                  <Label className="text-[10px] text-gray-400 uppercase font-medium">Max Threshold</Label>
+                  <p className="text-sm text-gray-500">{Number(selectedItem.maximum_threshold).toFixed(2)}</p>
+                </div>
+                <div>
+                  <Label className="text-[10px] text-gray-400 uppercase font-medium">Reorder Point</Label>
+                  <p className="text-sm text-gray-500">{isNaN(Number(selectedItem.reorder_point)) ? 'NaN' : Number(selectedItem.reorder_point).toFixed(2)}</p>
+                </div>
               </div>
             </div>
           )}
@@ -312,7 +451,7 @@ export default function StockOverview() {
                 <div className="text-right">
                   <p className="text-xs text-muted-foreground uppercase tracking-wider">Current Stock</p>
                   <p className="text-2xl font-bold text-solarized-blue">{Number(selectedItem.current_quantity).toFixed(2)}</p>
-                  <p className="text-xs">CFT</p>
+                  {/* <p className="text-xs">CFT</p> */}
                 </div>
               </div>
 
@@ -354,7 +493,7 @@ export default function StockOverview() {
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-semibold text-blue-800 uppercase tracking-wider">Stock Level Preview</span>
                     <span className="text-sm font-bold text-blue-900">
-                      Current: {Number(selectedItem.current_quantity).toFixed(2)} CFT
+                      Current: {Number(selectedItem.current_quantity).toFixed(2)} 
                     </span>
                   </div>
                   <div className="h-3 bg-gray-200 rounded-full overflow-hidden relative">
