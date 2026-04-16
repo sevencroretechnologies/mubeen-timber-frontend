@@ -371,52 +371,52 @@ export default function StockOverview() {
           {selectedItem && (
             <div className="space-y-5 py-4">
               <div className="grid grid-cols-2 gap-4">
-                <div><Label className="text-[10px] text-gray-400 uppercase font-medium">Warehouse</Label><p className="text-sm font-bold text-gray-900">{selectedItem.warehouse?.name}</p></div>
-                <div><Label className="text-[10px] text-gray-400 uppercase font-medium">Wood Type</Label><p className="text-sm font-bold text-gray-900">{selectedItem.wood_type?.name}</p></div>
+                <div><Label className="text-[10px] text-gray-900 uppercase font-bold">Warehouse</Label><p className="text-sm font-normal text-gray-900">{selectedItem.warehouse?.name}</p></div>
+                <div><Label className="text-[10px] text-gray-900 uppercase font-bold">Wood Type</Label><p className="text-sm font-normal text-gray-900">{selectedItem.wood_type?.name}</p></div>
               </div>
               
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label className="text-[10px] text-gray-400 uppercase font-medium">Current Qty</Label>
+                  <Label className="text-[10px] text-gray-900 uppercase font-bold">Current Qty</Label>
                   <p className="text-lg font-bold text-gray-900">{Number(selectedItem.current_quantity).toFixed(2)}</p>
                 </div>
                 <div>
-                  <Label className="text-[10px] text-gray-400 uppercase font-medium">Reserved</Label>
-                  <p className="text-sm text-gray-500">{Number(selectedItem.reserved_quantity).toFixed(2)}</p>
+                  <Label className="text-[10px] text-gray-900 uppercase font-bold">Reserved</Label>
+                  <p className="text-sm text-gray-900">{Number(selectedItem.reserved_quantity).toFixed(2)}</p>
                 </div>
                 <div>
-                  <Label className="text-[10px] text-gray-400 uppercase font-medium">Available</Label>
-                  <p className="text-sm font-bold text-green-600">{Number(selectedItem.available_quantity).toFixed(2)}</p>
+                  <Label className="text-[10px] text-gray-900 uppercase font-bold">Available</Label>
+                  <p className="text-sm font-bold text-gray-900">{Number(selectedItem.available_quantity).toFixed(2)}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label className="text-[10px] text-gray-400 uppercase font-medium">Avg Cost</Label>
-                  <p className="text-sm text-gray-500">₹{isNaN(Number(selectedItem.average_cost)) ? 'NaN' : Number(selectedItem.average_cost).toFixed(2)}</p>
+                  <Label className="text-[10px] text-gray-900 uppercase font-bold">Avg Cost</Label>
+                  <p className="text-sm text-gray-900">₹{isNaN(Number(selectedItem.average_cost)) ? '0.00' : Number(selectedItem.average_cost).toFixed(2)}</p>
                 </div>
                 <div>
-                  <Label className="text-[10px] text-gray-400 uppercase font-medium">Last Purchase</Label>
-                  <p className="text-sm text-gray-500">₹{isNaN(Number(selectedItem.last_purchase_price)) ? 'NaN' : Number(selectedItem.last_purchase_price).toFixed(2)}</p>
+                  <Label className="text-[10px] text-gray-900 uppercase font-bold">Last Purchase</Label>
+                  <p className="text-sm text-gray-900">₹{isNaN(Number(selectedItem.last_purchase_price)) ? '0.00' : Number(selectedItem.last_purchase_price).toFixed(2)}</p>
                 </div>
                 <div>
-                  <Label className="text-[10px] text-gray-400 uppercase font-medium">Status</Label>
+                  <Label className="text-[10px] text-gray-900 uppercase font-bold">Status</Label>
                   <div className="mt-1">{getStockLevelBadge(selectedItem)}</div>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label className="text-[10px] text-gray-400 uppercase font-medium">Min Threshold</Label>
-                  <p className="text-sm text-gray-500">{Number(selectedItem.minimum_threshold).toFixed(2)}</p>
+                  <Label className="text-[10px] text-gray-900 uppercase font-bold">Min Threshold</Label>
+                  <p className="text-sm text-gray-900">{Number(selectedItem.minimum_threshold).toFixed(2)}</p>
                 </div>
                 <div>
-                  <Label className="text-[10px] text-gray-400 uppercase font-medium">Max Threshold</Label>
-                  <p className="text-sm text-gray-500">{Number(selectedItem.maximum_threshold).toFixed(2)}</p>
+                  <Label className="text-[10px] text-gray-900 uppercase font-bold">Max Threshold</Label>
+                  <p className="text-sm text-gray-900">{Number(selectedItem.maximum_threshold).toFixed(2)}</p>
                 </div>
                 <div>
-                  <Label className="text-[10px] text-gray-400 uppercase font-medium">Reorder Point</Label>
-                  <p className="text-sm text-gray-500">{isNaN(Number(selectedItem.reorder_point)) ? 'NaN' : Number(selectedItem.reorder_point).toFixed(2)}</p>
+                  <Label className="text-[10px] text-gray-900 uppercase font-bold">Reorder Point</Label>
+                  <p className="text-sm text-gray-900">{isNaN(Number(selectedItem.reorder_point)) ? '0.00' : Number(selectedItem.reorder_point).toFixed(2)}</p>
                 </div>
               </div>
             </div>
