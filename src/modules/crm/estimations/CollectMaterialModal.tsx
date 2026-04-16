@@ -11,6 +11,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Package, Warehouse, Trees } from 'lucide-react';
 import api, { estimationsApi } from '@/services/api';
 import { Loader2 } from 'lucide-react';
@@ -244,23 +251,24 @@ export default function CollectMaterialModal({
                             <Trees className="h-4 w-4" />
                             Wood Type *
                         </Label>
-                        <select
-                            id="woodType"
-                            value={selectedWoodType ?? ''}
-                            onChange={(e) => {
-                                setSelectedWoodType(e.target.value ? Number(e.target.value) : null);
+                        <Select
+                            value={selectedWoodType?.toString() || ''}
+                            onValueChange={(v) => {
+                                setSelectedWoodType(v ? Number(v) : null);
                                 setSelectedWarehouse(null);
                             }}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
                         >
-                            <option value="">Select Wood Type</option>
-                            {woodTypes.map((wt) => (
-                                <option key={wt.id} value={wt.id}>
-                                    {wt.name} 
-                                </option>
-                            ))}
-                        </select>
+                            <SelectTrigger id="woodType">
+                                <SelectValue placeholder="Select Wood Type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {woodTypes.map((wt) => (
+                                    <SelectItem key={wt.id} value={wt.id.toString()}>
+                                        {wt.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     {/* Warehouse Selection */}
@@ -269,24 +277,25 @@ export default function CollectMaterialModal({
                             <Warehouse className="h-4 w-4" />
                             Warehouse *
                         </Label>
-                        <select
-                            id="warehouse"
-                            value={selectedWarehouse ?? ''}
-                            onChange={(e) => setSelectedWarehouse(e.target.value ? Number(e.target.value) : null)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
+                        <Select
+                            value={selectedWarehouse?.toString() || ''}
+                            onValueChange={(v) => setSelectedWarehouse(v ? Number(v) : null)}
                             disabled={!selectedWoodType || isLoadingStock}
                         >
-                            <option value="">Select Warehouse</option>
-                            {warehouses.map((wh) => {
-                                const available = getAvailableStockForWarehouse(wh.id);
-                                return (
-                                    <option key={wh.id} value={wh.id}>
-                                        {wh.name} (Available: {available.toFixed(2)} CFT)
-                                    </option>
-                                );
-                            })}
-                        </select>
+                            <SelectTrigger id="warehouse">
+                                <SelectValue placeholder="Select Warehouse" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {warehouses.map((wh) => {
+                                    const available = getAvailableStockForWarehouse(wh.id);
+                                    return (
+                                        <SelectItem key={wh.id} value={wh.id.toString()}>
+                                            {wh.name} (Available: {available.toFixed(2)} CFT)
+                                        </SelectItem>
+                                    );
+                                })}
+                            </SelectContent>
+                        </Select>
                         {selectedWarehouse && (
                             <p className="text-xs text-gray-500">
                                 Available stock: {availableStockForSelected.toFixed(2)} CFT

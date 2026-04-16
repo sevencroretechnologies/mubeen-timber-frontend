@@ -273,31 +273,57 @@ export default function OpportunityLostReasonList() {
                         </div>
                     ) : (
                         <>
-                            {/* Mobile card list (< sm) */}
-                            <div className="sm:hidden divide-y divide-slate-100">
+                            {/* Mobile card list (< md) */}
+                            <div className="block md:hidden space-y-3 p-4">
                                 {loading ? (
-                                    <div className="flex items-center justify-center py-10"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-400" /></div>
+                                    <div className="flex items-center justify-center py-10">
+                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-solarized-blue" />
+                                    </div>
                                 ) : (
                                     reasons.map((item) => (
-                                        <div key={item.id} className="flex items-start justify-between gap-3 px-4 py-3">
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-semibold text-blue-600 truncate">{item.opportunity?.party_name || `Opp #${item.opportunity_id}`}</p>
-                                                {item.opportunity?.naming_series && (
-                                                    <span className="text-[11px] text-slate-400">{item.opportunity.naming_series}</span>
-                                                )}
-                                                <p className="text-xs text-slate-600 mt-0.5 line-clamp-2">{item.opportunity_lost_reasons}</p>
+                                        <div key={item.id} className="bg-white rounded-xl shadow-sm p-4 border border-slate-100 transition-all hover:border-slate-200">
+                                            {/* Header */}
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h3 className="font-semibold text-slate-800 text-sm truncate pr-4">
+                                                    {item.opportunity?.party_name || `Opp #${item.opportunity_id}`}
+                                                </h3>
+                                                <span className="text-[10px] text-slate-500 shrink-0">
+                                                    {item.created_at ? String(item.created_at).split('T')[0] : '—'}
+                                                </span>
                                             </div>
-                                            <div className="flex items-center gap-1 shrink-0 pt-0.5">
-                                                <button onClick={() => handleViewClick(item)} className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors" title="View"><Eye className="h-4 w-4" /></button>
-                                                <button onClick={() => handleEditClick(item)} className="p-1.5 rounded hover:bg-amber-50 text-slate-500 hover:text-amber-600 transition-colors" title="Edit"><Edit2 className="h-4 w-4" /></button>
-                                                <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded hover:bg-red-50 text-slate-500 hover:text-red-600 transition-colors" title="Delete"><Trash2 className="h-4 w-4" /></button>
+
+                                            {/* Description */}
+                                            <div className="space-y-1 mb-3">
+                                                <p className="text-[10px] uppercase text-slate-400 font-bold tracking-tight">Lost Reason</p>
+                                                <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
+                                                    {item.opportunity_lost_reasons || 'No description provided'}
+                                                </p>
+                                            </div>
+
+                                            {/* Status & Actions */}
+                                            <div className="mt-2 pt-3 border-t border-slate-50 flex items-center justify-between">
+                                                <div className="space-y-0.5">
+                                                    <p className="text-slate-400 text-[10px] uppercase font-bold tracking-tight">Status</p>
+                                                    <span className="text-xs font-semibold text-emerald-600">Active</span>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-solarized-blue" onClick={() => handleViewClick(item)} title="View">
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600" onClick={() => handleEditClick(item)} title="Edit">
+                                                        <Edit2 className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-600" onClick={() => handleDelete(item.id)} title="Delete">
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
                                     ))
                                 )}
                             </div>
-                            {/* Desktop DataTable (sm+) */}
-                            <div className="hidden sm:block">
+                            {/* Desktop DataTable (md+) */}
+                            <div className="hidden md:block">
                                 <DataTable
                                     columns={columns}
                                     data={reasons}
