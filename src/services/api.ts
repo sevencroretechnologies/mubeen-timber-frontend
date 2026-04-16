@@ -445,13 +445,13 @@ export const crmProductService = {
   delete: (id: number) => api.delete(`/products/${id}`),
 };
 
-export const crmProductCategoryService = {
-  getAll: (params?: Record<string, unknown>) => api.get('/product-categories', { params }),
-  getById: (id: number) => api.get(`/product-categories/${id}`),
-  create: (data: Record<string, unknown>) => api.post('/product-categories', data),
-  update: (id: number, data: Record<string, unknown>) => api.put(`/product-categories/${id}`, data),
-  delete: (id: number) => api.delete(`/product-categories/${id}`),
-};
+// export const crmProductCategoryService = {
+//   getAll: (params?: Record<string, unknown>) => api.get('/product-categories', { params }),
+//   getById: (id: number) => api.get(`/product-categories/${id}`),
+//   create: (data: Record<string, unknown>) => api.post('/product-categories', data),
+//   update: (id: number, data: Record<string, unknown>) => api.put(`/product-categories/${id}`, data),
+//   delete: (id: number) => api.delete(`/product-categories/${id}`),
+// };
 
 export const projectService = {
   getAll: (params?: Record<string, unknown>) => api.get('/projects', { params }),

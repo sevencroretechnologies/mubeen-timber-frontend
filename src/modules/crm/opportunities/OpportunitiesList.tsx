@@ -83,7 +83,7 @@ function extractList<T>(raw: any): T[] {
 
 function extractTotal(raw: any): number {
   if (!raw) return 0;
-  
+
   // Directly check the raw response first for pagination
   if (raw.pagination && typeof raw.pagination.total_items === 'number') {
     return raw.pagination.total_items;
@@ -446,18 +446,37 @@ export default function OpportunitiesList() {
                               </DropdownMenu>
                             </div>
 
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-3 gap-x-4 text-sm">
+                            <div className="grid grid-cols-2 gap-y-4 gap-x-4 text-sm">
+                              {/* Status */}
                               <div>
                                 <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-0.5">Status</p>
                                 {row.status_name ? statusBadge(row.status_name) : '—'}
                               </div>
-                              <div>
+
+                              {/* From */}
+                              <div className="text-right sm:text-left">
                                 <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-0.5">From</p>
                                 <span className="capitalize text-gray-700 font-semibold">{row.opportunity_from || '—'}</span>
                               </div>
-                              <div className="col-span-2 sm:col-span-1">
-                                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-0.5">Expected Close</p>
-                                <span className="text-gray-700 font-medium">{row.expected_closing ? String(row.expected_closing).split('T')[0] : '—'}</span>
+
+                              {/* Expected Close */}
+                              <div>
+                                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-0.5">
+                                  Expected Close
+                                </p>
+                                <span className="text-gray-700 font-medium">
+                                  {row.expected_closing ? String(row.expected_closing).split('T')[0] : '—'}
+                                </span>
+                              </div>
+
+                              {/* Stage */}
+                              <div className="text-right sm:text-left">
+                                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-0.5">
+                                  Stage
+                                </p>
+                                <span className="text-gray-700 font-medium">
+                                  {row.stage_name || '—'}
+                                </span>
                               </div>
                             </div>
 
