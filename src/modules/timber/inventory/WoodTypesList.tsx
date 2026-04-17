@@ -242,28 +242,92 @@ export default function WoodTypesList() {
             <Button type="submit" variant="outline">Search</Button>
           </form>
 
-          <DataTable
-            columns={columns}
-            data={woodTypes}
-            progressPending={isLoading}
-            pagination
-            paginationServer
-            paginationTotalRows={totalRows}
-            paginationPerPage={perPage}
-            paginationDefaultPage={page}
-            onChangePage={(newPage) => setPage(newPage)}
-            onChangeRowsPerPage={(newPerPage) => { setPerPage(newPerPage); setPage(1); }}
-            customStyles={customStyles}
-            highlightOnHover
-            responsive
-            noDataComponent={
-              <div className="text-center py-12 text-muted-foreground">
-                <TreePine className="mx-auto h-12 w-12 mb-4 opacity-20" />
-                <p>No wood types found</p>
-                <p className="text-xs mt-1">Add your first wood type to get started</p>
+          {/* Mobile Card List (< md) */}
+          <div className="block md:hidden space-y-3 pb-4">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className="h-6 w-6 animate-spin text-solarized-blue" />
               </div>
-            }
-          />
+            ) : woodTypes.length === 0 ? (
+              <div className="text-center py-10 px-6 bg-slate-50 rounded-xl border border-dashed">
+                <TreePine className="mx-auto h-10 w-10 text-slate-300 mb-2" />
+                <p className="text-sm text-slate-500">No wood types found</p>
+              </div>
+            ) : (
+              woodTypes.map((item) => (
+                <div key={item.id} className="bg-white rounded-xl shadow-sm p-4 border border-slate-100 transition-all hover:border-slate-200">
+                  {/* Header */}
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-semibold text-slate-800 text-sm truncate pr-2">
+                      {item.name || '—'}
+                    </h3>
+                    <span className="text-[10px] text-slate-500 shrink-0">
+                      {item.created_at ? String(item.created_at).split('T')[0] : '—'}
+                    </span>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-xs text-slate-500 mb-3 line-clamp-2 leading-relaxed">
+                    {item.description || 'No description available'}
+                  </p>
+
+                  {/* Details - 2 Column Row */}
+                  <div className="grid grid-cols-2 gap-32 mt-3 text-[11px]">
+                    <div className="space-y-0.5">
+                      <p className="text-slate-400 uppercase font-bold tracking-tight">Type</p>
+                      <p className="font-semibold text-slate-700">{item.category || '—'}</p>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <p className="text-slate-400 uppercase font-bold tracking-tight">Status</p>
+                      <span className={`inline-block font-semibold ${item.is_active ? 'text-green-600' : 'text-slate-500'}`}>
+                        {item.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="mt-3 pt-3 border-t border-slate-50 flex justify-end gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400" onClick={() => handleView(item)} title="View">
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600" onClick={() => handleEdit(item)} title="Edit">
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-600" onClick={() => handleDelete(item.id)} title="Delete">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop Table (md+) */}
+          <div className="hidden md:block">
+            <DataTable
+              columns={columns}
+              data={woodTypes}
+              progressPending={isLoading}
+              pagination
+              paginationServer
+              paginationTotalRows={totalRows}
+              paginationPerPage={perPage}
+              paginationDefaultPage={page}
+              onChangePage={(newPage) => setPage(newPage)}
+              onChangeRowsPerPage={(newPerPage) => { setPerPage(newPerPage); setPage(1); }}
+              customStyles={customStyles}
+              highlightOnHover
+              responsive
+              noDataComponent={
+                <div className="text-center py-12 text-muted-foreground">
+                  <TreePine className="mx-auto h-12 w-12 mb-4 opacity-20" />
+                  <p>No wood types found</p>
+                  <p className="text-xs mt-1">Add your first wood type to get started</p>
+                </div>
+              }
+            />
+          </div>
         </CardContent>
       </Card>
 
