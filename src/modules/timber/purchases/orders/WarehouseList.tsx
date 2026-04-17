@@ -229,12 +229,7 @@ export default function WarehouseList() {
                         <p className="text-[10px] text-gray-400 font-medium mb-1">City</p>
                         <p className="font-bold text-gray-900">{wh.city || '-'}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-[10px] text-gray-400 font-medium mb-1">Created</p>
-                        <p className="font-bold text-gray-900">
-                          {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                        </p>
-                      </div>
+                     
                     </div>
 
                     <div className="pt-3 border-t border-gray-100 flex justify-end gap-2">
