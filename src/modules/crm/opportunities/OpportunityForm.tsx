@@ -100,6 +100,7 @@ export default function OpportunityForm() {
                     crmOpportunityStageService.getAll({ per_page: 200 }),
                     crmLeadService.getAll({ per_page: 500 }),
                     crmProductService.getAll({ per_page: 1000 }),
+                    crmCustomerService.getAll({ per_page: 500 }),
                 ]);
 
                 // Set dropdown states
@@ -116,6 +117,7 @@ export default function OpportunityForm() {
                             setProducts(data);
                             productsList = data;
                         }
+                        if (idx === 6) setCustomers(data);
                     }
                 });
 
@@ -317,7 +319,21 @@ export default function OpportunityForm() {
                             {form.opportunity_from === 'lead' && (
                                 <div className="space-y-1">
                                     <Label>Lead</Label>
-                                    <Select value={String(form.lead_id || 'none')} onValueChange={(v) => setField('lead_id', v === 'none' ? '' : v)}>
+                                    <Select 
+                                        value={String(form.lead_id || 'none')} 
+                                        onValueChange={(v) => {
+                                            const selectedLead = leads.find((l) => String(l.id) === v);
+                                            setForm((p: any) => ({
+                                                ...p,
+                                                lead_id: v === 'none' ? '' : v,
+                                                ...(selectedLead ? {
+                                                    company_name: selectedLead.company_name || selectedLead.company || '',
+                                                    website: selectedLead.website || '',
+                                                    whatsapp_no: selectedLead.whatsapp_no || '',
+                                                } : {})
+                                            }));
+                                        }}
+                                    >
                                         <SelectTrigger><SelectValue placeholder="Select Lead" /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="none">Select Lead</SelectItem>
@@ -332,10 +348,20 @@ export default function OpportunityForm() {
                                     <Select
                                         value={String(form.customer_id || 'none')}
                                         onValueChange={(v) => {
-                                            setField('customer_id', v === 'none' ? '' : v);
-                                            setField('customer_contact_id', '');
                                             const selected = customers.find((c) => String(c.id) === v);
-                                            setField('party_name', selected ? String(selected.name ?? '') : '');
+                                            const selectedAny = selected as any;
+                                            const contact = selectedAny?.contact_details?.[0] || selectedAny?.contactDetails?.[0] || {};
+                                            setForm((p: any) => ({
+                                                ...p,
+                                                customer_id: v === 'none' ? '' : v,
+                                                customer_contact_id: '',
+                                                party_name: selected ? String(selected.name ?? '') : '',
+                                                ...(selected ? {
+                                                    company_name: selected.name || selectedAny.company_name || '',
+                                                    website: selectedAny.website || '',
+                                                    whatsapp_no: selectedAny.whatsapp_no || contact.whatsapp_no || '',
+                                                } : {})
+                                            }));
                                         }}
                                     >
                                         <SelectTrigger><SelectValue placeholder="Select Customer" /></SelectTrigger>
@@ -350,7 +376,7 @@ export default function OpportunityForm() {
                                     </Select>
                                 </div>
                             )}
-                            {form.opportunity_from === 'customer' && (
+                            {/* {form.opportunity_from === 'customer' && (
                                 <div className="space-y-1">
                                     <Label>Customer Contact</Label>
                                     <Select value={String(form.customer_contact_id || 'none')} onValueChange={(v) => setField('customer_contact_id', v === 'none' ? '' : v)}>
@@ -361,7 +387,7 @@ export default function OpportunityForm() {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                            )}
+                            )} */}
 
                             {/* Source */}
                             {/* <div className="space-y-1">
@@ -530,28 +556,30 @@ export default function OpportunityForm() {
                                 <Label>Contact Person</Label>
                                 <Input value={form.contact_person || ''} onChange={(e) => setField('contact_person', e.target.value)} />
                             </div>
-                            {/* <div className="space-y-1">
-                                <Label>Contact Email</Label>
-                                <Input type="email" value={form.contact_email || ''} onChange={(e) => setField('contact_email', e.target.value)} />
-                            </div>
                             <div className="space-y-1">
-                                <Label>Contact Mobile</Label>
-                                <Input value={form.contact_mobile || ''} onChange={(e) => setField('contact_mobile', e.target.value)} />
-                            </div> */}
-                            {/* <div className="space-y-1">
-                                <Label>Territory</Label>
-                                <Select value={String(form.territory_id || 'none')} onValueChange={(v) => setField('territory_id', v === 'none' ? '' : v)}>
-                                    <SelectTrigger><SelectValue placeholder="Select Territory" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">Select Territory</SelectItem>
-                                        {territories.map((t) => <SelectItem key={t.id} value={String(t.id)}>{lbl(t, 'territory_name', 'name')}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div> */}
-                            {/* <div className="space-y-1">
                                 <Label>Company Name</Label>
                                 <Input value={form.company_name || ''} onChange={(e) => setField('company_name', e.target.value)} />
-                            </div> */}
+                            </div>
+                            <div className="space-y-1">
+                                <Label>Email</Label>
+                                <Input type="email" value={form.contact_email || ''} onChange={(e) => {
+                                    setField('contact_email', e.target.value);
+                                }} />
+                            </div>
+                            <div className="space-y-1">
+                                <Label>Phone</Label>
+                                <Input value={form.contact_mobile || ''} onChange={(e) => {
+                                    setField('contact_mobile', e.target.value);
+                                }} />
+                            </div>
+                            <div className="space-y-1">
+                                <Label>WhatsApp No</Label>
+                                <Input value={form.whatsapp_no || ''} onChange={(e) => setField('whatsapp_no', e.target.value)} />
+                            </div>
+                            <div className="space-y-1">
+                                <Label>Website</Label>
+                                <Input value={form.website || ''} onChange={(e) => setField('website', e.target.value)} />
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
