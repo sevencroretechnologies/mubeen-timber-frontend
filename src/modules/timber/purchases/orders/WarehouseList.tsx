@@ -280,10 +280,14 @@ export default function WarehouseList() {
                 <Label htmlFor="wh-active">Active</Label>
               </div>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>Cancel</Button>
-              <Button type="submit" className="bg-solarized-blue hover:bg-solarized-blue/90">{editingId ? 'Update' : 'Create'}</Button>
-            </DialogFooter>
+            <div className="flex items-center gap-3 w-full pt-4">
+              <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)} className="w-1/2 border-gray-200 text-gray-700 font-semibold h-11">
+                Cancel
+              </Button>
+              <Button type="submit" className="w-1/2 bg-solarized-blue hover:bg-solarized-blue/90 text-white font-semibold h-11">
+                {editingId ? 'Update' : 'Create'}
+              </Button>
+            </div>
           </form>
         </DialogContent>
       </Dialog>
