@@ -291,10 +291,10 @@ export default function WoodTypesList() {
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400" onClick={() => handleView(item)} title="View">
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600" onClick={() => handleEdit(item)} title="Edit">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 text-blue-600" onClick={() => handleEdit(item)} title="Edit">
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-600" onClick={() => handleDelete(item.id)} title="Delete">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 text-red-600" onClick={() => handleDelete(item.id)} title="Delete">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

@@ -221,27 +221,105 @@ export default function MaterialRequisitionList() {
           </form>
         </CardHeader>
         <CardContent>
-          <DataTable
-            columns={columns}
-            data={requisitions}
-            progressPending={isLoading}
-            pagination
-            paginationServer
-            paginationTotalRows={totalRows}
-            paginationPerPage={perPage}
-            paginationDefaultPage={page}
-            onChangePage={(newPage) => setPage(newPage)}
-            onChangeRowsPerPage={(newPerPage) => { setPerPage(newPerPage); setPage(1); }}
-            customStyles={customStyles}
-            highlightOnHover
-            responsive
-            noDataComponent={
-              <div className="text-center py-12 text-muted-foreground">
-                <ClipboardList className="mx-auto h-12 w-12 mb-4 opacity-20" />
-                <p>No material requisitions found</p>
+          {/* Mobile Card List (< md) */}
+          <div className="block md:hidden space-y-3 pb-4">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-10">
+                <span className="animate-spin rounded-full h-6 w-6 border-b-2 border-solarized-blue" />
               </div>
-            }
-          />
+            ) : requisitions.length === 0 ? (
+              <div className="text-center py-12 px-6 bg-slate-50 rounded-xl border border-dashed">
+                <ClipboardList className="mx-auto h-12 w-12 mb-4 opacity-20" />
+                <p className="text-sm text-slate-500 font-medium">No material requisitions found</p>
+              </div>
+            ) : (
+              requisitions.map((item) => (
+                <div key={item.id} className="bg-white rounded-xl shadow-sm p-4 border border-slate-100 transition-all hover:border-slate-200">
+                  {/* Header */}
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-semibold text-solarized-blue text-sm">
+                      {item.requisition_code || `REQ-${item.id}`}
+                    </h3>
+                    <span className="text-[10px] text-slate-500 shrink-0">
+                      {item.created_at ? String(item.created_at).split('T')[0] : '—'}
+                    </span>
+                  </div>
+
+                  {/* Notes / Description */}
+                  <p className="text-xs text-slate-500 mb-3 line-clamp-2 leading-relaxed">
+                    {item.notes || 'No additional notes provided'}
+                  </p>
+
+                  {/* Details Grid */}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 mt-4 text-[11px]">
+                    <div className="space-y-0.5">
+                      <p className="text-slate-400 uppercase font-bold tracking-tight">Requested By</p>
+                      <p className="font-semibold text-slate-700">{item.requested_by_user?.name || '—'}</p>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <p className="text-slate-400 uppercase font-bold tracking-tight">Status</p>
+                      <div className="flex mt-0.5">{getStatusBadge(item.status)}</div>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <p className="text-slate-400 uppercase font-bold tracking-tight">Priority</p>
+                      <div className="flex mt-0.5">{getPriorityBadge(item.priority)}</div>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <p className="text-slate-400 uppercase font-bold tracking-tight">Required Date</p>
+                      <p className="font-semibold text-slate-700">
+                        {item.requisition_date ? new Date(item.requisition_date).toLocaleDateString('en-IN') : '—'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="mt-4 pt-3 border-t border-slate-50 flex justify-end gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 text-solarized-blue" onClick={() => handleView(item)} title="View">
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    {item.status === 'pending' && (
+                      <>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 text-green-600" onClick={() => handleApprove(item.id)} title="Approve">
+                          <CheckCircle className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 text-red-600" onClick={() => handleReject(item.id)} title="Reject">
+                          <XCircle className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop Table (md+) */}
+          <div className="hidden md:block">
+            <DataTable
+              columns={columns}
+              data={requisitions}
+              progressPending={isLoading}
+              pagination
+              paginationServer
+              paginationTotalRows={totalRows}
+              paginationPerPage={perPage}
+              paginationDefaultPage={page}
+              onChangePage={(newPage) => setPage(newPage)}
+              onChangeRowsPerPage={(newPerPage) => { setPerPage(newPerPage); setPage(1); }}
+              customStyles={customStyles}
+              highlightOnHover
+              responsive
+              noDataComponent={
+                <div className="text-center py-12 text-muted-foreground">
+                  <ClipboardList className="mx-auto h-12 w-12 mb-4 opacity-20" />
+                  <p>No material requisitions found</p>
+                </div>
+              }
+            />
+          </div>
         </CardContent>
       </Card>
 
