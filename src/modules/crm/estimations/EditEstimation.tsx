@@ -180,7 +180,8 @@ export default function EditEstimation() {
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
 
   // Attachments
-  const [attachments, setAttachments] = useState<Array<{ file?: File; preview: string; base64: string }>>([]);
+  const [attachments, setAttachments] = useState<Array<{ id?: number; file?: File; preview: string; base64: string }>>([]);
+  const [deletedAttachmentIds, setDeletedAttachmentIds] = useState<number[]>([]);
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
 
   // ─── Computed Values ─────────────────────────────────────────────
@@ -306,6 +307,25 @@ export default function EditEstimation() {
         setEstimationProducts(mappedProducts);
         // Expand all products by default
         setExpandedProducts(new Set(mappedProducts.map((p: EstimationProduct) => p.tempId)));
+      }
+
+      // Attachments
+      const apiAttachments = res?.data?.attachments || est.attachments;
+      if (apiAttachments && Array.isArray(apiAttachments)) {
+        const baseUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:8000';
+        setAttachments(
+          apiAttachments.map((a: any) => {
+            let previewUrl = a.url || a.image_url || a.file_url || '';
+            if (!previewUrl && a.image) {
+               previewUrl = a.image.startsWith('http') ? a.image : `${baseUrl}/${a.image.startsWith('/') ? a.image.substring(1) : a.image}`;
+            }
+            return {
+              id: a.id,
+              preview: previewUrl,
+              base64: '', // Empty for existing files, won't be re-uploaded
+            };
+          })
+        );
       }
 
       // Project & Customer
@@ -556,7 +576,8 @@ export default function EditEstimation() {
         tax: parseFloat(charges.tax) || 0,
         labour_charges: parseFloat(charges.labour_charges) || 0,
         total_cft: productsSummary.totalCft,
-        attachments: attachments.filter((a) => a.base64.startsWith('data:image')).map((a) => a.base64),
+        attachments: attachments.filter((a) => a.base64 && a.base64.startsWith('data:image')).map((a) => a.base64),
+        deleted_attachment_ids: deletedAttachmentIds,
       };
 
       await estimationsApi.update(id, payload);
@@ -791,6 +812,42 @@ export default function EditEstimation() {
                     <p className="text-[10px] text-white/90 uppercase font-bold tracking-wider">Grand Total</p>
                     <p className="text-xl sm:text-2xl font-black text-white">₹{Number(grandTotal).toLocaleString()}</p>
                   </div>
+                </div>
+              </div>
+
+              {/* Attachments Section */}
+              <div className="space-y-4 p-3 sm:p-4 bg-slate-50 rounded-lg border border-slate-200 mt-4 sm:mt-6">
+                <h3 className="text-amber-800 font-bold text-sm uppercase tracking-tight flex items-center gap-2">
+                  <Paperclip className="h-4 w-4 text-amber-600" /> Attachments
+                </h3>
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-100 transition-colors cursor-pointer" onClick={() => document.getElementById('file-upload')?.click()}>
+                    <input type="file" id="file-upload" multiple accept="image/*" className="hidden" onChange={handleFileChange} />
+                    <Paperclip className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+                    <p className="text-sm text-slate-600 font-medium">Click to upload images</p>
+                    <p className="text-xs text-slate-400 mt-1">PNG, JPG up to 2MB</p>
+                    {isUploadingAttachment && <p className="text-xs text-amber-600 mt-2 font-medium">Processing images...</p>}
+                  </div>
+                  
+                  {attachments.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                      {attachments.map((file, index) => (
+                        <div key={index} className="relative group rounded-lg overflow-hidden border border-slate-200 bg-white aspect-square">
+                          <img src={file.preview} alt={`preview ${index}`} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Button type="button" variant="ghost" size="icon" className="text-white hover:text-red-500 hover:bg-white/20" onClick={() => {
+                              if (file.id) {
+                                setDeletedAttachmentIds(prev => [...prev, file.id!]);
+                              }
+                              setAttachments(prev => prev.filter((_, i) => i !== index));
+                            }}>
+                              <Trash2 className="h-5 w-5" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
