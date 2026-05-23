@@ -106,7 +106,7 @@ export default function CollectMaterialModal({
 
     const cft = totalCft;
     const collectedCft = parseFloat(String(estimation.total_collected_cft || 0));
-    const remainingCft = Math.max(0, cft - collectedCft);
+    const remainingCft = Math.max(0, parseFloat((cft - collectedCft).toFixed(2)));
 
     useEffect(() => {
         fetchWoodTypes();
