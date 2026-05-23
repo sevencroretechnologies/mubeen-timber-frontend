@@ -201,6 +201,24 @@ const ActionsCell = ({
   );
 };
 
+const CollectionProgress = ({ collected, total }: { collected: number; total: number }) => {
+  const percentage = total > 0 ? Math.round((collected / total) * 100) : 0;
+  return (
+    <div className="w-full px-2">
+      <div className="flex justify-between text-[10px] text-slate-500 mb-1">
+        <span>{collected.toFixed(2)} / {total.toFixed(2)} CFT</span>
+        <span className="font-medium text-slate-700">{percentage}%</span>
+      </div>
+      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+        <div
+          className={`h-full ${percentage >= 100 ? 'bg-emerald-500' : 'bg-amber-500'}`}
+          style={{ width: `${Math.min(percentage, 100)}%` }}
+        />
+      </div>
+    </div>
+  );
+};
+
 export default function EstimationsList() {
   const navigate = useNavigate();
   const [estimations, setEstimations] = useState<any[]>([]);
@@ -437,16 +455,16 @@ export default function EstimationsList() {
       width: "180px",
       center: true,
     },
-    // {
-    //     name: 'Collection Progress',
-    //     cell: row => (
-    //         <CollectionProgress
-    //             collected={row.total_collected_cft || 0}
-    //             total={row.cft || 0}
-    //         />
-    //     ),
-    //     width: '180px',
-    // },
+    {
+      name: "Progress",
+      cell: (row) => (
+        <CollectionProgress
+          collected={row.total_collected_cft || 0}
+          total={row.total_cft || 0}
+        />
+      ),
+      width: "180px",
+    },
     {
       name: "Actions",
       cell: (row) => (
@@ -637,6 +655,13 @@ export default function EstimationsList() {
                   <div>
                     <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Type</p>
                     <p className="text-xs font-semibold text-slate-700">Multi-Items</p>
+                  </div>
+                  <div className="flex-1 px-4">
+                     <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5 text-center">Progress</p>
+                     <CollectionProgress
+                        collected={row.total_collected_cft || 0}
+                        total={row.total_cft || 0}
+                      />
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Amount</p>
