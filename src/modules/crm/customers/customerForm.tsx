@@ -415,16 +415,28 @@ export default function CustomerForm() {
                                         <Label>Phone No.</Label>
                                         <Input
                                             value={contact.phone_no}
-                                            onChange={(e) => handleContactChange(index, "phone_no", e.target.value)}
-                                            placeholder="Phone number"
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                handleContactChange(index, "phone_no", val);
+                                            }}
+                                            placeholder="10-digit phone number"
+                                            pattern="[0-9]{10}"
+                                            title="Phone number must be exactly 10 digits"
+                                            maxLength={10}
                                         />
                                     </div>
                                     <div className="space-y-2">
                                         <Label>WhatsApp No.</Label>
                                         <Input
                                             value={contact.whatsapp_no}
-                                            onChange={(e) => handleContactChange(index, "whatsapp_no", e.target.value)}
-                                            placeholder="WhatsApp number"
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                handleContactChange(index, "whatsapp_no", val);
+                                            }}
+                                            placeholder="10-digit WhatsApp number"
+                                            pattern="[0-9]{10}"
+                                            title="WhatsApp number must be exactly 10 digits"
+                                            maxLength={10}
                                         />
                                     </div>
                                 </div>
