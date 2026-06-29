@@ -23,7 +23,7 @@ export default function MaterialRequisitionForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [warehouses, setWarehouses] = useState<TimberWarehouse[]>([]);
   const [woodTypes, setWoodTypes] = useState<TimberWoodType[]>([]);
-  const [priority, setPriority] = useState('medium');
+  const [priority, setPriority] = useState('normal');
   const [requiredDate, setRequiredDate] = useState('');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<RequisitionItemRow[]>([
@@ -74,15 +74,19 @@ export default function MaterialRequisitionForm() {
     setIsSubmitting(true);
     try {
       await materialRequisitionApi.create({
-        priority: priority as 'low' | 'medium' | 'high' | 'urgent',
-        required_date: requiredDate || undefined,
+        priority: priority as 'low' | 'normal' | 'high' | 'urgent',
+        requisition_date: requiredDate || undefined,
         notes: notes || undefined,
-        items: validItems.map((item) => ({
-          wood_type_id: Number(item.wood_type_id),
-          quantity_requested: Number(item.quantity_requested),
-          warehouse_id: item.warehouse_id ? Number(item.warehouse_id) : undefined,
-          notes: item.notes || undefined,
-        })),
+        items: validItems.map((item) => {
+          const woodType = woodTypes.find((wt) => wt.id === Number(item.wood_type_id));
+          return {
+            wood_type_id: Number(item.wood_type_id),
+            requested_quantity: Number(item.quantity_requested),
+            unit: woodType?.unit || 'pcs',
+            warehouse_id: item.warehouse_id ? Number(item.warehouse_id) : undefined,
+            notes: item.notes || undefined,
+          };
+        }),
       });
       showAlert('success', 'Success', 'Material requisition created successfully', 2000);
       navigate('/inventory/requisitions');
@@ -114,7 +118,7 @@ export default function MaterialRequisitionForm() {
                 <Label htmlFor="priority">Priority <span className="text-red-500">*</span></Label>
                 <select id="priority" value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm">
                   <option value="low">Low</option>
-                  <option value="medium">Medium</option>
+                  <option value="normal">Normal</option>
                   <option value="high">High</option>
                   <option value="urgent">Urgent</option>
                 </select>

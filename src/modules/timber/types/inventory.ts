@@ -343,15 +343,16 @@ export interface TaxRateFormData {
 export interface MaterialRequisitionFormData {
     job_card_id?: number;
     project_id?: number;
-    priority: "low" | "medium" | "high" | "urgent";
-    required_date?: string;
+    priority: "low" | "normal" | "high" | "urgent";
+    requisition_date?: string;
     notes?: string;
     items: MaterialRequisitionItemFormData[];
 }
 
 export interface MaterialRequisitionItemFormData {
     wood_type_id: number;
-    quantity_requested: number;
+    requested_quantity: number;
+    unit: string;
     warehouse_id?: number;
     notes?: string;
 }
